@@ -7,20 +7,34 @@
             [hiccup.page :refer :all])
   (:gen-class))
 
+(defn- without-prefix [origin prefix]
+  (loop [s origin t prefix]
+    (cond
+      (empty? t) s
+      (not= (first s) (first t)) origin
+      :else (recur (rest s) (rest t)))))
+
+(defn default-fn [l] [:p l])
+
+(def table-of-contents-sentinel #"目\s*录")
 (defn table-of-contents
   {:test
-   #(let [txt ["标题" "目 录" "第一章" "第二章" "第三章" "第一章" "……"]]
-      (t/is (= ["目 录" "第一章"
-                "第二章" "第三章"] (table-of-contents txt))))}
+   #(let [txt ["目 录" "第一章" "第二章" "第三章" "第一章" "……"]]
+      (tt/comprehend-tests
+       [(t/is (= [["目 录"] ["目 录"]] (table-of-contents ["目 录"])))
+        (t/is (= [["目 录" "第一章" "第二章" "第三章"]
+                  ["目 录" "第一章" "第二章" "第三章"]]
+                 (table-of-contents txt)))]))}
   [ls]
-  (let [sentinel   #"目\s*录"
-        skipped    (drop-while #(nil? (re-matches sentinel %)) ls)
-        first-item (second skipped)]
-    (assert (nil? (re-matches sentinel first-item)))
-    (->> skipped
-         (partition-by #(not= % first-item))
-         (take 3)
-         flatten)))
+  (let [head (first ls)]
+    (assert (re-matches table-of-contents-sentinel head))
+    (if-let [first-item (second ls)]
+      (loop [s (rest (rest ls))
+             t [head first-item]]
+        (if (or (= (first s) first-item) (empty? s))
+          [t t]
+          (recur (rest s) (conj t (first s)))))
+      [[head] [head]])))
 
 (defn use-chinese-paren
   {:test
@@ -45,19 +59,29 @@
   [s]
   (str/join " " (str/split s #"\s+")))
 
-(defn- wrap-in-html [ls]
-  (let [title (first ls)]
+(defn- wrap-in-html [lines]
+  (let [title (first lines)]
     (html
      (html5
       [:head {:lang "zh"}
        [:meta {:charset "utf-8"}]
-       [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
+       [:meta {:name "viewport"
+               :content "width=device-width, initial-scale=1"}]
        [:title title]]
       [:body
-       (let [[head & item-list] (table-of-contents ls)]
-         [:nav [:h2 head]
-          [:ul (for [item item-list] [:li item])]])
-       (map (partial conj [:p]) ls)]))))
+       (loop [ls lines
+              es []]
+         (cond (empty? ls)
+               (seq es)
+
+               (re-matches table-of-contents-sentinel (first ls))
+               (let [[processed [head & item-list]] (table-of-contents ls)]
+                 (recur (without-prefix ls processed)
+                        (conj es [:nav [:h2 head]
+                                  [:ul (for [item item-list] [:li item])]])))
+
+               :else
+               (recur (rest ls) (conj es (default-fn (first ls))))))]))))
 
 (defn -main
   "I don't do a whole lot ... yet."
