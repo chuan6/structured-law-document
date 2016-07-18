@@ -7,6 +7,21 @@
             [hiccup.page :refer :all])
   (:gen-class))
 
+(defn table-of-contents
+  {:test
+   #(let [txt ["标题" "目 录" "第一章" "第二章" "第三章" "第一章" "……"]]
+      (t/is (= ["目 录" "第一章"
+                "第二章" "第三章"] (table-of-contents txt))))}
+  [ls]
+  (let [sentinel   #"目\s*录"
+        skipped    (drop-while #(nil? (re-matches sentinel %)) ls)
+        first-item (second skipped)]
+    (assert (nil? (re-matches sentinel first-item)))
+    (->> skipped
+         (partition-by #(not= % first-item))
+         (take 3)
+         flatten)))
+
 (defn use-chinese-paren
   {:test
    #(let [f use-chinese-paren]
@@ -39,6 +54,9 @@
        [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
        [:title title]]
       [:body
+       (let [[head & item-list] (table-of-contents ls)]
+         [:nav [:h2 head]
+          [:ul (for [item item-list] [:li item])]])
        (map (partial conj [:p]) ls)]))))
 
 (defn -main
