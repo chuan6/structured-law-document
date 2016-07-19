@@ -137,7 +137,8 @@
    #(let [f space-filled]
       (tt/comprehend-tests
        (t/is (= "az" (f "az")))
-       (t/is (= "a-z" (f "a z")))))}
+       (t/is (= "a-z" (f "a z")))
+       (t/is (= "a-z-a" (f "a z a")))))}
   [s]
   (str/replace s #"\s" "-"))
 
@@ -161,7 +162,9 @@
                (let [[processed [head & item-list]] (table-of-contents ls)]
                  (recur (without-prefix ls processed)
                         (conj es [:nav [:h2 head]
-                                  [:ul (for [item item-list] [:li item])]])
+                                  [:ul (for [item item-list]
+                                         [:li [:a {:href (str "#" (space-filled item))}
+                                               item]])]])
                         (assoc env :table-of-contents item-list)))
 
                (let [[_ unit] (nth-item (first ls))]
