@@ -83,6 +83,32 @@
         (when (seq head)
           [(chinese-number head) (first tail)])))))
 
+(defn 章
+  {:test
+   #(let [f 章
+          a ["第七章 法律责任" "第八十条 ……" "……"]
+          b ["第八章 附则" "第九十六条 ……"]
+          ab (into a b)]
+      (tt/comprehend-tests
+       (let [[processed recognized] (f ab)]
+         (println (f ab))
+         [(t/is (= a processed))
+          (t/is (= {:token \章 :nth 7 :title (first a) :content (rest a)}
+                   recognized))])
+       (let [[processed recognized] (f b)]
+         (println (f b))
+         [(t/is (= b processed))
+          (t/is (= {:token \章 :nth 8 :title (first b) :content (rest b)}))])))}
+  [lines]
+  (let [head (first lines)
+        [i unit] (nth-item head)]
+    (assert (and i (= unit \章)))
+    (let [next [(inc i) \章]
+          body (take-while (fn [line]
+                             (not= (nth-item line) next))
+                           (rest lines))]
+      [(cons head body) {:token \章 :nth i :title head :content body}])))
+
 (defn use-chinese-paren
   {:test
    #(let [f use-chinese-paren]
@@ -100,11 +126,20 @@
   {:test
    #(let [f space-clapsed]
       (tt/comprehend-tests
-       [(t/is (= "az" (f "az")))
-        (t/is (= "a z" (f "a z")))
-        (t/is (= "a z" (f "a  z")))]))}
+       (t/is (= "az" (f "az")))
+       (t/is (= "a z" (f "a z")))
+       (t/is (= "a z" (f "a  z")))))}
   [s]
   (str/join " " (str/split s #"\s+")))
+
+(defn space-filled
+  {:test
+   #(let [f space-filled]
+      (tt/comprehend-tests
+       (t/is (= "az" (f "az")))
+       (t/is (= "a-z" (f "a z")))))}
+  [s]
+  (str/replace s #"\s" "-"))
 
 (defn- wrap-in-html [lines]
   (let [title (first lines)]
@@ -117,7 +152,8 @@
        [:title title]]
       [:body
        (loop [ls lines
-              es []]
+              es []
+              env {}]
          (cond (empty? ls)
                (seq es)
 
@@ -125,10 +161,20 @@
                (let [[processed [head & item-list]] (table-of-contents ls)]
                  (recur (without-prefix ls processed)
                         (conj es [:nav [:h2 head]
-                                  [:ul (for [item item-list] [:li item])]])))
+                                  [:ul (for [item item-list] [:li item])]])
+                        (assoc env :table-of-contents item-list)))
+
+               (let [[_ unit] (nth-item (first ls))]
+                 (= unit \章))
+               (let [[processed {:keys [title content]}] (章 ls)]
+                 (recur (without-prefix ls processed)
+                        (conj es [:div {:id (space-filled title)}
+                                  [:h2 title]
+                                  (for [line content] [:p line])])
+                        env))
 
                :else
-               (recur (rest ls) (conj es (default-fn (first ls))))))]))))
+               (recur (rest ls) (conj es (default-fn (first ls))) env)))]))))
 
 (defn -main
   "I don't do a whole lot ... yet."
