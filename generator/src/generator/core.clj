@@ -94,8 +94,15 @@
       (let [line (first ls)]
         (recur (rest ls) (conj es (token/nth-章节 ls)) env))
 
+      (= (second (nth-item (first ls))) \条)
+      (let [[processed recognized] (token/nth-条 ls)]
+        (recur (without-prefix ls processed)
+               (conj es recognized)
+               env))
+
       :else
-      (recur (rest ls) (conj es {:token :to-be-recognized :text (first ls)}) env))))
+      (recur (rest ls) (conj es {:token :to-be-recognized :text (first ls)})
+             env))))
 
 (defn- wrap-in-html [tokenized-lines]
   (html
@@ -122,6 +129,13 @@
          \节
          (let [txt (:text tl)]
            [:h2 {:id (space-filled txt)} txt])
+
+         \条
+         (let [head (:head tl)
+               [head-line & more-lines] (:text tl)]
+           [:div {:id head}
+            [:p [:b head] " " (second (str/split head-line #"\s" 2))]
+            (for [l more-lines] [:p l])])
 
          :to-be-recognized
          (default-fn (:text tl))))])))

@@ -63,3 +63,31 @@
         [i unit] (nth-item line)]
     (assert (and i (#{\章 \节} unit)))
     {:token unit :nth i :text line}))
+
+(defn nth-条
+  {:test
+   #(let [f nth-条
+          a ["第五条 县级以上……"]
+          b ["第六条 工会应当……" "……"]
+          c ["第二章 ……"]
+          d ["第七条 用人单位……"]
+          ab (into a b)
+          bcd (-> b (into c) (into d))]
+      (tt/comprehend-tests
+       (t/is (= [a {:token \条 :nth 5 :text a :head "第五条"}]
+                (f ab)))
+       (t/is (= [b {:token \条 :nth 6 :text b :head "第六条"}]
+                (f bcd)))))}
+  [lines]
+  (let [line (first lines)
+        [i unit] (nth-item line)]
+    (assert (and i (= unit \条)))
+    (let [lines-within
+          (into [line] (take-while
+                        (fn [l]
+                          (let [[_ unit] (nth-item l)]
+                            (nil? (#{\章 \节 \条} unit))))
+                        (rest lines)))]
+      [lines-within
+       {:token \条 :nth i :head (first (str/split line #"\s"))
+        :text lines-within}])))
