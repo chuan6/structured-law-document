@@ -22,9 +22,13 @@
   {:test
    #(let [txt ["目 录" "第一章" "第二章" "第三章" "第一章" "……"]]
       (tt/comprehend-tests
-       [(t/is (= [["目 录"] ["目 录"]] (table-of-contents ["目 录"])))
+       [(t/is (= [["目 录"]
+                  {:token :table-of-contents
+                   :list ["目 录"]}]
+                 (table-of-contents ["目 录"])))
         (t/is (= [["目 录" "第一章" "第二章" "第三章"]
-                  ["目 录" "第一章" "第二章" "第三章"]]
+                  {:token :table-of-contents
+                   :list ["目 录" "第一章" "第二章" "第三章"]}]
                  (table-of-contents txt)))]))}
   [ls]
   (let [head (first ls)]
@@ -33,9 +37,9 @@
       (loop [s (rest (rest ls))
              t [head first-item]]
         (if (or (= (first s) first-item) (empty? s))
-          [t t]
+          [t {:token :table-of-contents :list  t}]
           (recur (rest s) (conj t (first s)))))
-      [[head] [head]])))
+      [[head] {:token :table-of-contents :list [head]}])))
 
 (defn use-chinese-paren
   {:test
@@ -70,38 +74,57 @@
   [s]
   (str/replace s #"\s" "-"))
 
-(defn- wrap-in-html [lines]
-  (let [title (first lines)]
-    (html
-     (html5
-      [:head {:lang "zh"}
-       [:meta {:charset "utf-8"}]
-       [:meta {:name "viewport"
-               :content "width=device-width, initial-scale=1"}]
-       [:title title]]
-      [:body
-       (loop [ls lines
-              es []
-              env {}]
-         (cond (empty? ls)
-               (seq es)
+(defn- line-processing [lines]
+  (loop [ls lines
+         es []
+         env {} ;to be utilized for checking against 章节 items
+         ]
+    (cond
+      (empty? ls)
+      (seq es)
 
-               (re-matches table-of-contents-sentinel (first ls))
-               (let [[processed [head & item-list]] (table-of-contents ls)]
-                 (recur (without-prefix ls processed)
-                        (conj es [:nav [:h2 head]
-                                  [:ul (for [item item-list]
-                                         [:li [:a {:href (str "#" (space-filled item))}
-                                               item]])]])
-                        (assoc env :table-of-contents item-list)))
+      (re-matches table-of-contents-sentinel (first ls))
+      (let [[processed recognized] (table-of-contents ls)]
+        (recur (without-prefix ls processed)
+               (conj es recognized)
+               (assoc env :table-of-contents (:list recognized))))
 
-               (let [[_ unit] (nth-item (first ls))]
-                 (#{\章 \节} unit))
-               (let [line (first ls)]
-                 (recur (rest ls) (conj es [:h2 {:id (space-filled line)} line]) env))
+      (let [[_ unit] (nth-item (first ls))]
+        (#{\章 \节} unit))
+      (let [line (first ls)]
+        (recur (rest ls) (conj es (token/nth-章节 ls)) env))
 
-               :else
-               (recur (rest ls) (conj es (default-fn (first ls))) env)))]))))
+      :else
+      (recur (rest ls) (conj es {:token :to-be-recognized :text (first ls)}) env))))
+
+(defn- wrap-in-html [tokenized-lines]
+  (html
+   (html5
+    [:head {:lang "zh"}
+     [:meta {:charset "utf-8"}]
+     [:meta {:name "viewport"
+             :content "width=device-width, initial-scale=1"}]
+     [:title (:text (first tokenized-lines))]]
+    [:body
+     (for [{t :token :as tl} tokenized-lines]
+       (case t
+         :table-of-contents
+         (let [[head & item-list] (:list tl)]
+           [:nav [:h2 head]
+            [:ul (for [item item-list]
+                   [:li [:a {:href (str "#" (space-filled item))}
+                         item]])]])
+
+         \章
+         (let [txt (:text tl)]
+           [:h2 {:id (space-filled txt)} txt])
+
+         \节
+         (let [txt (:text tl)]
+           [:h2 {:id (space-filled txt)} txt])
+
+         :to-be-recognized
+         (default-fn (:text tl))))])))
 
 (defn -main
   "I don't do a whole lot ... yet."
@@ -110,6 +133,7 @@
     (->> (line-seq r)
          (remove str/blank?)
          (map (comp use-chinese-paren space-clapsed str/trim))
+         line-processing
          wrap-in-html
          (spit "../index.html"))))
 

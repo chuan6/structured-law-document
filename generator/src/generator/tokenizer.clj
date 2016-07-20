@@ -49,3 +49,17 @@
       (let [[head tail] (split-with cd-set cs)]
         (when (seq head)
           [(chinese-number head) (first tail)])))))
+
+(defn nth-章节
+  {:test
+   #(let [f nth-章节]
+      (tt/comprehend-tests
+       (t/is (= {:token \章 :nth 1 :text "第一章 总则"}
+                (f ["第一章 总则" "第一条 ……"])))
+       (t/is (= {:token \节 :nth 2 :text "第二节 劳务派遣"}
+                (f ["第二节 劳务派遣" "第五十七条 ……"])))))}
+  [lines]
+  (let [line (first lines)
+        [i unit] (nth-item line)]
+    (assert (and i (#{\章 \节} unit)))
+    {:token unit :nth i :text line}))
