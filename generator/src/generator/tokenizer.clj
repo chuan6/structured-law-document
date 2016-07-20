@@ -49,29 +49,3 @@
       (let [[head tail] (split-with cd-set cs)]
         (when (seq head)
           [(chinese-number head) (first tail)])))))
-
-(defn 章
-  {:test
-   #(let [f 章
-          a ["第七章 法律责任" "第八十条 ……" "……"]
-          b ["第八章 附则" "第九十六条 ……"]
-          ab (into a b)]
-      (tt/comprehend-tests
-       (let [[processed recognized] (f ab)]
-         (println (f ab))
-         [(t/is (= a processed))
-          (t/is (= {:token \章 :nth 7 :title (first a) :content (rest a)}
-                   recognized))])
-       (let [[processed recognized] (f b)]
-         (println (f b))
-         [(t/is (= b processed))
-          (t/is (= {:token \章 :nth 8 :title (first b) :content (rest b)}))])))}
-  [lines]
-  (let [head (first lines)
-        [i unit] (nth-item head)]
-    (assert (and i (= unit \章)))
-    (let [next [(inc i) \章]
-          body (take-while (fn [line]
-                             (not= (nth-item line) next))
-                           (rest lines))]
-      [(cons head body) {:token \章 :nth i :title head :content body}])))

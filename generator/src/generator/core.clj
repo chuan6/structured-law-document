@@ -96,13 +96,9 @@
                         (assoc env :table-of-contents item-list)))
 
                (let [[_ unit] (nth-item (first ls))]
-                 (= unit \章))
-               (let [[processed {:keys [title content]}] (token/章 ls)]
-                 (recur (without-prefix ls processed)
-                        (conj es [:div {:id (space-filled title)}
-                                  [:h2 title]
-                                  (for [line content] [:p line])])
-                        env))
+                 (#{\章 \节} unit))
+               (let [line (first ls)]
+                 (recur (rest ls) (conj es [:h2 {:id (space-filled line)} line]) env))
 
                :else
                (recur (rest ls) (conj es (default-fn (first ls))) env)))]))))
