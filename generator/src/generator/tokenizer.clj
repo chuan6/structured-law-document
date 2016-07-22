@@ -9,6 +9,8 @@
 (def nthten-map
   {\十 10 \百 100})
 
+(def numchar-zh-set (set (concat (keys cdigit-map) (keys nthten-map))))
+
 (defn chinese-number
   {:test
    #(let [f chinese-number]
@@ -43,10 +45,9 @@
        (t/is (= [1 \章] (f "第一章 总则")))
        (t/is (= [12 \条] (f "第十二条 ……")))))}
   [line]
-  (let [[c & cs] line
-        cd-set (set (concat (keys cdigit-map) (keys nthten-map)))]
+  (let [[c & cs] line]
     (when (= c \第)
-      (let [[head tail] (split-with cd-set cs)]
+      (let [[head tail] (split-with numchar-zh-set cs)]
         (when (seq head)
           [(chinese-number head) (first tail)])))))
 
@@ -91,3 +92,19 @@
       [lines-within
        {:token \条 :nth i :head (first (str/split line #"\s"))
         :text lines-within}])))
+
+(defn nth-项
+  {:test
+   #(let [f nth-项]
+      (tt/comprehend-tests
+       (t/is (= nil (f "（")))
+       (t/is (= nil (f "（括号内")))
+       (t/is (= {:token \项 :nth 5 :head "（五）" :text "（五）……"}
+                (f "（五）……")))))}
+  [line]
+  (assert (= (first line) \（))
+  (let [[i-zh tail] (split-with (partial not= \）) (rest line))]
+    (when (and (seq tail) (every? numchar-zh-set i-zh))
+      (when-let [i (chinese-number i-zh)]
+        {:token \项 :nth i :head (str/join (-> [\（] (into i-zh) (conj \）)))
+         :text line}))))
