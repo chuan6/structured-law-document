@@ -1,6 +1,5 @@
 (ns generator.tokenizer
-  (:require [clojure.core.match :refer [match]]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [clojure.test :as t]
             [clojure.zip :as z]
             [generator.test :as tt]))
@@ -179,43 +178,42 @@
 
 (defn- parse [cs]
   (let [[recognized-items rest-cs] (read-items cs)]
-    ;(println "recognized-items:" recognized-items)
     (reduce
      (fn [loc x]
-       ;;(println (z/root loc))
-       (let [curr (:token (if (z/branch? loc)
+       (let [curr-t (:token (if (z/branch? loc)
                             (first (z/node loc))
-                            (z/node loc)))]
-         ;;(println "node:" (z/node loc))
-         (match [curr (:token x)]
+                            (z/node loc)))
+             x-t (:token x)]
+         (case [curr-t x-t]
            [\法 \条] (-> loc (z/append-child (list x)) z/down z/rightmost)
            [\条 \款] (-> loc (z/append-child (list x)) z/down z/rightmost)
            [\条 \项] (-> loc (z/append-child (list {:token \款 :nth 1})) z/down z/rightmost
                          (z/append-child x) z/down z/rightmost)
            [\款 \项] (-> loc (z/append-child x) z/down z/rightmost)
 
-           [\条 \条] (-> loc z/up (z/append-child (list x)) z/down z/rightmost)
-           [\款 \款] (-> loc z/up (z/append-child (list x)) z/down z/rightmost)
-           [\项 \项] (-> loc z/up (z/append-child x) z/down z/rightmost)
+           [\条 \条] (recur (-> loc z/up) x)
+           [\款 \款] (recur (-> loc z/up) x)
+           [\项 \项] (recur (-> loc z/up) x)
 
-           [\款 \条] (-> loc z/up (z/insert-right (list x)) z/right)
-           [\项 \款] (-> loc z/up (z/insert-right (list x)) z/right)
-           [\项 \条] (-> loc z/up z/up (z/insert-right (list x)) z/right)
+           [\款 \条] (recur (-> loc z/up z/up) x)
+           [\项 \款] (recur (-> loc z/up z/up) x)
+           [\项 \条] (recur (-> loc z/up z/up z/up) x)
 
-           [_ :and] (let [and-t (-> loc z/up
-                                    (z/append-child x)
-                                    z/down z/rightmost)
-                          prev-t (z/left and-t)]
-                      (assert (t/is (= (:token (z/node and-t)) :and))
-                              (str "expect :and token to the right of "
-                                   (z/node prev-t)))
-                      prev-t)
-           :else (do (println "unrecognized pattern" [curr x])
-                     loc))))
+           (if (= x-t :and)
+             (let [and-t (-> loc z/up
+                             (z/append-child x)
+                             z/down z/rightmost)
+                   prev-t (z/left and-t)]
+               (assert (t/is (= (:token (z/node and-t)) :and))
+                       (str "expect :and token to the right of "
+                            (z/node prev-t)))
+               prev-t)
+             (do (println "unrecognized pattern" [curr-t x])
+                 loc)))))
      (parse-tree (list (first recognized-items)))
      (rest recognized-items))))
 
-(let [src "本法第三十九条和第四十条第一项、第二项"
+(let [src "本法第三十九条和第四十条第一项、第二项和第五十条"
       r (parse src)]
   (clojure.pprint/pprint (z/root r))
   (t/is (= src (str/join (map :text (flatten (z/root r)))))))
