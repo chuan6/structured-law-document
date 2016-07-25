@@ -182,24 +182,34 @@
     ;(println "recognized-items:" recognized-items)
     (reduce
      (fn [loc x]
-                                        ;(println (z/root loc))
+       ;;(println (z/root loc))
        (let [curr (:token (if (z/branch? loc)
                             (first (z/node loc))
                             (z/node loc)))]
-                                        ;(println "node:" (z/node loc))
+         ;;(println "node:" (z/node loc))
          (match [curr (:token x)]
-           [\条 \款] (-> loc (z/insert-child (list x)) z/down)
-           [\条 \项] (-> loc (z/insert-child (list {:token \款 :nth 1})) z/down
-                         (z/insert-child (list x)) z/down)
-           [\条 \条] (-> loc (z/insert-right (list x)) z/right)
-           [\款 \项] (-> loc (z/insert-child (list x)) z/down)
-           [\款 \款] (-> loc (z/insert-right (list x)) z/right)
+           [\法 \条] (-> loc (z/append-child (list x)) z/down z/rightmost)
+           [\条 \款] (-> loc (z/append-child (list x)) z/down z/rightmost)
+           [\条 \项] (-> loc (z/append-child (list {:token \款 :nth 1})) z/down z/rightmost
+                         (z/append-child x) z/down z/rightmost)
+           [\款 \项] (-> loc (z/append-child x) z/down z/rightmost)
+
+           [\条 \条] (-> loc z/up (z/append-child (list x)) z/down z/rightmost)
+           [\款 \款] (-> loc z/up (z/append-child (list x)) z/down z/rightmost)
+           [\项 \项] (-> loc z/up (z/append-child x) z/down z/rightmost)
+
            [\款 \条] (-> loc z/up (z/insert-right (list x)) z/right)
-           [\项 \项] (-> loc (z/insert-right (list x)) z/right)
            [\项 \款] (-> loc z/up (z/insert-right (list x)) z/right)
            [\项 \条] (-> loc z/up z/up (z/insert-right (list x)) z/right)
-           [\法 \条] (-> loc (z/insert-child (list x)) z/down)
-           [_ :and] (-> loc (z/insert-child x))
+
+           [_ :and] (let [and-t (-> loc z/up
+                                    (z/append-child x)
+                                    z/down z/rightmost)
+                          prev-t (z/left and-t)]
+                      (assert (t/is (= (:token (z/node and-t)) :and))
+                              (str "expect :and token to the right of "
+                                   (z/node prev-t)))
+                      prev-t)
            :else (do (println "unrecognized pattern" [curr x])
                      loc))))
      (parse-tree (list (first recognized-items)))
@@ -207,4 +217,5 @@
 
 (let [src "本法第三十九条和第四十条第一项、第二项"
       r (parse src)]
+  (clojure.pprint/pprint (z/root r))
   (t/is (= src (str/join (map :text (flatten (z/root r)))))))
