@@ -138,6 +138,8 @@
 
 (def item-char-set (set (seq "法条款项本第一二三四五六七八九十百")))
 
+(def separators #{\space \、 \和})
+
 (defn- left-most-item [s]
   (loop [xs []
          ys s]
@@ -150,25 +152,26 @@
       [[] s])))
 
 (defn- read-items [char-seq]
-  (loop [cs char-seq
-        ts []]
-   (let [c (first cs)]
-     (case c
-       nil [ts []]
-       \和 (recur (rest cs) (conj ts {:token :and :text "和"}))
-       \、 (recur (rest cs) (conj ts {:token :and :text "、"}))
-       (let [[item rest-cs] (left-most-item cs)]
-         (cond (empty? item)
-               [ts rest-cs]
+  (loop [[c :as cs] char-seq
+         ts []]
+    (let [[item rest-cs] (left-most-item cs)]
+      (cond
+        (separators c)
+        (recur (rest cs) (conj ts {:token :separator :text (str c)}))
 
-               (= c \本)
-               (recur rest-cs (conj ts {:token (peek item) :nth :this
-                                        :text (str/join item)}))
+        (empty? item)
+        [ts rest-cs]
 
-               :else
-               (let [[i unit] (nth-item item)]
-                 (recur rest-cs (conj ts {:token unit :nth i
-                                          :text (str/join item)})))))))))
+        :read-an-item
+        (case c
+          \本
+          (recur rest-cs (conj ts {:token (peek item) :nth :this
+                                   :text (str/join item)}))
+
+          \第
+          (let [[i unit] (nth-item item)]
+            (recur rest-cs (conj ts {:token unit :nth i
+                                     :text (str/join item)}))))))))
 
 (def parse-tree (partial z/zipper
                          seq? ;branch?
@@ -199,21 +202,14 @@
            [\项 \款] (recur (-> loc z/up z/up) x)
            [\项 \条] (recur (-> loc z/up z/up z/up) x)
 
-           (if (= x-t :and)
-             (let [and-t (-> loc z/up
-                             (z/append-child x)
-                             z/down z/rightmost)
-                   prev-t (z/left and-t)]
-               (assert (t/is (= (:token (z/node and-t)) :and))
-                       (str "expect :and token to the right of "
-                            (z/node prev-t)))
-               prev-t)
-             (do (println "unrecognized pattern" [curr-t x])
-                 loc)))))
+           (do (println "unrecognized pattern" [curr-t x])
+               loc))))
      (parse-tree (list (first recognized-items)))
-     (rest recognized-items))))
+     (remove #(= (:token %) :separator) (rest recognized-items)))))
 
-(let [src "本法第三十九条和第四十条第一项、第二项和第五十条"
-      r (parse src)]
-  (clojure.pprint/pprint (z/root r))
-  (t/is (= src (str/join (map :text (flatten (z/root r)))))))
+(tt/comprehend-tests
+ (for [src txts
+       :let [r (parse src)]]
+   (do (clojure.pprint/pprint (z/root r))
+       (t/is (= (str/join (str/split src #"[ 、和]"))
+                (str/join (map :text (flatten (z/root r)))))))))
