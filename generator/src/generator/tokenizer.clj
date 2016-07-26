@@ -209,9 +209,36 @@
      (parse-tree (list (first recognized-items)))
      (rest recognized-items))))
 
+(defn- generate-id [src]
+  (str/join
+   (loop [r () s src]
+     (if (empty? s)
+       r
+       (let [c (peek s)]
+         (recur (into r [(:nth c) (:token c)]) (pop s)))))))
+
+(defn- update-leaves
+  ([tree k f] (update-leaves tree [] k f))
+  ([[parent & children] path k f]
+   (let [path' (conj path parent)]
+     (if (or (empty? children)
+             (every? #(= (:token %) :separator) children))
+       (cons (assoc parent k (f path')) children)
+       (cons parent (map #(if (= (:token %) :separator)
+                            %
+                            (update-leaves % path' k f)) children))))))
+
 (tt/comprehend-tests
  (for [src txts
        :let [r (parse src)]]
    (do ;; (clojure.pprint/pprint (z/root r))
-       ;; (println "------------------------")
-       (t/is (= src (str/join (map :text (flatten (z/root r)))))))))
+     ;; (println "------------------------")
+     (t/is (= src (str/join (map :text (flatten (z/root r))))))))
+ (let [r (parse (seq "本法第三十九条和第四十条第一项、第二项"))]
+   (t/is (= '({:token \法, :nth :this, :text "本法"}
+              ({:token \条, :nth 39, :text "第三十九条", :id "法:this条39"} {:token :separator, :text "和"})
+              ({:token \条, :nth 40, :text "第四十条"}
+               ({:token \款, :nth 1}
+                ({:token \项, :nth 1, :text "第一项", :id "法:this条40款1项1"} {:token :separator, :text "、"})
+                ({:token \项, :nth 2, :text "第二项", :id "法:this条40款1项2"}))))
+            (update-leaves (z/root r) :id generate-id)))))
