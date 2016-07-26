@@ -191,8 +191,8 @@
            [\法 \条] (-> loc (z/append-child (list x)) z/down z/rightmost)
            [\条 \款] (-> loc (z/append-child (list x)) z/down z/rightmost)
            [\条 \项] (-> loc (z/append-child (list {:token \款 :nth 1})) z/down z/rightmost
-                         (z/append-child x) z/down z/rightmost)
-           [\款 \项] (-> loc (z/append-child x) z/down z/rightmost)
+                         (z/append-child (list x)) z/down z/rightmost)
+           [\款 \项] (-> loc (z/append-child (list x)) z/down z/rightmost)
 
            [\条 \条] (recur (-> loc z/up) x)
            [\款 \款] (recur (-> loc z/up) x)
@@ -202,14 +202,16 @@
            [\项 \款] (recur (-> loc z/up z/up) x)
            [\项 \条] (recur (-> loc z/up z/up z/up) x)
 
-           (do (println "unrecognized pattern" [curr-t x])
-               loc))))
+           (if (= x-t :separator)
+             (-> loc (z/append-child x))
+             (do (println "unrecognized pattern" [curr-t x])
+                 loc)))))
      (parse-tree (list (first recognized-items)))
-     (remove #(= (:token %) :separator) (rest recognized-items)))))
+     (rest recognized-items))))
 
 (tt/comprehend-tests
  (for [src txts
        :let [r (parse src)]]
-   (do (clojure.pprint/pprint (z/root r))
-       (t/is (= (str/join (str/split src #"[ 、和]"))
-                (str/join (map :text (flatten (z/root r)))))))))
+   (do ;; (clojure.pprint/pprint (z/root r))
+       ;; (println "------------------------")
+       (t/is (= src (str/join (map :text (flatten (z/root r)))))))))
