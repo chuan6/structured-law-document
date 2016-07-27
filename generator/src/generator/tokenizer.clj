@@ -151,7 +151,7 @@
           (recur xs' ys')))
       [[] s])))
 
-(defn- read-items [char-seq]
+(defn read-items [char-seq]
   (loop [[c :as cs] char-seq
          ts []]
     (let [[item rest-cs] (left-most-item cs)]
@@ -179,44 +179,45 @@
                          (fn [x children] ;makenode
                            (cons (first x) children))))
 
-(defn- parse [recognized-items]
-  (reduce
-   (fn [loc x]
-     (let [curr-t (:token (if (z/branch? loc)
-                            (first (z/node loc))
-                            (z/node loc)))
-           x-t (:token x)]
-       (case [curr-t x-t]
-         [\法 \条] (-> loc (z/append-child (list x)) z/down z/rightmost)
-         [\条 \款] (-> loc (z/append-child (list x)) z/down z/rightmost)
-         [\条 \项] (-> loc (z/append-child (list {:token \款 :nth 1})) z/down z/rightmost
-                       (z/append-child (list x)) z/down z/rightmost)
-         [\款 \项] (-> loc (z/append-child (list x)) z/down z/rightmost)
+(defn parse [recognized-items]
+  (z/root
+   (reduce
+    (fn [loc x]
+      (let [curr-t (:token (if (z/branch? loc)
+                             (first (z/node loc))
+                             (z/node loc)))
+            x-t (:token x)]
+        (case [curr-t x-t]
+          [\法 \条] (-> loc (z/append-child (list x)) z/down z/rightmost)
+          [\条 \款] (-> loc (z/append-child (list x)) z/down z/rightmost)
+          [\条 \项] (-> loc (z/append-child (list {:token \款 :nth 1})) z/down z/rightmost
+                        (z/append-child (list x)) z/down z/rightmost)
+          [\款 \项] (-> loc (z/append-child (list x)) z/down z/rightmost)
 
-         [\条 \条] (recur (-> loc z/up) x)
-         [\款 \款] (recur (-> loc z/up) x)
-         [\项 \项] (recur (-> loc z/up) x)
+          [\条 \条] (recur (-> loc z/up) x)
+          [\款 \款] (recur (-> loc z/up) x)
+          [\项 \项] (recur (-> loc z/up) x)
 
-         [\款 \条] (recur (-> loc z/up z/up) x)
-         [\项 \款] (recur (-> loc z/up z/up) x)
-         [\项 \条] (recur (-> loc z/up z/up z/up) x)
+          [\款 \条] (recur (-> loc z/up z/up) x)
+          [\项 \款] (recur (-> loc z/up z/up) x)
+          [\项 \条] (recur (-> loc z/up z/up z/up) x)
 
-         (if (= x-t :separator)
-           (-> loc (z/append-child x))
-           (do (println "unrecognized pattern" [curr-t x])
-               loc)))))
-   (parse-tree (list (first recognized-items)))
-   (rest recognized-items)))
+          (if (= x-t :separator)
+            (-> loc (z/append-child x))
+            (do (println "unrecognized pattern" [curr-t x])
+                loc)))))
+    (parse-tree (list (first recognized-items)))
+    (rest recognized-items))))
 
-(defn- generate-id [src]
-  (str/join
-   (loop [r () s src]
-     (if (empty? s)
-       r
-       (let [c (peek s)]
-         (recur (into r [(:nth c) (:token c)]) (pop s)))))))
+(defn generate-id [src]
+  ((str/join
+    (loop [r () s src]
+      (if (empty? s)
+        r
+        (let [c (peek s)]
+          (recur (into r [(:nth c) (:token c)]) (pop s))))))))
 
-(defn- update-leaves
+(defn update-leaves
   ([tree k f] (update-leaves tree [] k f))
   ([[parent & children] path k f]
    (let [path' (conj path parent)]
@@ -232,9 +233,9 @@
    (for [src txts
          :let [r (parse (items src))]]
      (do
-       ;; (clojure.pprint/pprint (z/root r))
+       ;; (clojure.pprint/pprint r)
        ;; (println "------------------------")
-       (t/is (= src (str/join (map :text (flatten (z/root r))))))))
+       (t/is (= src (str/join (map :text (flatten r)))))))
    (let [r (parse (items (seq "本法第三十九条和第四十条第一项、第二项")))]
      (t/is
       (= '({:token \法, :nth :this, :text "本法"}
@@ -245,4 +246,4 @@
              ({:token \项, :nth 1, :text "第一项", :id "法:this条40款1项1"}
               {:token :separator, :text "、"})
              ({:token \项, :nth 2, :text "第二项", :id "法:this条40款1项2"}))))
-         (update-leaves (z/root r) :id generate-id))))))
+         (update-leaves r :id generate-id))))))
