@@ -109,16 +109,17 @@
           b  (str "劳动者有下列情形之一的，用人单位不得依照"
                   "本法第四十条、第四十一条的规定解除劳动合同：")
           sb (seq b)]
-      (clojure.pprint/pprint (f sa))
       (tt/comprehend-tests
-       (t/is (= a (str/join (map :text (f sa)))))
-       (t/is (= b (str/join (map :text (f sb)))))))}
-  [cs]
+       (t/is (= a (str/join (map :text (f {} sa)))))
+       (t/is (= b (str/join (map :text (f {} sb)))))))}
+  [context cs]
   (let [flags [(partial = \本) #{\法 \条} (partial = \第) token/numchar-zh-set]
 
         check-flags
         (fn [[a b c d]]
-          (and ((flags 0) a) ((flags 1) b) ((flags 2) c) ((flags 3) d)))]
+          (and ((flags 0) a) ((flags 1) b) ((flags 2) c) ((flags 3) d)))
+
+        generate-id (partial token/generate-id context)]
     (->> (loop [cs cs ts []]
            (if (empty? cs)
              ts
@@ -126,9 +127,40 @@
                (let [[items rests] (token/read-items cs)]
                  (recur rests (into ts (flatten (token/update-leaves
                                                  (token/parse items)
-                                                 :id token/generate-id)))))
+                                                 :id generate-id)))))
                (recur (rest cs) (conj ts {:token :to-be-recognized
                                           :text (str (first cs))}))))))))
+
+(defn within-条
+  {:test
+   #(let [f within-条
+          a "第一条"
+          b " 第一款内容"
+          c "第二款内容"
+          d "（一）第一项内容"
+          e "第三款内容"
+          r (f [(str a b) c d e])]
+      (tt/comprehend-tests
+       (t/is (= [\条 \款 \款 \项 \款] (map :token r)))
+       (t/is (= [1 1 2 1 3] (map :nth r)))
+       (t/is (= [a (str/trim b) c d e] (map :text r)))))}
+  [[line & lines]]
+  (let [[head tail] (split-with (partial not= \space) line)
+        [i unit]    (token/nth-item head)
+        first-款    (str/join (rest tail))] ;use "rest" to skip \space
+    (assert (= unit (last head) \条))
+    (assert (seq first-款))
+    (loop [ts [{:token \条 :nth i :text (str/join head)}
+               {:token \款 :nth 1 :text first-款}]
+           [l & ls] lines
+           i-款 2]
+      (if (nil? l)
+        ts
+        (if (= (first l) \（)
+          (if-let [t (token/nth-项 l)]
+            (recur (conj ts t) ls i-款)
+            (recur (conj ts {:token :to-be-recognized :text l}) ls i-款))
+          (recur (conj ts {:token \款 :nth i-款 :text l}) ls (inc i-款)))))))
 
 (defn wrap-item-string-in-html
   {:test
@@ -163,40 +195,9 @@
                [:a {:href (str \# id)} text]
                text)))])
 
-(defn within-条
-  {:test
-   #(let [f within-条
-          a "第一条"
-          b " 第一款内容"
-          c "第二款内容"
-          d "（一）第一项内容"
-          e "第三款内容"
-          r (f [(str a b) c d e])]
-      (tt/comprehend-tests
-       (t/is (= [\条 \款 \款 \项 \款] (map :token r)))
-       (t/is (= [1 1 2 1 3] (map :nth r)))
-       (t/is (= [a (str/trim b) c d e] (map :text r)))))}
-  [[line & lines]]
-  (let [[head tail] (split-with (partial not= \space) line)
-        [i unit]    (token/nth-item head)
-        first-款    (str/join (rest tail))] ;use "rest" to skip \space
-    (assert (= unit (last head) \条))
-    (assert (seq first-款))
-    (loop [ts [{:token \条 :nth i :text (str/join head)}
-               {:token \款 :nth 1 :text first-款}]
-           [l & ls] lines
-           i-款 2]
-      (if (nil? l)
-        ts
-        (if (= (first l) \（)
-          (if-let [t (token/nth-项 l)]
-            (recur (conj ts t) ls i-款)
-            (recur (conj ts {:token :to-be-recognized :text l}) ls i-款))
-          (recur (conj ts {:token \款 :nth i-款 :text l}) ls (inc i-款)))))))
-
 (defn- wrap-条-in-html [[head & more-tokens]]
   (assert (= (:token head) \条))
-  [:div {:id (:text head)}
+  [:div {:id (str \条 (:nth head))}
    [:p [:b (:text head)]]
    (seq
     (loop [ps []
@@ -204,25 +205,25 @@
            i-款 0]
       (if (nil? t)
         ps
-        (condp = (:token t)
-          \款 (recur (conj ps [:p {:class "款"
-                                   :id (str "条" (:nth head) "款" (inc i-款))}
-                               (->> (within-款项 (seq (:text t)))
-                                    (partition-by #(= (:token %) :to-be-recognized))
-                                    (map #(if (= (:token (first %)) :to-be-recognized)
-                                            (str/join (map :text %))
-                                            (wrap-item-string-in-html %))))])
-                     ts
-                     (inc i-款))
-          \项 (recur (conj ps [:p {:class "项"
-                                   :id (str "条" (:nth head) "款" i-款 "项" (:nth t))}
-                               (->> (within-款项 (seq (:text t)))
-                                    (partition-by #(= (:token %) :to-be-recognized))
-                                    (map #(if (= (:token (first %)) :to-be-recognized)
-                                            (str/join (map :text %))
-                                            (wrap-item-string-in-html %))))])
-                     ts
-                     i-款)))))])
+        (let [content (->> (within-款项 {\条 (:nth head)} (seq (:text t)))
+                           (partition-by #(= (:token %) :to-be-recognized))
+                           (map #(if (= (:token (first %)) :to-be-recognized)
+                                   (str/join (map :text %))
+                                   (wrap-item-string-in-html %))))]
+          (condp = (:token t)
+            \款 (recur (conj ps [:p {:class "款"
+                                     :id (str "条" (:nth head)
+                                              "款" (inc i-款))}
+                                 content])
+                       ts
+                       (inc i-款))
+            \项 (recur (conj ps [:p {:class "项"
+                                     :id (str "条" (:nth head)
+                                              "款" i-款
+                                              "项" (:nth t))}
+                                 content])
+                       ts
+                       i-款))))))])
 
 (defn- wrap-in-html [tokenized-lines]
   (html

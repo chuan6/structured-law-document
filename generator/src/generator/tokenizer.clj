@@ -209,13 +209,32 @@
     (parse-tree (list (first recognized-items)))
     (rest recognized-items))))
 
-(defn generate-id [src]
-  ((str/join
-    (loop [r () s src]
-      (if (empty? s)
-        r
-        (let [c (peek s)]
-          (recur (into r [(:nth c) (:token c)]) (pop s))))))))
+(defn generate-id
+  {:test
+   #(let [f generate-id]
+      (tt/comprehend-tests
+       (t/is (= "" (f {} [])))
+       (t/is (= "条1" (f {} [{:token \法 :nth :this} {:token \条 :nth 1}])))
+       (t/is (= "条1" (f {\条 1} [{:token \条 :nth :this}])))
+       (t/is (= "条1款2项3" (f {} [{:token \法 :nth :this}
+                                   {:token \条 :nth 1}
+                                   {:token \款 :nth 2}
+                                   {:token \项 :nth 3}])))))}
+  [context src]
+  (str/join
+   (loop [r () s src]
+     (cond (empty? s)
+           r
+
+           (= (count s) 1)
+           (let [c-t (:token (peek s))]
+             (assert (= (:nth (peek s)) :this))
+             (cond-> r
+               (not= c-t \法) (into [(context c-t) c-t])))
+
+           :else
+           (let [c (peek s)]
+             (recur (into r [(:nth c) (:token c)]) (pop s)))))))
 
 (defn update-leaves
   ([tree k f] (update-leaves tree [] k f))
@@ -239,11 +258,11 @@
    (let [r (parse (items (seq "本法第三十九条和第四十条第一项、第二项")))]
      (t/is
       (= '({:token \法, :nth :this, :text "本法"}
-           ({:token \条, :nth 39, :text "第三十九条", :id "法:this条39"}
+           ({:token \条, :nth 39, :text "第三十九条", :id "条39"}
             {:token :separator, :text "和"})
            ({:token \条, :nth 40, :text "第四十条"}
             ({:token \款, :nth 1}
-             ({:token \项, :nth 1, :text "第一项", :id "法:this条40款1项1"}
+             ({:token \项, :nth 1, :text "第一项", :id "条40款1项1"}
               {:token :separator, :text "、"})
-             ({:token \项, :nth 2, :text "第二项", :id "法:this条40款1项2"}))))
-         (update-leaves r :id generate-id))))))
+             ({:token \项, :nth 2, :text "第二项", :id "条40款1项2"}))))
+         (update-leaves r :id (partial generate-id {})))))))
