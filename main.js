@@ -18,63 +18,61 @@ function horizontalExtra(computed) {
     return x;
 }
 
-function multiCols (container, h, es, ws) {
+function multiCols (container) {
     var i;
 
-    container.style.height = px (h ());
     container.style.columnWidth =
         container.style.MozColumnWidth =
-        container.style.WebkitColumnWidth = px (300);
+        container.style.WebkitColumnWidth = px(300);
     container.style.columnGap =
         container.style.MozColumnGap =
         container.style.WebkitColumnGap = 0;
-
-    //revert width of each entry back to min-width
-    //defined in CSS
-    for (i = 0; i < es.length; i++) {
-        es[i].style.width = ws;
-    }
 }
 
-function singleCol (container, es, computed) {
+function singleCol (container) {
     var i, w;
 
-    container.style.height = "auto";
     container.style.columnWidth =
         container.style.MozColumnWidth =
         container.style.WebkitColumnWidth = "normal";
     container.style.columnGap =
         container.style.MozColumnGap =
         container.style.WebkitColumnGap = "normal";
-
-    //widden width of each entry to better utilize
-    //available width
-    w = window.innerWidth - horizontalExtra(computed) - 32;
-    for (i = 0; i < es.length; i++) {
-        es[i].style.width = px(w);
-    }
 }
 
-function dynamicLayout(container, h, es) {
-    var computed = window.getComputedStyle(es[0]);
-    var minEntryWidth =
-        parseFloat(computed.minWidth) + horizontalExtra(computed);
+function dynamicLayoutFn(container, es) {
+    var isSingleCol;
+    var h = getAvailHeightFn(32);
 
-    if (window.innerWidth >= minEntryWidth * 2) {
-        multiCols (container, h, es, computed.minWidth);
-    } else {
-        singleCol (container, es, computed);
-    }
+    return function () {
+        var computed, minEntryWidth, shouldBeSingleCol;
+
+        computed = window.getComputedStyle(es[0]);
+        minEntryWidth = parseFloat(computed.minWidth) + horizontalExtra(computed);
+        shouldBeSingleCol = (window.innerWidth < minEntryWidth * 2);
+        if (shouldBeSingleCol !== isSingleCol) {
+            if (shouldBeSingleCol) {
+                container.style.height = "auto";
+                singleCol(container);
+            } else {
+                container.style.height = px(h());
+                multiCols(container);
+            }
+            isSingleCol = shouldBeSingleCol;
+        } else if (!shouldBeSingleCol) {
+            container.style.height = px(h());
+        }
+    };
 }
 
 window.addEventListener("load", function () {
     var container = document.getElementById("entries-container");
     var entries = document.getElementsByClassName ("entry");
-    var h = getAvailHeightFn(32);
+    var layout = dynamicLayoutFn(container, entries);
 
-    dynamicLayout(container, h, entries);
+    layout();
 
     window.onresize = function () {
-        dynamicLayout(container, h, entries);
+        layout();
     };
 });
