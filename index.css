@@ -10,16 +10,10 @@ body {
 #entries-container {
   margin: 0 auto;
   background-color: inherit;
-  column-width: 300px;
-  -webkit-column-width: 300px;
-  -moz-column-width: 300px;
-  column-gap: 0;
-  -webkit-column-gap: 0;
-  -moz-column-gap: 0;
 }
 
 .entry, .title {
-  width: 240px;
+  width: 256px;
   background-color: inherit;
 }
 
