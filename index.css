@@ -1,0 +1,40 @@
+body
+:lang(en) {font-family: sans-serif;}
+
+body {
+  margin: 0 auto;
+  background-color: white;
+  
+}
+
+#entries-container {
+  margin: 0 auto;
+  background-color: inherit;
+  height: 768px;
+  column-width: 300px;
+  -webkit-column-width: 300px;
+  -moz-column-width: 300px;
+  column-gap: 0;
+  -webkit-column-gap: 0;
+  -moz-column-gap: 0;
+}
+
+.entry, .title {
+  width: 240px;
+  background-color: inherit;
+}
+
+.entry {
+  padding: 0.5em 1.62em 0.5em 1em;
+  margin: 0.5em 0.31em 0.5em 0.31em;
+  border-left: 2px solid red;
+  line-height: 1.62;
+}
+
+.entry:target {
+  background-color: #FFFFD8;
+}
+
+.title {
+  font-weight: bold;
+}

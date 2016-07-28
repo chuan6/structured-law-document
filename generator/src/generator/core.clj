@@ -197,8 +197,9 @@
 
 (defn- wrap-条-in-html [[head & more-tokens]]
   (assert (= (:token head) \条))
-  [:div {:id (str \条 (:nth head))}
-   [:p [:b (:text head)]]
+  [:div {:class "entry" :id (str \条 (:nth head))}
+   [:div {:class "title"}
+    [:b {:class "title"} (:text head)]]
    (seq
     (loop [ps []
            [t & ts] more-tokens
@@ -232,30 +233,34 @@
      [:meta {:charset "utf-8"}]
      [:meta {:name "viewport"
              :content "width=device-width, initial-scale=1"}]
-     [:title (:text (first tokenized-lines))]]
+     [:title (:text (first tokenized-lines))]
+     [:link {:rel "stylesheet" :href "index.css"}]
+     ;;[:script {:src "main.js"}]
+     ]
     [:body
-     (for [{t :token :as tl} tokenized-lines]
-       (case t
-         :table-of-contents
-         (let [[head & item-list] (:list tl)]
-           [:nav [:h2 head]
-            [:ul (for [item item-list]
-                   [:li [:a {:href (str "#" (space-filled item))}
-                         item]])]])
+     [:div {:id "entries-container"}
+      (for [{t :token :as tl} tokenized-lines]
+        (case t
+          :table-of-contents
+          (let [[head & item-list] (:list tl)]
+            [:nav [:h2 head]
+             [:ul (for [item item-list]
+                    [:li [:a {:href (str "#" (space-filled item))}
+                          item]])]])
 
-         \章
-         (let [txt (:text tl)]
-           [:h2 {:id (space-filled txt)} txt])
+          \章
+          (let [txt (:text tl)]
+            [:h2 {:id (space-filled txt)} txt])
 
-         \节
-         (let [txt (:text tl)]
-           [:h2 {:id (space-filled txt)} txt])
+          \节
+          (let [txt (:text tl)]
+            [:h2 {:id (space-filled txt)} txt])
 
-         \条
-         (wrap-条-in-html (within-条 (:text tl)))
+          \条
+          (wrap-条-in-html (within-条 (:text tl)))
 
-         :to-be-recognized
-         (default-fn (:text tl))))])))
+          :to-be-recognized
+          (default-fn (:text tl))))]])))
 
 (defn -main
   "I don't do a whole lot ... yet."
