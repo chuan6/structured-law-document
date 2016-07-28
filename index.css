@@ -10,7 +10,6 @@ body {
 #entries-container {
   margin: 0 auto;
   background-color: inherit;
-  height: 768px;
   column-width: 300px;
   -webkit-column-width: 300px;
   -moz-column-width: 300px;
@@ -31,7 +30,7 @@ body {
   line-height: 1.62;
 }
 
-.entry:target {
+.章:target, .节:target, .entry:target, .款:target, .项:target {
   background-color: #FFFFD8;
 }
 

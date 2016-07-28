@@ -235,8 +235,7 @@
              :content "width=device-width, initial-scale=1"}]
      [:title (:text (first tokenized-lines))]
      [:link {:rel "stylesheet" :href "index.css"}]
-     ;;[:script {:src "main.js"}]
-     ]
+     [:script {:src "main.js"}]]
     [:body
      [:div {:id "entries-container"}
       (for [{t :token :as tl} tokenized-lines]
@@ -250,11 +249,11 @@
 
           \章
           (let [txt (:text tl)]
-            [:h2 {:id (space-filled txt)} txt])
+            [:h2 {:id (space-filled txt) :class "章"} txt])
 
           \节
           (let [txt (:text tl)]
-            [:h2 {:id (space-filled txt)} txt])
+            [:h3 {:id (space-filled txt) :class "节"} txt])
 
           \条
           (wrap-条-in-html (within-条 (:text tl)))
