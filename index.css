@@ -13,7 +13,7 @@ body {
 }
 
 .entry, .title {
-  width: 256px;
+  min-width: 256px;
   background-color: inherit;
 }
 
