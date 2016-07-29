@@ -12,20 +12,29 @@ body {
   background-color: inherit;
 }
 
-.entry, .title {
+.entry, .title, nav {
   min-width: 256px;
   background-color: inherit;
 }
 
 .entry {
   padding: 0.5em 1.62em 0.5em 1em;
-  margin: 0.5em 0.31em 0.5em 0.31em;
-  border-left: 2px solid red;
+  margin: 0.5em 8px 0.5em 8px;
+  border-left: 1px solid red;
   line-height: 1.62;
+}
+
+nav, .章, .节 {
+  margin-left: 8px;
+  margin-right: 8px;
 }
 
 .章:target, .节:target, .entry:target, .款:target, .项:target {
   background-color: #FFFFD8;
+}
+
+nav ul {
+  line-height: 1.62;
 }
 
 .title {
