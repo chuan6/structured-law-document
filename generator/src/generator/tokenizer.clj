@@ -12,32 +12,33 @@
 
 (def numchar-zh-set (set (concat (keys cdigit-map) (keys nthten-map))))
 
-(defn chinese-number
+(defn 数字
   {:test
-   #(let [f chinese-number]
+   #(let [f 数字]
       (tt/comprehend-tests
-       (t/is (= 0   (f "零")))
-       (t/is (= 1   (f "一")))
-       (t/is (= 10  (f "十")))
-       (t/is (= 12  (f "十二")))
-       (t/is (= 20  (f "二十行")))
-       (t/is (= 34  (f "三十四")))
-       (t/is (= 567 (f "五百六十七")))
-       (t/is (= 809 (f "八百零九回")))))}
-  [s]
-  (let [c (first s)]
-    (cond (empty? s) 0
-          (= c \十)  (+ 10 (chinese-number (rest s)))
-          (= c \零)  (chinese-number (rest s))
+       (t/is (nil?          (f "")))
+       (t/is (= [0 []]      (f "零")))
+       (t/is (= [1 []]      (f "一")))
+       (t/is (= [10 []]     (f "十")))
+       (t/is (= [12 []]     (f "十二")))
+       (t/is (= [20 [\行]]  (f "二十行")))
+       (t/is (= [34 []]     (f "三十四")))
+       (t/is (= [567 []]    (f "五百六十七")))
+       (t/is (= [809 [\回]] (f "八百零九回")))))}
+  ([s] (when (seq s) (数字 s 0)))
+  ([s carry]
+   (let [c (first s)]
+     (cond (= c \十)  (recur (rest s) (+ 10 carry))
+           (= c \零)  (recur (rest s) carry)
 
-          (contains? cdigit-map c)
-          (let [d (cdigit-map c)
-                n (second s)]
-            (if (contains? nthten-map n)
-              (+ (* d (nthten-map n)) (chinese-number (nthrest s 2)))
-              d))
+           (contains? cdigit-map c)
+           (let [d (cdigit-map c)
+                 n (second s)]
+             (if (contains? nthten-map n)
+               (recur (nthrest s 2) (+ (* d (nthten-map n)) carry))
+               [(+ d carry) (rest s)]))
 
-          :else 0)))
+           :else [carry s]))))
 
 (defn nth-item
   {:test
@@ -48,9 +49,8 @@
   [line]
   (let [[c & cs] line]
     (when (= c \第)
-      (let [[head tail] (split-with numchar-zh-set cs)]
-        (when (seq head)
-          [(chinese-number head) (first tail)])))))
+      (let [[i unprocessed] (数字 cs)]
+        [i (first unprocessed)]))))
 
 (defn nth-章节
   {:test
@@ -106,7 +106,7 @@
   (assert (= (first line) \（))
   (let [[i-zh tail] (split-with (partial not= \）) (rest line))]
     (when (and (seq tail) (every? numchar-zh-set i-zh))
-      (when-let [i (chinese-number i-zh)]
+      (when-let [i (first (数字 i-zh))]
         {:token \项 :nth i :head (str/join (-> [\（] (into i-zh) (conj \）)))
          :text line}))))
 
@@ -266,3 +266,63 @@
               {:token :separator, :text "、"})
              ({:token \项, :nth 2, :text "第二项", :id "条40款1项2"}))))
          (update-leaves r :id (partial generate-id {})))))))
+
+(defn- read-chars [from to cs]
+  (when-let [[begin body] (from cs)]
+    (when-let [[body end] (to body)]
+      [begin body end])))
+
+(defn from-第
+  {:test
+   #(let [f from-第]
+      (tt/comprehend-tests
+       (t/is (nil? (from-第 [])))
+       (t/is (nil? (from-第 [\newline \第])))
+       (t/is (= [[\第] [\a \b \c]] (from-第 [\第 \a \b \c])))))}
+  [[c & cs]]
+  (when (= c \第) [[c] cs]))
+
+(defn to-条
+  {:test
+   #(let [f to-条]
+      (tt/comprehend-tests
+       (t/is (nil? (to-条 [])))
+       (t/is (nil? (to-条 [\a \b])))
+       (t/is (= [[\a \b] [\条]] (to-条 [\a \b \条])))))}
+  [cs]
+  (loop [body []
+         [end & tail] cs]
+    (if (= end \条)
+      [body [end]]
+      (when tail
+        (recur (conj body end) tail)))))
+
+(defn into-str
+  {:test
+   #(let [f into-str]
+      (tt/comprehend-tests
+       (t/is (= ""     (into-str)))
+       (t/is (= "abc"  (into-str [\a \b \c])))
+       (t/is (= "abcd" (into-str [\a] [\b] [\c \d])))))}
+  ([] "")
+  ([s] (str/join s))
+  ([s & ss] (str/join (reduce into (vec s) ss))))
+
+(defn 条头
+  {:test
+   #(let [f 条头]
+      (tt/comprehend-tests
+       (t/is (not (f "第三十九条")))
+       (t/is (not (f "\n第三十九")))
+       (t/is (not (f "\n第三十九 条")))
+       (t/is (not (f "\n三十九条")))
+       (t/is (not (f "\n第39条")))
+       (t/is (= {:token :条头 :nth 39 :text "第三十九条"}
+                (f "\n第三十九条")))))}
+  [[c & cs]]
+  (and (= c \newline)
+       (when-let [[begin body end] (read-chars from-第 to-条 cs)]
+         (let [[i tail] (数字 body)]
+           (and (empty? tail)
+                {:token :条头 :nth i
+                 :text (into-str begin body end)})))))

@@ -141,26 +141,24 @@
           e "第三款内容"
           r (f [(str a b) c d e])]
       (tt/comprehend-tests
-       (t/is (= [\条 \款 \款 \项 \款] (map :token r)))
+       (t/is (= [:条头 \款 \款 \项 \款] (map :token r)))
        (t/is (= [1 1 2 1 3] (map :nth r)))
        (t/is (= [a (str/trim b) c d e] (map :text r)))))}
   [[line & lines]]
-  (let [[head tail] (split-with (partial not= \space) line)
-        [i unit]    (token/nth-item head)
-        first-款    (str/join (rest tail))] ;use "rest" to skip \space
-    (assert (= unit (last head) \条))
-    (assert (seq first-款))
-    (loop [ts [{:token \条 :nth i :text (str/join head)}
-               {:token \款 :nth 1 :text first-款}]
-           [l & ls] lines
-           i-款 2]
-      (if (nil? l)
-        ts
-        (if (= (first l) \（)
-          (if-let [t (token/nth-项 l)]
-            (recur (conj ts t) ls i-款)
-            (recur (conj ts {:token :to-be-recognized :text l}) ls i-款))
-          (recur (conj ts {:token \款 :nth i-款 :text l}) ls (inc i-款)))))))
+  (when-let [head (token/条头 (cons \newline line))]
+    (let [tail     (without-prefix line (:text head))
+          first-款 (str/join (rest tail))] ;use "rest" to skip \space
+      (assert (seq first-款))
+      (loop [ts [head {:token \款 :nth 1 :text first-款}]
+             [l & ls] lines
+             i-款 2]
+        (if (nil? l)
+          ts
+          (if (= (first l) \（)
+            (if-let [t (token/nth-项 l)]
+              (recur (conj ts t) ls i-款)
+              (recur (conj ts {:token :to-be-recognized :text l}) ls i-款))
+            (recur (conj ts {:token \款 :nth i-款 :text l}) ls (inc i-款))))))))
 
 (defn wrap-item-string-in-html
   {:test
@@ -196,7 +194,7 @@
                text)))])
 
 (defn- wrap-条-in-html [[head & more-tokens]]
-  (assert (= (:token head) \条))
+  (assert (= (:token head) :条头))
   [:div {:class "entry" :id (str \条 (:nth head))}
    [:div {:class "title"}
     [:b {:class "title"} (:text head)]]
