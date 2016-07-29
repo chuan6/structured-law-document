@@ -1,0 +1,6 @@
+general:
+  build_dir: generator
+
+test:
+  override:
+    - lein test generator.core generator.tokenizer
