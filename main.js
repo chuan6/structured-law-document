@@ -97,8 +97,12 @@ var backButton = function () {
 
     return {
         "element": bb,
-        "update": function (href) {
-            bb.href = href;
+        "update": function (id) {
+            if (id) {
+                bb.href = "#" + id;
+            } else {
+                bb.removeAttribute("href");
+            }
         }
     };
 }();
@@ -113,7 +117,7 @@ window.addEventListener("hashchange", function (e) {
     var hash = window.location.hash;
     if (hash === "#" + peek(jumpstack)) {
         jumpstack.pop();
-        backButton.update("#" + peek(jumpstack));
+        backButton.update(peek(jumpstack));
     }
 });
 
@@ -126,6 +130,6 @@ window.addEventListener("click", function (e) {
     id = getEnclosingID(e.target);
     if (id !== "back-button") {
         jumpstack.push(id);
-        backButton.update("#" + id);
+        backButton.update(id);
     }
 });

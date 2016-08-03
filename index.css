@@ -52,7 +52,7 @@ nav, .章, .节 {
   margin-right: 8px;
 }
 
-.章:target, .节:target, .entry:target, .款:target, .项:target {
+#outline:target, .章:target, .节:target, .entry:target, .款:target, .项:target {
   background-color: #FFFFD8;
 }
 

@@ -242,7 +242,8 @@
         (case t
           :table-of-contents
           (let [[head & item-list] (:list tl)]
-            [:nav [:h2 head]
+            [:nav {:id "outline"}
+             [:h2 head]
              [:ul (for [item item-list]
                     [:li [:a {:href (str "#" (space-filled item))}
                           item]])]])
