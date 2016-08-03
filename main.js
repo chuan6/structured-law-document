@@ -76,3 +76,42 @@ window.addEventListener("load", function () {
         layout();
     };
 });
+
+function getEnclosingID(elmt) {
+    return elmt.id? elmt.id : getEnclosingID(elmt.parentNode);
+}
+
+var jumpStack = function () {
+    var stack = [];
+
+    return {
+        "into": function (src) {
+            stack.push(getEnclosingID(src));
+            console.log(stack);
+        },
+        "back": function () {
+            var x = stack.pop();
+
+            if (x) {
+                document.getElementById(x).scrollIntoView();
+            }
+        }
+    };
+}();
+
+window.addEventListener("click", function (e) {
+    if (e.target.tagName !== "A")
+        return;
+
+    jumpStack.into(e.target);
+});
+
+window.addEventListener("load", function () {
+    var button = document.createElement("button");
+    var backs = [];
+
+    button.id = "back-button";
+    button.textContent = "返回";
+    button.addEventListener("click", jumpStack.back);
+    document.body.appendChild(button);
+});
