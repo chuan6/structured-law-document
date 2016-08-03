@@ -76,3 +76,67 @@ window.addEventListener("load", function () {
         layout();
     };
 });
+
+function getEnclosingID(elmt) {
+    return elmt.id? elmt.id : getEnclosingID(elmt.parentNode);
+}
+
+function peek(arr) {
+    if (arr.length > 0)
+        return arr[arr.length - 1];
+}
+
+var backButton = function () {
+    var bb = document.createElement("button");
+    var stack = [];
+    var idstr = function (s) { return "#" + s; };
+
+    bb.id = "back-button";
+    bb.textContent = "返回";
+
+    return {
+        "element": bb,
+        "into": function (src) {
+            var t = bb.textContent;
+            var a = document.createElement("A");
+
+            stack.push(getEnclosingID(src));
+            console.log(stack);
+
+            a.href = idstr(peek(stack));
+            a.textContent = t;
+            if (t) {
+                bb.textContent = "";
+                bb.appendChild(a);
+            } else {
+                bb.replaceChild(bb.childNode, a);
+            }
+        },
+        "back": function () {
+            var x = stack.pop();
+            var a = bb.children[0];
+
+            console.log(stack);
+            if (x) {
+                if (a.tagName === "A") {
+                    a.href = idstr(x);
+                }
+            }
+        }
+    };
+}();
+
+window.addEventListener("load", function () {
+    backButton.element.addEventListener("click", function (e) {
+        backButton.back();
+        e.stopPropagation();
+    });
+    document.body.appendChild(backButton.element);
+});
+
+window.addEventListener("click", function (e) {
+    if (e.target.tagName !== "A")
+        return;
+
+    backButton.into(e.target);
+});
