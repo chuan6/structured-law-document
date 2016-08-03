@@ -16,14 +16,19 @@ body {
   position: fixed;
   border: none;
   outline: none;
-  background-color: lightblue;
+  background-color: red;
+  color: white;
   border-radius: 1.62em;
-  font-size: 100%;
   height: 3.24em;
   width: 3.24em;
-  box-shadow: 0 0 0.5em grey;
+  box-shadow: 0 0 1em grey;
   right: 1em;
   bottom: 1em;
+  font-size: 100%;
+  font-weight: bold;
+  line-height: 3.24em;
+  text-align: center;
+  text-decoration: none;
 }
 
 #back-button::-moz-focus-inner {

@@ -87,56 +87,45 @@ function peek(arr) {
 }
 
 var backButton = function () {
-    var bb = document.createElement("button");
+    var bb = document.createElement("a");
+    var text = "返回";
     var stack = [];
     var idstr = function (s) { return "#" + s; };
 
     bb.id = "back-button";
-    bb.textContent = "返回";
+    bb.textContent = text;
 
     return {
         "element": bb,
-        "into": function (src) {
-            var t = bb.textContent;
-            var a = document.createElement("A");
-
-            stack.push(getEnclosingID(src));
-            console.log(stack);
-
-            a.href = idstr(peek(stack));
-            a.textContent = t;
-            if (t) {
-                bb.textContent = "";
-                bb.appendChild(a);
-            } else {
-                bb.replaceChild(bb.childNode, a);
-            }
-        },
-        "back": function () {
-            var x = stack.pop();
-            var a = bb.children[0];
-
-            console.log(stack);
-            if (x) {
-                if (a.tagName === "A") {
-                    a.href = idstr(x);
-                }
-            }
+        "update": function (href) {
+            bb.href = href;
         }
     };
 }();
 
+var jumpstack = [];
+
 window.addEventListener("load", function () {
-    backButton.element.addEventListener("click", function (e) {
-        backButton.back();
-        e.stopPropagation();
-    });
     document.body.appendChild(backButton.element);
 });
 
+window.addEventListener("hashchange", function (e) {
+    var hash = window.location.hash;
+    if (hash === "#" + peek(jumpstack)) {
+        jumpstack.pop();
+        backButton.update("#" + peek(jumpstack));
+    }
+});
+
 window.addEventListener("click", function (e) {
+    var id;
+
     if (e.target.tagName !== "A")
         return;
 
-    backButton.into(e.target);
+    id = getEnclosingID(e.target);
+    if (id !== "back-button") {
+        jumpstack.push(id);
+        backButton.update("#" + id);
+    }
 });
