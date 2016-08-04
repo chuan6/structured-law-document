@@ -47,6 +47,17 @@ body {
   line-height: 1.62;
 }
 
+.entry a {
+  background-color: Azure;
+  border: 1px solid silver;
+  border-radius: 0.31em;
+  text-decoration: none;
+  color: inherit;
+  padding: 0 0.1em;
+  margin: 0 0.1em;
+  box-shadow: 0 0 0.1em silver;
+}
+
 nav, .章, .节 {
   margin-left: 8px;
   margin-right: 8px;
