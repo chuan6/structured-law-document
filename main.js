@@ -125,7 +125,7 @@ window.addEventListener("load", function () {
 });
 
 window.addEventListener("hashchange", function (e) {
-    var hash = window.location.hash;
+    var hash = decodeURI(window.location.hash);
     if (hash === "#" + jumps.peek()) {
         jumps.pop();
     }
