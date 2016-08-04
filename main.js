@@ -81,19 +81,11 @@ function getEnclosingID(elmt) {
     return elmt.id? elmt.id : getEnclosingID(elmt.parentNode);
 }
 
-function peek(arr) {
-    if (arr.length > 0)
-        return arr[arr.length - 1];
-}
-
 var backButton = function () {
     var bb = document.createElement("a");
-    var text = "返回";
-    var stack = [];
-    var idstr = function (s) { return "#" + s; };
 
     bb.id = "back-button";
-    bb.textContent = text;
+    bb.textContent = "返回";
 
     return {
         "element": bb,
@@ -107,7 +99,26 @@ var backButton = function () {
     };
 }();
 
-var jumpstack = [];
+var jumps = function (bbutton) {
+    var stack = ["outline"];
+
+    return {
+        "push": function (id) {
+            stack.push(id);
+            bbutton.update(id);
+        },
+        "pop": function () {
+            if (stack.length > 1) {
+                stack.pop();
+            }
+            bbutton.update(stack[stack.length - 1]);
+        },
+        "peek": function () {
+            if (stack.length > 0)
+                return stack[stack.length - 1];
+        }
+    };
+}(backButton);
 
 window.addEventListener("load", function () {
     document.body.appendChild(backButton.element);
@@ -115,9 +126,8 @@ window.addEventListener("load", function () {
 
 window.addEventListener("hashchange", function (e) {
     var hash = window.location.hash;
-    if (hash === "#" + peek(jumpstack)) {
-        jumpstack.pop();
-        backButton.update(peek(jumpstack));
+    if (hash === "#" + jumps.peek()) {
+        jumps.pop();
     }
 });
 
@@ -129,7 +139,6 @@ window.addEventListener("click", function (e) {
 
     id = getEnclosingID(e.target);
     if (id !== "back-button") {
-        jumpstack.push(id);
-        backButton.update(id);
+        jumps.push(id);
     }
 });
