@@ -40,10 +40,13 @@ body {
   background-color: inherit;
 }
 
+.title, .款, .项 {
+  padding: 0 1.62em 0 1em;
+}
+
 .entry {
-  padding: 0.5em 1.62em 0.5em 1em;
   margin: 0.5em 8px 0.5em 8px;
-  border-left: 1px solid red;
+  border-left: 2px solid red;
   line-height: 1.62;
 }
 
@@ -56,6 +59,12 @@ body {
   padding: 0 0.1em;
   margin: 0 0.1em;
   box-shadow: 0 0 0.1em silver;
+}
+
+.entry p {
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  margin: 0;
 }
 
 nav, .章, .节 {

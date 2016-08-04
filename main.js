@@ -104,14 +104,21 @@ var jumps = function (bbutton) {
 
     return {
         "push": function (id) {
-            stack.push(id);
-            bbutton.update(id);
+            console.log("before push:", stack);
+            if (id !== stack[stack.length - 1]) {
+                // only push new id that is different from the top
+                stack.push(id);
+                bbutton.update(id);
+            }
+            console.log("after push:", stack);
         },
         "pop": function () {
+            console.log("before pop:", stack);
             if (stack.length > 1) {
                 stack.pop();
             }
             bbutton.update(stack[stack.length - 1]);
+            console.log("after pop:", stack);
         },
         "peek": function () {
             if (stack.length > 0)

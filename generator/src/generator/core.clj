@@ -199,7 +199,7 @@
   (assert (= (:token head) \条))
   [:div {:class "entry" :id (str \条 (:nth head))}
    [:div {:class "title"}
-    [:b {:class "title"} (:text head)]]
+    [:b (:text head)]]
    (seq
     (loop [ps []
            [t & ts] more-tokens
