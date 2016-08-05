@@ -81,62 +81,71 @@ function getEnclosingID(elmt) {
     return elmt.id? elmt.id : getEnclosingID(elmt.parentNode);
 }
 
-function peek(arr) {
-    if (arr.length > 0)
-        return arr[arr.length - 1];
+function updateHrefToID(a, id) {
+    if (id) {
+        a.href = "#" + id;
+    } else {
+        a.removeAttribute("href");
+    }
 }
 
-var backButton = function () {
-    var bb = document.createElement("button");
-    var stack = [];
-    var idstr = function (s) { return "#" + s; };
+var backButton = function (init) {
+    var bb;
+    var stack, top;
 
+    bb = document.createElement("a");
     bb.id = "back-button";
     bb.textContent = "返回";
+    updateHrefToID(bb, init);
+
+    stack = [init];
+
+    top = function () {
+        return stack[stack.length - 1];
+    };
 
     return {
         "element": bb,
-        "into": function (src) {
-            var t = bb.textContent;
-            var a = document.createElement("A");
-
-            stack.push(getEnclosingID(src));
-            console.log(stack);
-
-            a.href = idstr(peek(stack));
-            a.textContent = t;
-            if (t) {
-                bb.textContent = "";
-                bb.appendChild(a);
-            } else {
-                bb.replaceChild(bb.childNode, a);
+        "push": function (id) {
+            console.log("before push:", stack);
+            if (id !== top()) {
+                // only push new id that is different from the top
+                stack.push(id);
+                updateHrefToID(bb, id);
             }
+            console.log("after push:", stack);
         },
-        "back": function () {
-            var x = stack.pop();
-            var a = bb.children[0];
-
-            console.log(stack);
-            if (x) {
-                if (a.tagName === "A") {
-                    a.href = idstr(x);
-                }
+        "pop": function () {
+            console.log("before pop:", stack);
+            if (stack.length > 1) {
+                stack.pop();
             }
-        }
+            updateHrefToID(bb, top());
+            console.log("after pop:", stack);
+        },
+        "peek": top
     };
-}();
+}("outline");
 
 window.addEventListener("load", function () {
-    backButton.element.addEventListener("click", function (e) {
-        backButton.back();
-        e.stopPropagation();
-    });
     document.body.appendChild(backButton.element);
 });
 
+window.addEventListener("hashchange", function (e) {
+    var hash = decodeURI(window.location.hash);
+    if (hash === "#" + backButton.peek()) {
+        backButton.pop();
+    }
+});
+
 window.addEventListener("click", function (e) {
+    var id;
+
     if (e.target.tagName !== "A")
         return;
 
-    backButton.into(e.target);
+    id = getEnclosingID(e.target);
+    if (id !== "back-button") {
+        backButton.push(id);
+    }
 });

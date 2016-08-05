@@ -199,7 +199,7 @@
   (assert (= (:token head) \条))
   [:div {:class "entry" :id (str \条 (:nth head))}
    [:div {:class "title"}
-    [:b {:class "title"} (:text head)]]
+    [:b (:text head)]]
    (seq
     (loop [ps []
            [t & ts] more-tokens
@@ -242,7 +242,8 @@
         (case t
           :table-of-contents
           (let [[head & item-list] (:list tl)]
-            [:nav [:h2 head]
+            [:nav {:id "outline"}
+             [:h2 head]
              [:ul (for [item item-list]
                     [:li [:a {:href (str "#" (space-filled item))}
                           item]])]])
