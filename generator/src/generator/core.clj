@@ -263,7 +263,7 @@
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
-  (with-open [r (io/reader "../original_text.txt")]
+  (with-open [r (io/reader (io/file (io/resource "劳动合同法.txt")))]
     (->> (line-seq r)
          (remove str/blank?)
          (map (comp use-chinese-paren space-clapsed str/trim))
