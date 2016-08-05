@@ -12,16 +12,59 @@ body {
   background-color: inherit;
 }
 
+#back-button {
+  position: fixed;
+  border: none;
+  outline: none;
+  background-color: red;
+  color: white;
+  border-radius: 1.62em;
+  height: 3.24em;
+  width: 3.24em;
+  box-shadow: 0 0 1em grey;
+  right: 1em;
+  bottom: 1em;
+  font-size: 100%;
+  font-weight: bold;
+  line-height: 3.24em;
+  text-align: center;
+  text-decoration: none;
+}
+
+#back-button::-moz-focus-inner {
+  border: none;
+}
+
 .entry, .title, nav {
   min-width: 256px;
   background-color: inherit;
 }
 
+.title, .款, .项 {
+  padding: 0 1.62em 0 1em;
+}
+
 .entry {
-  padding: 0.5em 1.62em 0.5em 1em;
   margin: 0.5em 8px 0.5em 8px;
-  border-left: 1px solid red;
+  border-left: 2px solid red;
   line-height: 1.62;
+}
+
+.entry a {
+  background-color: Azure;
+  border: 1px solid silver;
+  border-radius: 0.31em;
+  text-decoration: none;
+  color: inherit;
+  padding: 0 0.1em;
+  margin: 0 0.1em;
+  box-shadow: 0 0 0.1em silver;
+}
+
+.entry p {
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  margin: 0;
 }
 
 nav, .章, .节 {
@@ -29,7 +72,7 @@ nav, .章, .节 {
   margin-right: 8px;
 }
 
-.章:target, .节:target, .entry:target, .款:target, .项:target {
+#outline:target, .章:target, .节:target, .entry:target, .款:target, .项:target {
   background-color: #FFFFD8;
 }
 
