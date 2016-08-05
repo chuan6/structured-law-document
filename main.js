@@ -81,34 +81,37 @@ function getEnclosingID(elmt) {
     return elmt.id? elmt.id : getEnclosingID(elmt.parentNode);
 }
 
-var backButton = function () {
-    var bb = document.createElement("a");
+function updateHrefToID(a, id) {
+    if (id) {
+        a.href = "#" + id;
+    } else {
+        a.removeAttribute("href");
+    }
+}
 
+var backButton = function (init) {
+    var bb;
+    var stack, top;
+
+    bb = document.createElement("a");
     bb.id = "back-button";
     bb.textContent = "返回";
+    updateHrefToID(bb, init);
+
+    stack = [init];
+
+    top = function () {
+        return stack[stack.length - 1];
+    };
 
     return {
         "element": bb,
-        "update": function (id) {
-            if (id) {
-                bb.href = "#" + id;
-            } else {
-                bb.removeAttribute("href");
-            }
-        }
-    };
-}();
-
-var jumps = function (bbutton) {
-    var stack = ["outline"];
-
-    return {
         "push": function (id) {
             console.log("before push:", stack);
-            if (id !== stack[stack.length - 1]) {
+            if (id !== top()) {
                 // only push new id that is different from the top
                 stack.push(id);
-                bbutton.update(id);
+                updateHrefToID(bb, id);
             }
             console.log("after push:", stack);
         },
@@ -117,15 +120,12 @@ var jumps = function (bbutton) {
             if (stack.length > 1) {
                 stack.pop();
             }
-            bbutton.update(stack[stack.length - 1]);
+            updateHrefToID(bb, top());
             console.log("after pop:", stack);
         },
-        "peek": function () {
-            if (stack.length > 0)
-                return stack[stack.length - 1];
-        }
+        "peek": top
     };
-}(backButton);
+}("outline");
 
 window.addEventListener("load", function () {
     document.body.appendChild(backButton.element);
@@ -133,8 +133,8 @@ window.addEventListener("load", function () {
 
 window.addEventListener("hashchange", function (e) {
     var hash = decodeURI(window.location.hash);
-    if (hash === "#" + jumps.peek()) {
-        jumps.pop();
+    if (hash === "#" + backButton.peek()) {
+        backButton.pop();
     }
 });
 
@@ -146,6 +146,6 @@ window.addEventListener("click", function (e) {
 
     id = getEnclosingID(e.target);
     if (id !== "back-button") {
-        jumps.push(id);
+        backButton.push(id);
     }
 });
