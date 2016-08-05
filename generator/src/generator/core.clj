@@ -260,15 +260,21 @@
           :to-be-recognized
           (default-fn (:text tl))))]])))
 
+(defn- mainfn [inname->outpath]
+  (dorun
+   (for [[in out] inname->outpath]
+     (with-open [r (io/reader (io/file (io/resource in)))]
+       (->> (line-seq r)
+            (remove str/blank?)
+            (map (comp use-chinese-paren space-clapsed str/trim))
+            draw-skeleton
+            wrap-in-html
+            (spit out))))))
+
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
-  (with-open [r (io/reader (io/file (io/resource "劳动合同法.txt")))]
-    (->> (line-seq r)
-         (remove str/blank?)
-         (map (comp use-chinese-paren space-clapsed str/trim))
-         draw-skeleton
-         wrap-in-html
-         (spit "../index.html"))))
+  (mainfn {"劳动合同法.txt" "../index.html"
+           "网络预约出租汽车经营服务管理暂行办法.txt" "../index_notready.txt"}))
 
 (-main)
