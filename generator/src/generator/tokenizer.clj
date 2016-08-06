@@ -133,8 +133,9 @@
            "本法第四十七条"
            "本法第十四条 第二款第三项"
            "本法第四十六条"
-           "前款第（五）、第（六）项"
-           "本规定第十、十八、二十六、二十七条"])
+           ;;"前款第（五）、第（六）项"
+           ;;"本规定第十、十八、二十六、二十七条"
+           ])
 
 ;(clojure.pprint/pprint (map #(str/split % #"[法条款项和、]") txts))
 
@@ -328,3 +329,38 @@
            (and (empty? tail)
                 {:token :条头 :nth i
                  :text (into-str begin body end)})))))
+
+(defn nth-items
+  {:test
+   #(let [f nth-items
+          invalid-inputs ["第一" "第二、第三" "第四、第五abc"]]
+      (tt/comprehend-tests
+       (for [in (map seq invalid-inputs)]
+         (t/is (= in (f in))))
+       (t/is (= [{:nth 1 :token \条}] (f (seq "第一条"))))
+       (t/is (= [{:nth 2 :token \款}
+                 {:nth 3 :token \款}] (f (seq "第二、第三款"))))
+       (t/is (= [{:nth 4 :token \项}
+                 {:nth 5 :token \项}
+                 {:nth 6 :token \项}] (f (seq "第四、五、六项"))))))}
+  [char-seq]
+  (assert (= (first char-seq) \第))
+  (let [item-types #{\条 \款 \项}]
+    (loop [cs char-seq
+           ns []
+           it nil]
+      (if it
+        (map #(assoc % :token it) ns)
+        (let [[n cs'] (数字 (let [c (first cs)]
+                              (cond (= c \第) (rest cs)
+                                    (numchar-zh-set c) cs)))]
+          (if-let [x (first cs')]
+            (cond (item-types x)
+                  (recur (rest cs') (conj ns {:nth n}) x)
+
+                  (separators x)
+                  (recur (rest cs') (conj ns {:nth n}) nil)
+
+                  :else
+                  char-seq)
+            char-seq))))))
