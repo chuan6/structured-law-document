@@ -267,6 +267,6 @@
   "I don't do a whole lot ... yet."
   [& args]
   (mainfn {"劳动合同法.txt" "../index.html"
-           "网络预约出租汽车经营服务管理暂行办法.txt" "../index_notready2.html"}))
+           "网络预约出租汽车经营服务管理暂行办法.txt" "../index_notready.html"}))
 
 (-main)
