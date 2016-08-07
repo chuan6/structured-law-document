@@ -103,20 +103,19 @@
                   "本法第四十条、第四十一条的规定解除劳动合同：")
           sb (seq b)]
       (tt/comprehend-tests
-       (t/is (= a (str/join (map :text (f {} sa)))))
-       (t/is (= b (str/join (map :text (f {} sb)))))))}
+       (t/is (= a (str/join (map token/str-token (f {} sa)))))
+       (t/is (= b (str/join (map token/str-token (f {} sb)))))))}
   [context cs]
-  (let [flags [(partial = \本) #{\法 \条} (partial = \第) token/numchar-zh-set]
-
-        check-flags
-        (fn [[a b c d]]
-          (and ((flags 0) a) ((flags 1) b) ((flags 2) c) ((flags 3) d)))
+  (let [flags [#{[\本]}
+               #{[\规 \定] [\法] [\条]}
+               #{[\第]}
+               (set (map vector token/numchar-zh-set))]
 
         generate-id (partial token/generate-id context)]
     (->> (loop [cs cs ts []]
            (if (empty? cs)
              ts
-             (if (check-flags cs)
+             (if (token/seq-match flags cs)
                (let [[items rests] (token/read-items cs)]
                  (recur rests (into ts (flatten (token/update-leaves
                                                  (token/parse items)
@@ -156,14 +155,14 @@
 (defn wrap-item-string-in-html
   {:test
    #(let [f wrap-item-string-in-html
-          ts [{:token \法, :nth :this, :text "本法"}
-              {:token \条, :nth 39, :text "第三十九条", :id "条39"}
-              {:token :separator, :text "和"}
-              {:token \条, :nth 40, :text "第四十条"}
-              {:token \款, :nth 1}
-              {:token \项, :nth 1, :text "第一项", :id "条40款1项1"}
-              {:token :separator, :text "、"}
-              {:token \项, :nth 2, :text "第二项", :id "条40款1项2"}]]
+          ts [{:token :法 :nth :this :text "本法"}
+              {:token :条 :nth 39 :text "三十九" :第? true :unit? true :id "条39"}
+              {:token :separator :text "和"}
+              {:token :条 :nth 40 :text "四十" :第? true :unit? true}
+              {:token :款 :nth 1}
+              {:token :项 :nth 1 :text "一" :第? true :unit? true :id "条40款1项1"}
+              {:token :separator :text "、"}
+              {:token :项 :nth 2 :text "二" :第? true :unit? true :id "条40款1项2"}]]
       (tt/comprehend-tests
        (t/is (= (html [:span
                        "本法"
@@ -178,12 +177,12 @@
                         (partition-by :id)
                         (map #(if (:id (first %))
                                 %
-                                {:text (str/join (map :text %))}))
+                                {:text (str/join (map token/str-token %))}))
                         flatten)]
            (for [t ts'
                  :let [{:keys [id text]} t]]
              (if id
-               [:a {:href (str \# id)} text]
+               [:a {:href (str \# id)} (token/str-token t)]
                text)))])
 
 (defn- wrap-条-in-html [[head & more-tokens]]
@@ -197,7 +196,7 @@
            i-款 0]
       (if (nil? t)
         ps
-        (let [content (->> (within-款项 {\条 (:nth head)} (seq (:text t)))
+        (let [content (->> (within-款项 {:条 (:nth head)} (seq (:text t)))
                            (partition-by #(= (:token %) :to-be-recognized))
                            (map #(if (= (:token (first %)) :to-be-recognized)
                                    (str/join (map :text %))
@@ -268,6 +267,6 @@
   "I don't do a whole lot ... yet."
   [& args]
   (mainfn {"劳动合同法.txt" "../index.html"
-           "网络预约出租汽车经营服务管理暂行办法.txt" "../index_notready.html"}))
+           "网络预约出租汽车经营服务管理暂行办法.txt" "../index_notready2.html"}))
 
 (-main)
