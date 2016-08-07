@@ -4,6 +4,13 @@
             [clojure.zip :as z]
             [generator.test :as tt]))
 
+(defn without-prefix [origin prefix]
+  (loop [s origin t prefix]
+    (cond
+      (empty? t) s
+      (not= (first s) (first t)) origin
+      :else (recur (rest s) (rest t)))))
+
 (def cdigit-map
   {\零 0 \一 1 \二 2 \三 3 \四 4 \五 5 \六 6 \七 7 \八 8 \九 9})
 
@@ -16,29 +23,32 @@
   {:test
    #(let [f 数字]
       (tt/comprehend-tests
-       (t/is (nil?          (f "")))
-       (t/is (= [0 []]      (f "零")))
-       (t/is (= [1 []]      (f "一")))
-       (t/is (= [10 []]     (f "十")))
-       (t/is (= [12 []]     (f "十二")))
-       (t/is (= [20 [\行]]  (f "二十行")))
-       (t/is (= [34 []]     (f "三十四")))
-       (t/is (= [567 []]    (f "五百六十七")))
-       (t/is (= [809 [\回]] (f "八百零九回")))))}
-  ([s] (when (seq s) (数字 s 0)))
-  ([s carry]
-   (let [c (first s)]
-     (cond (= c \十)  (recur (rest s) (+ 10 carry))
-           (= c \零)  (recur (rest s) carry)
+       (t/is (= [0 []]                      (f "")))
+       (t/is (= [0 [\零]]                   (f "零")))
+       (t/is (= [1 [\一]]                   (f "一")))
+       (t/is (= [10 [\十]]                  (f "十")))
+       (t/is (= [12 [\十 \二]]              (f "十二章")))
+       (t/is (= [20 [\二 \十]]              (f "二十行")))
+       (t/is (= [34 [\三 \十 \四]]          (f "三十四")))
+       (t/is (= [567 [\五 \百 \六 \十 \七]] (f "五百六十七")))
+       (t/is (= [809 [\八 \百 \零 \九]]     (f "八百零九回")))))}
+  [s]
+  (let [c (first s)]
+    (cond (empty? s) [0 []]
+          (= c \十)  (let [[x s'] (数字 (rest s))]
+                       [(+ 10 x) (cons \十 s')])
+          (= c \零)  (let [[x s'] (数字 (rest s))]
+                       [x (cons \零 s')])
 
-           (contains? cdigit-map c)
-           (let [d (cdigit-map c)
-                 n (second s)]
-             (if (contains? nthten-map n)
-               (recur (nthrest s 2) (+ (* d (nthten-map n)) carry))
-               [(+ d carry) (rest s)]))
+          (contains? cdigit-map c)
+          (let [d (cdigit-map c)
+                n (second s)]
+            (if (contains? nthten-map n)
+              (let [[x s'] (数字 (nthrest s 2))]
+                [(+ (* d (nthten-map n)) x) (into [c n] s')])
+              [d [c]]))
 
-           :else [carry s]))))
+          :else [0 []])))
 
 (defn nth-item
   {:test
@@ -49,8 +59,8 @@
   [line]
   (let [[c & cs] line]
     (when (= c \第)
-      (let [[i unprocessed] (数字 cs)]
-        [i (first unprocessed)]))))
+      (let [[i processed] (数字 cs)]
+        [i (first (without-prefix cs processed))]))))
 
 (defn nth-章节
   {:test
@@ -325,8 +335,8 @@
   [[c & cs]]
   (and (= c \newline)
        (when-let [[begin body end] (read-chars from-第 to-条 cs)]
-         (let [[i tail] (数字 body)]
-           (and (empty? tail)
+         (let [[i processed] (数字 body)]
+           (and (= processed body)
                 {:token :条头 :nth i
                  :text (into-str begin body end)})))))
 
@@ -337,12 +347,15 @@
       (tt/comprehend-tests
        (for [in (map seq invalid-inputs)]
          (t/is (= in (f in))))
-       (t/is (= [{:nth 1 :token \条}] (f (seq "第一条"))))
-       (t/is (= [{:nth 2 :token \款}
-                 {:nth 3 :token \款}] (f (seq "第二、第三款"))))
-       (t/is (= [{:nth 4 :token \项}
-                 {:nth 5 :token \项}
-                 {:nth 6 :token \项}] (f (seq "第四、五、六项"))))))}
+       (t/is (= [{:nth 1 :token \条 :第? true :unit? true :text "一"}]
+                (f (seq "第一条"))))
+       (t/is (= [{:nth 2 :token \款 :第? true :unit? false :text "二"}
+                 {:nth 3 :token \款 :第? true :unit? true :text "三"}]
+                (f (seq "第二、第三款"))))
+       (t/is (= [{:nth 4 :token \项 :第? true :unit? false :text "四"}
+                 {:nth 5 :token \项 :第? false :unit? false :text "五"}
+                 {:nth 6 :token \项 :第? false :unit? true :text "六"}]
+                (f (seq "第四、五、六项"))))))}
   [char-seq]
   (assert (= (first char-seq) \第))
   (let [item-types #{\条 \款 \项}]
@@ -351,15 +364,23 @@
            it nil]
       (if it
         (map #(assoc % :token it) ns)
-        (let [[n cs'] (数字 (let [c (first cs)]
-                              (cond (= c \第) (rest cs)
-                                    (numchar-zh-set c) cs)))]
-          (if-let [x (first cs')]
-            (cond (item-types x)
-                  (recur (rest cs') (conj ns {:nth n}) x)
+        (let [c       (first cs)
+              第?     (= c \第)
+              cs      (cond 第? (rest cs)
+                            (numchar-zh-set c) cs)
+              [n ncs] (数字 cs)
+              cs'     (without-prefix cs ncs)
+              nx      {:nth n :text (str/join ncs) :第? 第?}]
+          (if-let [c' (first cs')]
+            (cond (item-types c')
+                  (recur (rest cs')
+                         (conj ns (assoc nx :unit? true))
+                         c')
 
-                  (separators x)
-                  (recur (rest cs') (conj ns {:nth n}) nil)
+                  (separators c')
+                  (recur (rest cs')
+                         (conj ns (assoc nx :unit? false))
+                         nil)
 
                   :else
                   char-seq)

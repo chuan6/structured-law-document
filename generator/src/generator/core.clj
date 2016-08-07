@@ -8,13 +8,6 @@
             [hiccup.page :refer :all])
   (:gen-class))
 
-(defn- without-prefix [origin prefix]
-  (loop [s origin t prefix]
-    (cond
-      (empty? t) s
-      (not= (first s) (first t)) origin
-      :else (recur (rest s) (rest t)))))
-
 (defn default-fn [l] [:p l])
 
 (def table-of-contents-sentinel #"目\s*录")
@@ -83,7 +76,7 @@
 
       (re-matches table-of-contents-sentinel (first ls))
       (let [[processed recognized] (table-of-contents ls)]
-        (recur (without-prefix ls processed)
+        (recur (token/without-prefix ls processed)
                (conj es recognized)))
 
       (let [[_ unit] (token/nth-item (first ls))]
@@ -93,7 +86,7 @@
 
       (= (second (token/nth-item (first ls))) \条)
       (let [[processed recognized] (token/nth-条 ls)]
-        (recur (without-prefix ls processed)
+        (recur (token/without-prefix ls processed)
                (conj es recognized)))
 
       :else
@@ -146,7 +139,7 @@
        (t/is (= [a (str/trim b) c d e] (map :text r)))))}
   [[line & lines]]
   (when-let [head (token/条头 (cons \newline line))]
-    (let [tail     (without-prefix line (:text head))
+    (let [tail     (token/without-prefix line (:text head))
           first-款 (str/join (rest tail))] ;use "rest" to skip \space
       (assert (seq first-款))
       (loop [ts [head {:token \款 :nth 1 :text first-款}]
