@@ -346,24 +346,35 @@
           invalid-inputs ["第一" "第二、第三" "第四、第五abc"]]
       (tt/comprehend-tests
        (for [in (map seq invalid-inputs)]
-         (t/is (= in (f in))))
+         (t/is (nil? (f in))))
        (t/is (= [{:nth 1 :token \条 :第? true :unit? true :text "一"}]
                 (f (seq "第一条"))))
        (t/is (= [{:nth 2 :token \款 :第? true :unit? false :text "二"}
+                 {:token :separator :text "、"}
                  {:nth 3 :token \款 :第? true :unit? true :text "三"}]
                 (f (seq "第二、第三款"))))
        (t/is (= [{:nth 4 :token \项 :第? true :unit? false :text "四"}
+                 {:token :separator :text "、"}
                  {:nth 5 :token \项 :第? false :unit? false :text "五"}
+                 {:token :separator :text "、"}
                  {:nth 6 :token \项 :第? false :unit? true :text "六"}]
                 (f (seq "第四、五、六项"))))))}
   [char-seq]
   (assert (= (first char-seq) \第))
-  (let [item-types #{\条 \款 \项}]
+  (let [item-types #{\条 \款 \项}
+        sep-t      (fn [c]
+                     {:token :separator :text (str c)})
+        passively-assign-token
+        (fn [ts]
+          (when-let [it (:token (peek ts))]
+            (map (fn [t]
+                   (if (:token t)
+                     t
+                     (assoc t :token it))) ts)))]
     (loop [cs char-seq
-           ns []
-           it nil]
-      (if it
-        (map #(assoc % :token it) ns)
+           ts []]
+      (if (:unit? (peek ts))
+        (passively-assign-token ts)
         (let [c       (first cs)
               第?     (= c \第)
               cs      (cond 第? (rest cs)
@@ -371,17 +382,12 @@
               [n ncs] (数字 cs)
               cs'     (without-prefix cs ncs)
               nx      {:nth n :text (str/join ncs) :第? 第?}]
-          (if-let [c' (first cs')]
-            (cond (item-types c')
-                  (recur (rest cs')
-                         (conj ns (assoc nx :unit? true))
-                         c')
+          (when-let [c' (first cs')]
+            (cond
+              (item-types c')
+              (recur (rest cs')
+                     (conj ts (assoc nx :unit? true :token c')))
 
-                  (separators c')
-                  (recur (rest cs')
-                         (conj ns (assoc nx :unit? false))
-                         nil)
-
-                  :else
-                  char-seq)
-            char-seq))))))
+              (separators c')
+              (recur (rest cs')
+                     (into ts [(assoc nx :unit? false) (sep-t c')])))))))))
