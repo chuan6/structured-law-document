@@ -3,4 +3,4 @@ general:
 
 test:
   override:
-    - lein test generator.core generator.tokenizer
+    - lein test generator.core generator.tokenizer generator.lisp generator.zh-digits generator.test

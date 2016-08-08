@@ -2,97 +2,12 @@
   (:require [clojure.string :as str]
             [clojure.test :as t]
             [clojure.zip :as z]
-            [generator.test :as tt]))
+            [generator.lisp :as s]
+            [generator.test :as tt]
+            [generator.zh-digits :refer [数字 numchar-zh-set]]))
 
-(defn without-prefix [origin prefix]
-  (loop [s origin t prefix]
-    (cond
-      (empty? t) s
-      (not= (first s) (first t)) origin
-      :else (recur (rest s) (rest t)))))
-
-(defn- read-chars [from to cs]
-  (when-let [[begin body] (from cs)]
-    (when-let [[body end] (to body)]
-      [begin body end])))
-
-(defn from-char
-  {:test
-   #(let [f (partial from-char \第)]
-      (tt/comprehend-tests
-       (t/is (nil? (f [])))
-       (t/is (nil? (f [\newline \第])))
-       (t/is (= [[\第] [\a \b \c]] (f [\第 \a \b \c])))))}
-  [beginc [c & cs]]
-  (when (= c beginc) [[c] cs]))
-
-(defn to-char
-  {:test
-   #(let [f (partial to-char \条)]
-      (tt/comprehend-tests
-       (t/is (nil? (f [])))
-       (t/is (nil? (f [\a \b])))
-       (t/is (= [[\a \b] [\条]] (f [\a \b \条])))))}
-  [endc cs]
-  (loop [body []
-         [end & tail] cs]
-    (if (= end endc)
-      [body [end]]
-      (when tail
-        (recur (conj body end) tail)))))
-
-(def from-第 (partial from-char \第))
-(def to-条 (partial to-char \条))
-
-(defn into-str
-  {:test
-   #(let [f into-str]
-      (tt/comprehend-tests
-       (t/is (= ""     (into-str)))
-       (t/is (= "abc"  (into-str [\a \b \c])))
-       (t/is (= "abcd" (into-str [\a] [\b] [\c \d])))))}
-  ([] "")
-  ([s] (str/join s))
-  ([s & ss] (str/join (reduce into (vec s) ss))))
-
-(def cdigit-map
-  {\零 0 \一 1 \二 2 \三 3 \四 4 \五 5 \六 6 \七 7 \八 8 \九 9})
-
-(def nthten-map
-  {\十 10 \百 100})
-
-(def numchar-zh-set (set (concat (keys cdigit-map) (keys nthten-map))))
-
-(defn 数字
-  {:test
-   #(let [f 数字]
-      (tt/comprehend-tests
-       (t/is (= [0 []]                      (f "")))
-       (t/is (= [0 [\零]]                   (f "零")))
-       (t/is (= [1 [\一]]                   (f "一")))
-       (t/is (= [10 [\十]]                  (f "十")))
-       (t/is (= [12 [\十 \二]]              (f "十二章")))
-       (t/is (= [20 [\二 \十]]              (f "二十行")))
-       (t/is (= [34 [\三 \十 \四]]          (f "三十四")))
-       (t/is (= [567 [\五 \百 \六 \十 \七]] (f "五百六十七")))
-       (t/is (= [809 [\八 \百 \零 \九]]     (f "八百零九回")))))}
-  [s]
-  (let [c (first s)]
-    (cond (empty? s) [0 []]
-          (= c \十)  (let [[x s'] (数字 (rest s))]
-                       [(+ 10 x) (cons \十 s')])
-          (= c \零)  (let [[x s'] (数字 (rest s))]
-                       [x (cons \零 s')])
-
-          (contains? cdigit-map c)
-          (let [d (cdigit-map c)
-                n (second s)]
-            (if (contains? nthten-map n)
-              (let [[x s'] (数字 (nthrest s 2))]
-                [(+ (* d (nthten-map n)) x) (into [c n] s')])
-              [d [c]]))
-
-          :else [0 []])))
+(def from-第 (partial s/from-x \第))
+(def to-条 (partial s/to-x \条))
 
 (defn nth-item
   {:test
@@ -104,7 +19,7 @@
   (let [[c & cs] line]
     (when (= c \第)
       (let [[i processed] (数字 cs)]
-        [i (first (without-prefix cs processed))]))))
+        [i (first (s/without-prefix cs processed))]))))
 
 (defn nth-章节
   {:test
@@ -157,12 +72,12 @@
        (t/is (not (f "（括号内）")))
        (t/is (= [1 [\（ \一 \）]] (f "（一）……")))))}
   [cs]
-  (let [openfn (partial from-char \（)
-        closefn (partial to-char \）)]
-    (when-let [[begin body end] (read-chars openfn closefn cs)]
+  (let [openfn (partial s/from-x \（)
+        closefn (partial s/to-x \）)]
+    (when-let [[begin body end] (s/read-xs openfn closefn cs)]
       (let [[i processed] (数字 body)]
         (when (and (seq processed) (= processed body))
-          [i (reduce into begin [body end])])))))
+          [i (s/flatten-and-vector begin body end)])))))
 
 (defn nth-项
   {:test
@@ -254,7 +169,7 @@
               cs      (cond 第? (rest cs)
                             (numchar-zh-set c) cs)
               [n ncs] (or (括号数字 cs) (数字 cs))
-              cs'     (without-prefix cs ncs)
+              cs'     (s/without-prefix cs ncs)
               nx      {:nth n :text (str/join ncs) :第? 第?}]
           (when-let [c' (first cs')]
             (if (item-types c')
@@ -304,7 +219,7 @@
        (recur more-cs (conj ts s-t))
        (if-let [adj (adj->nth c)]
          (when-let [processed (match-item-types more-cs)]
-           (recur (without-prefix more-cs processed)
+           (recur (s/without-prefix more-cs processed)
                   (let [processed-str (str/join processed)]
                     (conj ts {:token (keyword processed-str)
                               :nth adj
@@ -452,33 +367,10 @@
                 (f "\n第三十九条")))))}
   [[c & cs]]
   (and (= c \newline)
-       (when-let [[begin body end] (read-chars from-第 to-条 cs)]
+       (when-let [[begin body end] (s/read-xs from-第 to-条 cs)]
          (let [[i processed] (数字 body)]
            (and (= processed body)
                 {:token :条头 :nth i
-                 :text (into-str begin body end)})))))
+                 :text (str/join
+                        (s/flatten-and-vector begin body end))})))))
 
-(defn seq-match
-  {:test
-   #(let [f (partial seq-match
-                     [#{[\本]}
-                      #{[\规 \定] [\法] [\条]}
-                      #{[\第]}
-                      (set (map vector numchar-zh-set))])]
-      (tt/comprehend-tests
-       (t/is (f (seq "本规定第一条")))
-       (t/is (f (seq "本法第二条")))
-       (t/is (f (seq "本条第一项")))
-       (t/is (not (f (seq "本款地三项"))))
-       (t/is (not (f (seq "前条第二款"))))
-       (t/is (not (f (seq "本规定情况下"))))))}
-  [word-sets cs]
-  (first
-   (reduce
-    (fn [[_ cs] word-set]
-      (if-let [word (some seq (for [word word-set]
-                                (when (= word (take (count word) cs))
-                                  word)))]
-        [true (without-prefix cs word)]
-        (reduced [false cs])))
-    [true cs] word-sets)))

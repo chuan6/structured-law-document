@@ -2,8 +2,10 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :as t]
+            [generator.lisp :as s]
             [generator.test :as tt]
             [generator.tokenizer :as token]
+            [generator.zh-digits :refer [numchar-zh-set]]
             [hiccup.core :refer :all]
             [hiccup.page :refer :all])
   (:gen-class))
@@ -76,7 +78,7 @@
 
       (re-matches table-of-contents-sentinel (first ls))
       (let [[processed recognized] (table-of-contents ls)]
-        (recur (token/without-prefix ls processed)
+        (recur (s/without-prefix ls processed)
                (conj es recognized)))
 
       (let [[_ unit] (token/nth-item (first ls))]
@@ -86,7 +88,7 @@
 
       (= (second (token/nth-item (first ls))) \条)
       (let [[processed recognized] (token/nth-条 ls)]
-        (recur (token/without-prefix ls processed)
+        (recur (s/without-prefix ls processed)
                (conj es recognized)))
 
       :else
@@ -109,13 +111,13 @@
   (let [flags [#{[\本]}
                #{[\规 \定] [\法] [\条]}
                #{[\第]}
-               (set (map vector token/numchar-zh-set))]
+               (set (map vector numchar-zh-set))]
 
         generate-id (partial token/generate-id context)]
     (->> (loop [cs cs ts []]
            (if (empty? cs)
              ts
-             (if (token/seq-match flags cs)
+             (if (s/seq-match flags cs)
                (let [[items rests] (token/read-items cs)]
                  (recur rests (into ts (flatten (token/update-leaves
                                                  (token/parse items)
@@ -138,7 +140,7 @@
        (t/is (= [a (str/trim b) c d e] (map :text r)))))}
   [[line & lines]]
   (when-let [head (token/条头 (cons \newline line))]
-    (let [tail     (token/without-prefix line (:text head))
+    (let [tail     (s/without-prefix line (:text head))
           first-款 (str/join (rest tail))] ;use "rest" to skip \space
       (assert (seq first-款))
       (loop [ts [head {:token \款 :nth 1 :text first-款}]
