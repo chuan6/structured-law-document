@@ -2,6 +2,7 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :as t]
+            [generator.line :as l]
             [generator.lisp :as s]
             [generator.test :as tt]
             [generator.tokenizer :as token]
@@ -81,13 +82,12 @@
         (recur (s/without-prefix ls processed)
                (conj es recognized)))
 
-      (let [[_ unit] (token/nth-item (first ls))]
+      (let [[_ unit] (l/nth-item (first ls))]
         (#{\章 \节} unit))
-      (let [line (first ls)]
-        (recur (rest ls) (conj es (token/nth-章节 ls))))
+      (recur (rest ls) (conj es (l/nth-章节 ls)))
 
-      (= (second (token/nth-item (first ls))) \条)
-      (let [[processed recognized] (token/nth-条 ls)]
+      (= (second (l/nth-item (first ls))) \条)
+      (let [[processed recognized] (l/nth-条 ls)]
         (recur (s/without-prefix ls processed)
                (conj es recognized)))
 
@@ -149,7 +149,7 @@
         (if (nil? l)
           ts
           (if (= (first l) \（)
-            (if-let [t (token/nth-项 l)]
+            (if-let [t (l/nth-项 l)]
               (recur (conj ts t) ls i-款)
               (recur (conj ts {:token :to-be-recognized :text l}) ls i-款))
             (recur (conj ts {:token \款 :nth i-款 :text l}) ls (inc i-款))))))))
