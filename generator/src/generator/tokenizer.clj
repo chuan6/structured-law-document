@@ -11,6 +11,50 @@
       (not= (first s) (first t)) origin
       :else (recur (rest s) (rest t)))))
 
+(defn- read-chars [from to cs]
+  (when-let [[begin body] (from cs)]
+    (when-let [[body end] (to body)]
+      [begin body end])))
+
+(defn from-char
+  {:test
+   #(let [f (partial from-char \第)]
+      (tt/comprehend-tests
+       (t/is (nil? (f [])))
+       (t/is (nil? (f [\newline \第])))
+       (t/is (= [[\第] [\a \b \c]] (f [\第 \a \b \c])))))}
+  [beginc [c & cs]]
+  (when (= c beginc) [[c] cs]))
+
+(defn to-char
+  {:test
+   #(let [f (partial to-char \条)]
+      (tt/comprehend-tests
+       (t/is (nil? (f [])))
+       (t/is (nil? (f [\a \b])))
+       (t/is (= [[\a \b] [\条]] (f [\a \b \条])))))}
+  [endc cs]
+  (loop [body []
+         [end & tail] cs]
+    (if (= end endc)
+      [body [end]]
+      (when tail
+        (recur (conj body end) tail)))))
+
+(def from-第 (partial from-char \第))
+(def to-条 (partial to-char \条))
+
+(defn into-str
+  {:test
+   #(let [f into-str]
+      (tt/comprehend-tests
+       (t/is (= ""     (into-str)))
+       (t/is (= "abc"  (into-str [\a \b \c])))
+       (t/is (= "abcd" (into-str [\a] [\b] [\c \d])))))}
+  ([] "")
+  ([s] (str/join s))
+  ([s & ss] (str/join (reduce into (vec s) ss))))
+
 (def cdigit-map
   {\零 0 \一 1 \二 2 \三 3 \四 4 \五 5 \六 6 \七 7 \八 8 \九 9})
 
@@ -104,6 +148,34 @@
        {:token \条 :nth i :head (first (str/split line #"\s"))
         :text lines-within}])))
 
+(defn 括号数字
+  {:test
+   #(let [f 括号数字]
+      (tt/comprehend-tests
+       (t/is (not (f "（")))
+       (t/is (not (f "（）")))
+       (t/is (not (f "（括号内）")))
+       (t/is (= [1 [\（ \一 \）]] (f "（一）……")))))}
+  [cs]
+  (let [openfn (partial from-char \（)
+        closefn (partial to-char \）)]
+    (when-let [[begin body end] (read-chars openfn closefn cs)]
+      (let [[i processed] (数字 body)]
+        (when (and (seq processed) (= processed body))
+          [i (reduce into begin [body end])])))))
+
+(defn nth-项
+  {:test
+   #(let [f nth-项]
+      (tt/comprehend-tests
+       (t/is (= nil (f "（")))
+       (t/is (= nil (f "（括号内")))
+       (t/is (= {:token \项 :nth 5 :head "（五）" :text "（五）……"}
+                (f "（五）……")))))}
+  [line]
+  (when-let [[i processed] (括号数字 line)]
+    {:token \项 :nth i :head (str/join processed) :text line}))
+
 (def txts ["本法第三十九条和第四十条第一项、第二项"
            "本法第三十九条和第四十条第一项、第二项"
            "本法第二十二条和第二十三条"
@@ -131,9 +203,10 @@
            "本规定第十、十八、二十六、二十七条"
            ])
 
-;(clojure.pprint/pprint (map #(str/split % #"[法条款项和、]") txts))
+(defn- separators [c]
+  (when (#{\space \、 \和} c)
+    {:token :separator :text (str c)}))
 
-(declare 括号数字)
 (defn nth-items
   {:test
    #(let [f nth-items
@@ -190,10 +263,6 @@
               (when-let [s-t (separators c')]
                 (recur (rest cs')
                        (into ts [(assoc nx :unit? false) s-t]))))))))))
-
-(defn- separators [c]
-  (when (#{\space \、 \和} c)
-    {:token :separator :text (str c)}))
 
 (def item-types #{[\法] [\规 \定] [\条] [\款] [\项]})
 
@@ -370,50 +439,6 @@
            ({:token :条 :nth 27 :text "二十七" :第? false :unit? true :id "条27"}))
          (update-leaves r :id (partial generate-id {})))))))
 
-(defn- read-chars [from to cs]
-  (when-let [[begin body] (from cs)]
-    (when-let [[body end] (to body)]
-      [begin body end])))
-
-(defn from-char
-  {:test
-   #(let [f (partial from-char \第)]
-      (tt/comprehend-tests
-       (t/is (nil? (f [])))
-       (t/is (nil? (f [\newline \第])))
-       (t/is (= [[\第] [\a \b \c]] (f [\第 \a \b \c])))))}
-  [beginc [c & cs]]
-  (when (= c beginc) [[c] cs]))
-
-(defn to-char
-  {:test
-   #(let [f (partial to-char \条)]
-      (tt/comprehend-tests
-       (t/is (nil? (f [])))
-       (t/is (nil? (f [\a \b])))
-       (t/is (= [[\a \b] [\条]] (f [\a \b \条])))))}
-  [endc cs]
-  (loop [body []
-         [end & tail] cs]
-    (if (= end endc)
-      [body [end]]
-      (when tail
-        (recur (conj body end) tail)))))
-
-(def from-第 (partial from-char \第))
-(def to-条 (partial to-char \条))
-
-(defn into-str
-  {:test
-   #(let [f into-str]
-      (tt/comprehend-tests
-       (t/is (= ""     (into-str)))
-       (t/is (= "abc"  (into-str [\a \b \c])))
-       (t/is (= "abcd" (into-str [\a] [\b] [\c \d])))))}
-  ([] "")
-  ([s] (str/join s))
-  ([s & ss] (str/join (reduce into (vec s) ss))))
-
 (defn 条头
   {:test
    #(let [f 条头]
@@ -432,34 +457,6 @@
            (and (= processed body)
                 {:token :条头 :nth i
                  :text (into-str begin body end)})))))
-
-(defn 括号数字
-  {:test
-   #(let [f 括号数字]
-      (tt/comprehend-tests
-       (t/is (not (f "（")))
-       (t/is (not (f "（）")))
-       (t/is (not (f "（括号内）")))
-       (t/is (= [1 [\（ \一 \）]] (f "（一）……")))))}
-  [cs]
-  (let [openfn (partial from-char \（)
-        closefn (partial to-char \）)]
-    (when-let [[begin body end] (read-chars openfn closefn cs)]
-      (let [[i processed] (数字 body)]
-        (when (and (seq processed) (= processed body))
-          [i (reduce into begin [body end])])))))
-
-(defn nth-项
-  {:test
-   #(let [f nth-项]
-      (tt/comprehend-tests
-       (t/is (= nil (f "（")))
-       (t/is (= nil (f "（括号内")))
-       (t/is (= {:token \项 :nth 5 :head "（五）" :text "（五）……"}
-                (f "（五）……")))))}
-  [line]
-  (when-let [[i processed] (括号数字 line)]
-    {:token \项 :nth i :head (str/join processed) :text line}))
 
 (defn seq-match
   {:test
