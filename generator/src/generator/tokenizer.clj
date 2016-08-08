@@ -2,113 +2,13 @@
   (:require [clojure.string :as str]
             [clojure.test :as t]
             [clojure.zip :as z]
-            [generator.test :as tt]))
+            [generator.line :as l]
+            [generator.lisp :as s]
+            [generator.test :as tt]
+            [generator.zh-digits :refer [数字 numchar-zh-set]]))
 
-(def cdigit-map
-  {\零 0 \一 1 \二 2 \三 3 \四 4 \五 5 \六 6 \七 7 \八 8 \九 9})
-
-(def nthten-map
-  {\十 10 \百 100})
-
-(def numchar-zh-set (set (concat (keys cdigit-map) (keys nthten-map))))
-
-(defn chinese-number
-  {:test
-   #(let [f chinese-number]
-      (tt/comprehend-tests
-       (t/is (= 0   (f "零")))
-       (t/is (= 1   (f "一")))
-       (t/is (= 10  (f "十")))
-       (t/is (= 12  (f "十二")))
-       (t/is (= 20  (f "二十行")))
-       (t/is (= 34  (f "三十四")))
-       (t/is (= 567 (f "五百六十七")))
-       (t/is (= 809 (f "八百零九回")))))}
-  [s]
-  (let [c (first s)]
-    (cond (empty? s) 0
-          (= c \十)  (+ 10 (chinese-number (rest s)))
-          (= c \零)  (chinese-number (rest s))
-
-          (contains? cdigit-map c)
-          (let [d (cdigit-map c)
-                n (second s)]
-            (if (contains? nthten-map n)
-              (+ (* d (nthten-map n)) (chinese-number (nthrest s 2)))
-              d))
-
-          :else 0)))
-
-(defn nth-item
-  {:test
-   #(let [f nth-item]
-      (tt/comprehend-tests
-       (t/is (= [1 \章] (f "第一章 总则")))
-       (t/is (= [12 \条] (f "第十二条 ……")))))}
-  [line]
-  (let [[c & cs] line]
-    (when (= c \第)
-      (let [[head tail] (split-with numchar-zh-set cs)]
-        (when (seq head)
-          [(chinese-number head) (first tail)])))))
-
-(defn nth-章节
-  {:test
-   #(let [f nth-章节]
-      (tt/comprehend-tests
-       (t/is (= {:token \章 :nth 1 :text "第一章 总则"}
-                (f ["第一章 总则" "第一条 ……"])))
-       (t/is (= {:token \节 :nth 2 :text "第二节 劳务派遣"}
-                (f ["第二节 劳务派遣" "第五十七条 ……"])))))}
-  [lines]
-  (let [line (first lines)
-        [i unit] (nth-item line)]
-    (assert (and i (#{\章 \节} unit)))
-    {:token unit :nth i :text line}))
-
-(defn nth-条
-  {:test
-   #(let [f nth-条
-          a ["第五条 县级以上……"]
-          b ["第六条 工会应当……" "……"]
-          c ["第二章 ……"]
-          d ["第七条 用人单位……"]
-          ab (into a b)
-          bcd (-> b (into c) (into d))]
-      (tt/comprehend-tests
-       (t/is (= [a {:token \条 :nth 5 :text a :head "第五条"}]
-                (f ab)))
-       (t/is (= [b {:token \条 :nth 6 :text b :head "第六条"}]
-                (f bcd)))))}
-  [lines]
-  (let [line (first lines)
-        [i unit] (nth-item line)]
-    (assert (and i (= unit \条)))
-    (let [lines-within
-          (into [line] (take-while
-                        (fn [l]
-                          (let [[_ unit] (nth-item l)]
-                            (nil? (#{\章 \节 \条} unit))))
-                        (rest lines)))]
-      [lines-within
-       {:token \条 :nth i :head (first (str/split line #"\s"))
-        :text lines-within}])))
-
-(defn nth-项
-  {:test
-   #(let [f nth-项]
-      (tt/comprehend-tests
-       (t/is (= nil (f "（")))
-       (t/is (= nil (f "（括号内")))
-       (t/is (= {:token \项 :nth 5 :head "（五）" :text "（五）……"}
-                (f "（五）……")))))}
-  [line]
-  (assert (= (first line) \（))
-  (let [[i-zh tail] (split-with (partial not= \）) (rest line))]
-    (when (and (seq tail) (every? numchar-zh-set i-zh))
-      (when-let [i (chinese-number i-zh)]
-        {:token \项 :nth i :head (str/join (-> [\（] (into i-zh) (conj \）)))
-         :text line}))))
+(def from-第 (partial s/from-x \第))
+(def to-条 (partial s/to-x \条))
 
 (def txts ["本法第三十九条和第四十条第一项、第二项"
            "本法第三十九条和第四十条第一项、第二项"
@@ -132,46 +32,116 @@
            "本法第二十六条"
            "本法第四十七条"
            "本法第十四条 第二款第三项"
-           "本法第四十六条"])
+           "本法第四十六条"
+           ;;"前款第（五）、第（六）项"
+           "本规定第十、十八、二十六、二十七条"
+           ])
 
-;(clojure.pprint/pprint (map #(str/split % #"[法条款项和、]") txts))
+(defn- separators [c]
+  (when (#{\space \、 \和} c)
+    {:token :separator :text (str c)}))
 
-(def item-char-set (set (seq "法条款项本第一二三四五六七八九十百")))
+(defn nth-items
+  {:test
+   #(let [f nth-items
+          invalid-inputs ["第一" "第二、第三" "第四、第五abc"]]
+      (tt/comprehend-tests
+       (for [in (map seq invalid-inputs)]
+         (t/is (nil? (f in))))
+       (t/is (= [[{:nth 1 :token :条 :第? true :unit? true :text "一"}]
+                 []]
+                (f (seq "第一条"))))
+       (t/is (= [[{:nth 2 :token :款 :第? true :unit? false :text "二"}
+                  {:token :separator :text "、"}
+                  {:nth 3 :token :款 :第? true :unit? true :text "三"}]
+                 []]
+                (f (seq "第二、第三款"))))
+       (t/is (= [[{:nth 4 :token :项 :第? true :unit? false :text "四"}
+                  {:token :separator :text "、"}
+                  {:nth 5 :token :项 :第? false :unit? false :text "五"}
+                  {:token :separator :text "、"}
+                  {:nth 6 :token :项 :第? false :unit? true :text "六"}]
+                 (seq "规定的")]
+                (f (seq "第四、五、六项规定的"))))
+       (t/is (= [[{:nth 5 :token :项 :第? true :unit? false :text "（五）"}
+                  {:token :separator :text "、"}
+                  {:nth 6 :token :项 :第? true :unit? true :text "（六）"}]
+                 (seq "有关")]
+                (f (seq "第（五）、第（六）项有关"))))))}
+  [char-seq]
+  (assert (= (first char-seq) \第))
+  (let [item-types #{\条 \款 \项}
 
-(def separators #{\space \、 \和})
+        passively-assign-token
+        (fn [ts]
+          (when-let [it (:token (peek ts))]
+            (map (fn [t]
+                   (if (:token t)
+                     t
+                     (assoc t :token it))) ts)))]
+    (loop [cs char-seq
+           ts []]
+      (if (:unit? (peek ts))
+        [(passively-assign-token ts) cs]
+        (let [c       (first cs)
+              第?     (= c \第)
+              cs      (cond 第? (rest cs)
+                            (numchar-zh-set c) cs)
+              [n ncs] (or (l/括号数字 cs) (数字 cs))
+              cs'     (s/without-prefix cs ncs)
+              nx      {:nth n :text (str/join ncs) :第? 第?}]
+          (when-let [c' (first cs')]
+            (if (item-types c')
+              (recur (rest cs')
+                     (conj ts (assoc nx :unit? true :token (keyword (str c')))))
+              (when-let [s-t (separators c')]
+                (recur (rest cs')
+                       (into ts [(assoc nx :unit? false) s-t]))))))))))
 
-(defn- left-most-item [s]
-  (loop [xs []
-         ys s]
-    (if (item-char-set (first ys))
-      (let [xs' (conj xs (first ys))
-            ys' (rest ys)]
-        (if (#{"法" "条" "款" "项"} (str (first ys)))
-          [xs' ys']
-          (recur xs' ys')))
-      [[] s])))
+(def item-types #{[\法] [\规 \定] [\条] [\款] [\项]})
 
-(defn read-items [char-seq]
-  (loop [[c :as cs] char-seq
-         ts []]
-    (let [[item rest-cs] (left-most-item cs)]
-      (cond
-        (separators c)
-        (recur (rest cs) (conj ts {:token :separator :text (str c)}))
+(defn match-item-types [cs]
+  (first (remove nil? (for [target item-types
+                            :let [n (count target)]]
+                        (when (= (take n cs) target)
+                          target)))))
 
-        (empty? item)
-        [ts rest-cs]
-
-        :read-an-item
-        (case c
-          \本
-          (recur rest-cs (conj ts {:token (peek item) :nth :this
-                                   :text (str/join item)}))
-
-          \第
-          (let [[i unit] (nth-item item)]
-            (recur rest-cs (conj ts {:token unit :nth i
-                                     :text (str/join item)}))))))))
+(defn read-items
+  {:test
+   #(let [f read-items]
+      (tt/comprehend-tests
+       (t/is (= [[{:token :法 :nth :this :text "本法"}
+                  {:token :条 :nth 20 :text "二十" :第? true :unit? true}
+                  {:token :项 :nth 3 :text "三" :第? true :unit? true}]
+                 [\规 \定]]
+                (f "本法第二十条第三项规定")))
+       (t/is (= [[{:token :规定 :nth :this :text "本规定"}
+                  {:token :条 :nth 10 :第? true :unit? false :text "十"}
+                  {:token :separator :text "、"}
+                  {:token :条 :nth 18 :第? false :unit? false :text "十八"}
+                  {:token :separator :text "、"}
+                  {:token :条 :nth 26 :第? false :unit? false :text "二十六"}
+                  {:token :separator :text "、"}
+                  {:token :条 :nth 27 :第? false :unit? true :text "二十七"}]
+                 [\有 \关 \规 \定]]
+                (f "本规定第十、十八、二十六、二十七条有关规定")))))}
+  [char-seq]
+  (let [adj->nth {\本 :this}]
+   (loop [[c & more-cs :as cs] char-seq
+          ts []]
+     (if-let [s-t (separators c)]
+       (recur more-cs (conj ts s-t))
+       (if-let [adj (adj->nth c)]
+         (when-let [processed (match-item-types more-cs)]
+           (recur (s/without-prefix more-cs processed)
+                  (let [processed-str (str/join processed)]
+                    (conj ts {:token (keyword processed-str)
+                              :nth adj
+                              :text (str c processed-str)}))))
+         (case c
+           \第 (when-let [[ts' rest-cs] (nth-items cs)]
+                 (recur rest-cs (into ts ts')))
+           [ts cs]))))))
 
 (def parse-tree (partial z/zipper
                          seq? ;branch?
@@ -188,19 +158,20 @@
                              (z/node loc)))
             x-t (:token x)]
         (case [curr-t x-t]
-          [\法 \条] (-> loc (z/append-child (list x)) z/down z/rightmost)
-          [\条 \款] (-> loc (z/append-child (list x)) z/down z/rightmost)
-          [\条 \项] (-> loc (z/append-child (list {:token \款 :nth 1})) z/down z/rightmost
+          [:法 :条] (-> loc (z/append-child (list x)) z/down z/rightmost)
+          [:规定 :条] (-> loc (z/append-child (list x)) z/down z/rightmost)
+          [:条 :款] (-> loc (z/append-child (list x)) z/down z/rightmost)
+          [:条 :项] (-> loc (z/append-child (list {:token :款 :nth 1})) z/down z/rightmost
                         (z/append-child (list x)) z/down z/rightmost)
-          [\款 \项] (-> loc (z/append-child (list x)) z/down z/rightmost)
+          [:款 :项] (-> loc (z/append-child (list x)) z/down z/rightmost)
 
-          [\条 \条] (recur (-> loc z/up) x)
-          [\款 \款] (recur (-> loc z/up) x)
-          [\项 \项] (recur (-> loc z/up) x)
+          [:条 :条] (recur (-> loc z/up) x)
+          [:款 :款] (recur (-> loc z/up) x)
+          [:项 :项] (recur (-> loc z/up) x)
 
-          [\款 \条] (recur (-> loc z/up z/up) x)
-          [\项 \款] (recur (-> loc z/up z/up) x)
-          [\项 \条] (recur (-> loc z/up z/up z/up) x)
+          [:款 :条] (recur (-> loc z/up z/up) x)
+          [:项 :款] (recur (-> loc z/up z/up) x)
+          [:项 :条] (recur (-> loc z/up z/up z/up) x)
 
           (if (= x-t :separator)
             (-> loc (z/append-child x))
@@ -213,13 +184,14 @@
   {:test
    #(let [f generate-id]
       (tt/comprehend-tests
-       (t/is (= "" (f {} [])))
-       (t/is (= "条1" (f {} [{:token \法 :nth :this} {:token \条 :nth 1}])))
-       (t/is (= "条1" (f {\条 1} [{:token \条 :nth :this}])))
-       (t/is (= "条1款2项3" (f {} [{:token \法 :nth :this}
-                                   {:token \条 :nth 1}
-                                   {:token \款 :nth 2}
-                                   {:token \项 :nth 3}])))))}
+       (t/is (= ""          (f {} [])))
+       (t/is (= "条1"       (f {} [{:token :法 :nth :this}
+                                   {:token :条 :nth 1}])))
+       (t/is (= "条1"       (f {:条 1} [{:token :条 :nth :this}])))
+       (t/is (= "条1款2项3" (f {} [{:token :法 :nth :this}
+                                   {:token :条 :nth 1}
+                                   {:token :款 :nth 2}
+                                   {:token :项 :nth 3}])))))}
   [context src]
   (str/join
    (loop [r () s src]
@@ -230,11 +202,29 @@
            (let [c-t (:token (peek s))]
              (assert (= (:nth (peek s)) :this))
              (cond-> r
-               (not= c-t \法) (into [(context c-t) c-t])))
+               (nil? (#{:法 :规定} c-t)) (into [(context c-t) (name c-t)])))
 
            :else
            (let [c (peek s)]
-             (recur (into r [(:nth c) (:token c)]) (pop s)))))))
+             (recur (into r [(:nth c) (name (:token c))]) (pop s)))))))
+
+(defn str-token
+  {:test
+   #(let [f str-token
+          [a b c] (first (nth-items "第（二）、第（三）项"))]
+      (tt/comprehend-tests
+       (t/is (= "第一条" (f (first (first (nth-items "第一条"))))))
+       (t/is (= "第（二）"   (f a)))
+       (t/is (= "、"     (f b)))
+       (t/is (= "第（三）项"   (f c)))))}
+  [t]
+  (let [item-tokens (set (map (comp keyword str/join) item-types))
+        token (:token t)]
+    (if (item-tokens token)
+      (str (if (:第? t) \第 "")
+           (:text t)
+           (if (:unit? t) (name token) ""))
+      (:text t))))
 
 (defn update-leaves
   ([tree k f] (update-leaves tree [] k f))
@@ -254,15 +244,47 @@
      (do
        ;; (clojure.pprint/pprint r)
        ;; (println "------------------------")
-       (t/is (= src (str/join (map :text (flatten r)))))))
+       (t/is (= src (str/join (map str-token (flatten r)))))))
    (let [r (parse (items (seq "本法第三十九条和第四十条第一项、第二项")))]
      (t/is
-      (= '({:token \法, :nth :this, :text "本法"}
-           ({:token \条, :nth 39, :text "第三十九条", :id "条39"}
-            {:token :separator, :text "和"})
-           ({:token \条, :nth 40, :text "第四十条"}
-            ({:token \款, :nth 1}
-             ({:token \项, :nth 1, :text "第一项", :id "条40款1项1"}
-              {:token :separator, :text "、"})
-             ({:token \项, :nth 2, :text "第二项", :id "条40款1项2"}))))
+      (= '({:token :法 :nth :this :text "本法"}
+           ({:token :条 :nth 39 :text "三十九" :第? true :unit? true :id "条39"}
+            {:token :separator :text "和"})
+           ({:token :条 :nth 40 :text "四十" :第? true :unit? true}
+            ({:token :款 :nth 1}
+             ({:token :项 :nth 1 :text "一" :第? true :unit? true :id "条40款1项1"}
+              {:token :separator :text "、"})
+             ({:token :项 :nth 2 :text "二" :第? true :unit? true :id "条40款1项2"}))))
+         (update-leaves r :id (partial generate-id {})))))
+   (let [r (parse (items (seq "本规定第十、十八、二十六、二十七条")))]
+     (t/is
+      (= '({:token :规定 :nth :this :text "本规定"}
+           ({:token :条 :nth 10 :text "十" :第? true :unit? false :id "条10"}
+            {:token :separator :text "、"})
+           ({:token :条 :nth 18 :text "十八" :第? false :unit? false :id "条18"}
+            {:token :separator :text "、"})
+           ({:token :条 :nth 26 :text "二十六" :第? false :unit? false :id "条26"}
+            {:token :separator :text "、"})
+           ({:token :条 :nth 27 :text "二十七" :第? false :unit? true :id "条27"}))
          (update-leaves r :id (partial generate-id {})))))))
+
+(defn 条头
+  {:test
+   #(let [f 条头]
+      (tt/comprehend-tests
+       (t/is (not (f "第三十九条")))
+       (t/is (not (f "\n第三十九")))
+       (t/is (not (f "\n第三十九 条")))
+       (t/is (not (f "\n三十九条")))
+       (t/is (not (f "\n第39条")))
+       (t/is (= {:token :条头 :nth 39 :text "第三十九条"}
+                (f "\n第三十九条")))))}
+  [[c & cs]]
+  (and (= c \newline)
+       (when-let [[begin body end] (s/read-xs from-第 to-条 cs)]
+         (let [[i processed] (数字 body)]
+           (and (= processed body)
+                {:token :条头 :nth i
+                 :text (str/join
+                        (s/flatten-and-vector begin body end))})))))
+

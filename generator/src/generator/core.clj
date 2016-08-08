@@ -2,18 +2,14 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :as t]
+            [generator.line :as l]
+            [generator.lisp :as s]
             [generator.test :as tt]
             [generator.tokenizer :as token]
+            [generator.zh-digits :refer [numchar-zh-set]]
             [hiccup.core :refer :all]
             [hiccup.page :refer :all])
   (:gen-class))
-
-(defn- without-prefix [origin prefix]
-  (loop [s origin t prefix]
-    (cond
-      (empty? t) s
-      (not= (first s) (first t)) origin
-      :else (recur (rest s) (rest t)))))
 
 (defn default-fn [l] [:p l])
 
@@ -83,17 +79,16 @@
 
       (re-matches table-of-contents-sentinel (first ls))
       (let [[processed recognized] (table-of-contents ls)]
-        (recur (without-prefix ls processed)
+        (recur (s/without-prefix ls processed)
                (conj es recognized)))
 
-      (let [[_ unit] (token/nth-item (first ls))]
+      (let [[_ unit] (l/nth-item (first ls))]
         (#{\章 \节} unit))
-      (let [line (first ls)]
-        (recur (rest ls) (conj es (token/nth-章节 ls))))
+      (recur (rest ls) (conj es (l/nth-章节 ls)))
 
-      (= (second (token/nth-item (first ls))) \条)
-      (let [[processed recognized] (token/nth-条 ls)]
-        (recur (without-prefix ls processed)
+      (= (second (l/nth-item (first ls))) \条)
+      (let [[processed recognized] (l/nth-条 ls)]
+        (recur (s/without-prefix ls processed)
                (conj es recognized)))
 
       :else
@@ -110,20 +105,19 @@
                   "本法第四十条、第四十一条的规定解除劳动合同：")
           sb (seq b)]
       (tt/comprehend-tests
-       (t/is (= a (str/join (map :text (f {} sa)))))
-       (t/is (= b (str/join (map :text (f {} sb)))))))}
+       (t/is (= a (str/join (map token/str-token (f {} sa)))))
+       (t/is (= b (str/join (map token/str-token (f {} sb)))))))}
   [context cs]
-  (let [flags [(partial = \本) #{\法 \条} (partial = \第) token/numchar-zh-set]
-
-        check-flags
-        (fn [[a b c d]]
-          (and ((flags 0) a) ((flags 1) b) ((flags 2) c) ((flags 3) d)))
+  (let [flags [#{[\本]}
+               #{[\规 \定] [\法] [\条]}
+               #{[\第]}
+               (set (map vector numchar-zh-set))]
 
         generate-id (partial token/generate-id context)]
     (->> (loop [cs cs ts []]
            (if (empty? cs)
              ts
-             (if (check-flags cs)
+             (if (s/seq-match flags cs)
                (let [[items rests] (token/read-items cs)]
                  (recur rests (into ts (flatten (token/update-leaves
                                                  (token/parse items)
@@ -141,38 +135,36 @@
           e "第三款内容"
           r (f [(str a b) c d e])]
       (tt/comprehend-tests
-       (t/is (= [\条 \款 \款 \项 \款] (map :token r)))
+       (t/is (= [:条头 \款 \款 \项 \款] (map :token r)))
        (t/is (= [1 1 2 1 3] (map :nth r)))
        (t/is (= [a (str/trim b) c d e] (map :text r)))))}
   [[line & lines]]
-  (let [[head tail] (split-with (partial not= \space) line)
-        [i unit]    (token/nth-item head)
-        first-款    (str/join (rest tail))] ;use "rest" to skip \space
-    (assert (= unit (last head) \条))
-    (assert (seq first-款))
-    (loop [ts [{:token \条 :nth i :text (str/join head)}
-               {:token \款 :nth 1 :text first-款}]
-           [l & ls] lines
-           i-款 2]
-      (if (nil? l)
-        ts
-        (if (= (first l) \（)
-          (if-let [t (token/nth-项 l)]
-            (recur (conj ts t) ls i-款)
-            (recur (conj ts {:token :to-be-recognized :text l}) ls i-款))
-          (recur (conj ts {:token \款 :nth i-款 :text l}) ls (inc i-款)))))))
+  (when-let [head (token/条头 (cons \newline line))]
+    (let [tail     (s/without-prefix line (:text head))
+          first-款 (str/join (rest tail))] ;use "rest" to skip \space
+      (assert (seq first-款))
+      (loop [ts [head {:token \款 :nth 1 :text first-款}]
+             [l & ls] lines
+             i-款 2]
+        (if (nil? l)
+          ts
+          (if (= (first l) \（)
+            (if-let [t (l/nth-项 l)]
+              (recur (conj ts t) ls i-款)
+              (recur (conj ts {:token :to-be-recognized :text l}) ls i-款))
+            (recur (conj ts {:token \款 :nth i-款 :text l}) ls (inc i-款))))))))
 
 (defn wrap-item-string-in-html
   {:test
    #(let [f wrap-item-string-in-html
-          ts [{:token \法, :nth :this, :text "本法"}
-              {:token \条, :nth 39, :text "第三十九条", :id "条39"}
-              {:token :separator, :text "和"}
-              {:token \条, :nth 40, :text "第四十条"}
-              {:token \款, :nth 1}
-              {:token \项, :nth 1, :text "第一项", :id "条40款1项1"}
-              {:token :separator, :text "、"}
-              {:token \项, :nth 2, :text "第二项", :id "条40款1项2"}]]
+          ts [{:token :法 :nth :this :text "本法"}
+              {:token :条 :nth 39 :text "三十九" :第? true :unit? true :id "条39"}
+              {:token :separator :text "和"}
+              {:token :条 :nth 40 :text "四十" :第? true :unit? true}
+              {:token :款 :nth 1}
+              {:token :项 :nth 1 :text "一" :第? true :unit? true :id "条40款1项1"}
+              {:token :separator :text "、"}
+              {:token :项 :nth 2 :text "二" :第? true :unit? true :id "条40款1项2"}]]
       (tt/comprehend-tests
        (t/is (= (html [:span
                        "本法"
@@ -187,16 +179,16 @@
                         (partition-by :id)
                         (map #(if (:id (first %))
                                 %
-                                {:text (str/join (map :text %))}))
+                                {:text (str/join (map token/str-token %))}))
                         flatten)]
            (for [t ts'
                  :let [{:keys [id text]} t]]
              (if id
-               [:a {:href (str \# id)} text]
+               [:a {:href (str \# id)} (token/str-token t)]
                text)))])
 
 (defn- wrap-条-in-html [[head & more-tokens]]
-  (assert (= (:token head) \条))
+  (assert (= (:token head) :条头))
   [:div {:class "entry" :id (str \条 (:nth head))}
    [:div {:class "title"}
     [:b (:text head)]]
@@ -206,7 +198,7 @@
            i-款 0]
       (if (nil? t)
         ps
-        (let [content (->> (within-款项 {\条 (:nth head)} (seq (:text t)))
+        (let [content (->> (within-款项 {:条 (:nth head)} (seq (:text t)))
                            (partition-by #(= (:token %) :to-be-recognized))
                            (map #(if (= (:token (first %)) :to-be-recognized)
                                    (str/join (map :text %))
@@ -262,15 +254,21 @@
           :to-be-recognized
           (default-fn (:text tl))))]])))
 
+(defn- mainfn [inname->outpath]
+  (dorun
+   (for [[in out] inname->outpath]
+     (with-open [r (io/reader (io/file (io/resource in)))]
+       (->> (line-seq r)
+            (remove str/blank?)
+            (map (comp use-chinese-paren space-clapsed str/trim))
+            draw-skeleton
+            wrap-in-html
+            (spit out))))))
+
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
-  (with-open [r (io/reader "../original_text.txt")]
-    (->> (line-seq r)
-         (remove str/blank?)
-         (map (comp use-chinese-paren space-clapsed str/trim))
-         draw-skeleton
-         wrap-in-html
-         (spit "../index.html"))))
+  (mainfn {"劳动合同法.txt" "../index.html"
+           "网络预约出租汽车经营服务管理暂行办法.txt" "../index_notready.html"}))
 
 (-main)
