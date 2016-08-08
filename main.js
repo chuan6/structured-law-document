@@ -49,7 +49,7 @@ function dynamicLayoutFn(container, es) {
 
         computed = window.getComputedStyle(es[0]);
         minEntryWidth = parseFloat(computed.minWidth) + horizontalExtra(computed);
-        shouldBeSingleCol = (window.innerWidth < minEntryWidth * 2);
+        shouldBeSingleCol = true; //(window.innerWidth < minEntryWidth * 2);
         if (shouldBeSingleCol !== isSingleCol) {
             if (shouldBeSingleCol) {
                 container.style.height = "auto";
