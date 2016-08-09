@@ -141,6 +141,15 @@
                        ts
                        i-款))))))])
 
+(defn- wrap-outline-in-html [outline]
+  (assert (= (:token outline) :table-of-contents))
+  (let [[head & item-list] (:list outline)]
+    [:nav {:id "outline"}
+     [:h2 head]
+     [:ul (for [item item-list]
+            [:li [:a {:href (str "#" (space-filled item))}
+                  item]])]]))
+
 (defn- wrap-in-html [tokenized-lines]
   (html
    (html5
@@ -162,27 +171,31 @@
              (case t
                :table-of-contents
                (recur (rest tls)
-                      (conj elmts (let [[head & item-list] (:list tl)]
-                                    [:nav {:id "outline"}
-                                     [:h2 head]
-                                     [:ul (for [item item-list]
-                                            [:li [:a {:href (str "#" (space-filled item))}
-                                                  item]])]])))
+                      (conj elmts (wrap-outline-in-html tl)))
 
                :章
                (let [txt (:text tl)]
-                 (recur (rest tls) (conj elmts [:h2 {:id (space-filled txt) :class "章"} txt])))
+                 (recur (rest tls)
+                        (conj elmts [:h2 {:id (space-filled txt)
+                                          :class "章"}
+                                     txt])))
 
                :节
                (let [txt (:text tl)]
-                 (recur (rest tls) (conj elmts [:h3 {:id (space-filled txt) :class "节"} txt])))
+                 (recur (rest tls)
+                        (conj elmts [:h3 {:id (space-filled txt)
+                                          :class "节"}
+                                     txt])))
 
                :条
-               (let [[lines-within lines-after] (split-with #(#{:款 :项} (:token %)) (rest tls))]
-                 (recur lines-after (conj elmts (wrap-条-in-html tl lines-within))))
+               (let [[lines-within lines-after]
+                     (split-with #(#{:款 :项} (:token %)) (rest tls))]
+                 (recur lines-after
+                        (conj elmts (wrap-条-in-html tl lines-within))))
 
                :to-be-recognized
-               (recur (rest tls) (conj elmts (default-fn (:text tl)))))))))]])))
+               (recur (rest tls)
+                      (conj elmts (default-fn (:text tl)))))))))]])))
 
 (defn tokenized-lines [ls]
   (let [[before-ts after-ls] (l/recognize-table-of-contents ls)]
