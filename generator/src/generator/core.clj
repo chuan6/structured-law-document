@@ -144,7 +144,7 @@
 (defn- wrap-in-html [tokenized-lines]
   (html
    (html5
-    [:head {:lang "zh"}
+    [:head {:lang "zh-CN"}
      [:meta {:charset "utf-8"}]
      [:meta {:name "viewport"
              :content "width=device-width, initial-scale=1"}]

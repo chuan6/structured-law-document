@@ -1,9 +1,11 @@
-body
-:lang(en) {font-family: sans-serif;}
-
 body {
+  font-family: sans-serif;
   margin: 0 auto;
   background-color: white;
+}
+
+h2, h3 {
+  font-family: "仿宋", FangSong, serif;
 }
 
 #entries-container {
