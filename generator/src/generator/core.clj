@@ -13,30 +13,6 @@
 
 (defn default-fn [l] [:p l])
 
-(def table-of-contents-sentinel #"目\s*录")
-(defn table-of-contents
-  {:test
-   #(let [txt ["目 录" "第一章" "第二章" "第三章" "第一章" "……"]]
-      (tt/comprehend-tests
-       [(t/is (= [["目 录"]
-                  {:token :table-of-contents
-                   :list ["目 录"]}]
-                 (table-of-contents ["目 录"])))
-        (t/is (= [["目 录" "第一章" "第二章" "第三章"]
-                  {:token :table-of-contents
-                   :list ["目 录" "第一章" "第二章" "第三章"]}]
-                 (table-of-contents txt)))]))}
-  [ls]
-  (let [head (first ls)]
-    (assert (re-matches table-of-contents-sentinel head))
-    (if-let [first-item (second ls)]
-      (loop [s (rest (rest ls))
-             t [head first-item]]
-        (if (or (= (first s) first-item) (empty? s))
-          [t {:token :table-of-contents :list  t}]
-          (recur (rest s) (conj t (first s)))))
-      [[head] {:token :table-of-contents :list [head]}])))
-
 (defn use-chinese-paren
   {:test
    #(let [f use-chinese-paren]
@@ -70,30 +46,6 @@
   [s]
   (str/replace s #"\s" "-"))
 
-(defn- draw-skeleton [lines]
-  (loop [ls lines
-         es []]
-    (cond
-      (empty? ls)
-      (seq es)
-
-      (re-matches table-of-contents-sentinel (first ls))
-      (let [[processed recognized] (table-of-contents ls)]
-        (recur (s/without-prefix ls processed)
-               (conj es recognized)))
-
-      (let [[_ unit] (l/nth-item (first ls))]
-        (#{\章 \节} unit))
-      (recur (rest ls) (conj es (l/nth-章节 ls)))
-
-      (= (second (l/nth-item (first ls))) \条)
-      (let [[processed recognized] (l/nth-条 ls)]
-        (recur (s/without-prefix ls processed)
-               (conj es recognized)))
-
-      :else
-      (recur (rest ls) (conj es {:token :to-be-recognized :text (first ls)})))))
-
 (defn within-款项
   {:test
    #(let [f within-款项
@@ -124,35 +76,6 @@
                                                  :id generate-id)))))
                (recur (rest cs) (conj ts {:token :to-be-recognized
                                           :text (str (first cs))}))))))))
-
-(defn within-条
-  {:test
-   #(let [f within-条
-          a "第一条"
-          b " 第一款内容"
-          c "第二款内容"
-          d "（一）第一项内容"
-          e "第三款内容"
-          r (f [(str a b) c d e])]
-      (tt/comprehend-tests
-       (t/is (= [:条头 \款 \款 \项 \款] (map :token r)))
-       (t/is (= [1 1 2 1 3] (map :nth r)))
-       (t/is (= [a (str/trim b) c d e] (map :text r)))))}
-  [[line & lines]]
-  (when-let [head (token/条头 (cons \newline line))]
-    (let [tail     (s/without-prefix line (:text head))
-          first-款 (str/join (rest tail))] ;use "rest" to skip \space
-      (assert (seq first-款))
-      (loop [ts [head {:token \款 :nth 1 :text first-款}]
-             [l & ls] lines
-             i-款 2]
-        (if (nil? l)
-          ts
-          (if (= (first l) \（)
-            (if-let [t (l/nth-项 l)]
-              (recur (conj ts t) ls i-款)
-              (recur (conj ts {:token :to-be-recognized :text l}) ls i-款))
-            (recur (conj ts {:token \款 :nth i-款 :text l}) ls (inc i-款))))))))
 
 (defn wrap-item-string-in-html
   {:test
@@ -187,14 +110,14 @@
                [:a {:href (str \# id)} (token/str-token t)]
                text)))])
 
-(defn- wrap-条-in-html [[head & more-tokens]]
-  (assert (= (:token head) :条头))
+(defn- wrap-条-in-html [head body]
+  (assert (= (:token head) :条))
   [:div {:class "entry" :id (str \条 (:nth head))}
    [:div {:class "title"}
     [:b (:text head)]]
    (seq
     (loop [ps []
-           [t & ts] more-tokens
+           [t & ts] body
            i-款 0]
       (if (nil? t)
         ps
@@ -204,13 +127,13 @@
                                    (str/join (map :text %))
                                    (wrap-item-string-in-html %))))]
           (condp = (:token t)
-            \款 (recur (conj ps [:p {:class "款"
+            :款 (recur (conj ps [:p {:class "款"
                                      :id (str "条" (:nth head)
                                               "款" (inc i-款))}
                                  content])
                        ts
                        (inc i-款))
-            \项 (recur (conj ps [:p {:class "项"
+            :项 (recur (conj ps [:p {:class "项"
                                      :id (str "条" (:nth head)
                                               "款" i-款
                                               "项" (:nth t))}
@@ -230,29 +153,42 @@
      [:script {:src "main.js"}]]
     [:body
      [:div {:id "entries-container"}
-      (for [{t :token :as tl} tokenized-lines]
-        (case t
-          :table-of-contents
-          (let [[head & item-list] (:list tl)]
-            [:nav {:id "outline"}
-             [:h2 head]
-             [:ul (for [item item-list]
-                    [:li [:a {:href (str "#" (space-filled item))}
-                          item]])]])
+      (seq
+       (loop [tls tokenized-lines
+              elmts []]
+         (if (empty? tls)
+           elmts
+           (let [{t :token :as tl} (first tls)]
+             (case t
+               :table-of-contents
+               (recur (rest tls)
+                      (conj elmts (let [[head & item-list] (:list tl)]
+                                    [:nav {:id "outline"}
+                                     [:h2 head]
+                                     [:ul (for [item item-list]
+                                            [:li [:a {:href (str "#" (space-filled item))}
+                                                  item]])]])))
 
-          \章
-          (let [txt (:text tl)]
-            [:h2 {:id (space-filled txt) :class "章"} txt])
+               :章
+               (let [txt (:text tl)]
+                 (recur (rest tls) (conj elmts [:h2 {:id (space-filled txt) :class "章"} txt])))
 
-          \节
-          (let [txt (:text tl)]
-            [:h3 {:id (space-filled txt) :class "节"} txt])
+               :节
+               (let [txt (:text tl)]
+                 (recur (rest tls) (conj elmts [:h3 {:id (space-filled txt) :class "节"} txt])))
 
-          \条
-          (wrap-条-in-html (within-条 (:text tl)))
+               :条
+               (let [[lines-within lines-after] (split-with #(#{:款 :项} (:token %)) (rest tls))]
+                 (recur lines-after (conj elmts (wrap-条-in-html tl lines-within))))
 
-          :to-be-recognized
-          (default-fn (:text tl))))]])))
+               :to-be-recognized
+               (recur (rest tls) (conj elmts (default-fn (:text tl)))))))))]])))
+
+(defn tokenized-lines [ls]
+  (let [[before-ts after-ls] (l/recognize-table-of-contents ls)]
+    (if (empty? before-ts) ;;table of contents is not found
+      (l/draw-skeleton ls)
+      (into before-ts (l/draw-skeleton after-ls)))))
 
 (defn- mainfn [inname->outpath]
   (dorun
@@ -261,7 +197,7 @@
        (->> (line-seq r)
             (remove str/blank?)
             (map (comp use-chinese-paren space-clapsed str/trim))
-            draw-skeleton
+            tokenized-lines
             wrap-in-html
             (spit out))))))
 
