@@ -5,7 +5,7 @@
             [generator.line :as l]
             [generator.lisp :as s]
             [generator.test :as tt]
-            [generator.tokenizer :as token]
+            [generator.tokenizer :as tk]
             [generator.zh-digits :refer [numchar-zh-set]]
             [hiccup.core :refer :all]
             [hiccup.page :refer :all])
@@ -57,25 +57,25 @@
                   "本法第四十条、第四十一条的规定解除劳动合同：")
           sb (seq b)]
       (tt/comprehend-tests
-       (t/is (= a (str/join (map token/str-token (f {} sa)))))
-       (t/is (= b (str/join (map token/str-token (f {} sb)))))))}
+       (t/is (= a (str/join (map tk/str-token (f {} sa)))))
+       (t/is (= b (str/join (map tk/str-token (f {} sb)))))))}
   [context cs]
-  (let [flags [#{[\本]}
+  (let [genid (partial tk/generate-id context)
+        flags [#{[\本]}
                #{[\规 \定] [\法] [\条]}
                #{[\第]}
-               (set (map vector numchar-zh-set))]
-
-        generate-id (partial token/generate-id context)]
-    (->> (loop [cs cs ts []]
-           (if (empty? cs)
-             ts
-             (if (s/seq-match flags cs)
-               (let [[items rests] (token/read-items cs)]
-                 (recur rests (into ts (flatten (token/update-leaves
-                                                 (token/parse items)
-                                                 :id generate-id)))))
-               (recur (rest cs) (conj ts {:token :to-be-recognized
-                                          :text (str (first cs))}))))))))
+               (set (map vector numchar-zh-set))]]
+    (loop [cs cs ts []]
+      (if (empty? cs)
+        ts
+        (if (s/seq-match flags cs)
+          (let [[items rests] (tk/read-items cs)]
+            (recur rests (s/flatten-and-vector
+                          ts (-> items
+                                 tk/parse
+                                 (tk/update-leaves :id genid)))))
+          (recur (rest cs) (conj ts {:token :to-be-recognized
+                                     :text (first cs)})))))))
 
 (defn wrap-item-string-in-html
   {:test
@@ -130,12 +130,12 @@
   [:span (let [ts' (flatten
                     (s/map-on-binary-partitions
                      :id ts
-                     identity #(str/join (map token/str-token %))))]
+                     identity #(str/join (map tk/str-token %))))]
            (for [t ts'
                  :let [id (:id t)]]
              (if-not id
                t
-               [:a {:href (str \# id)} (token/str-token t)])))])
+               [:a {:href (str \# id)} (tk/str-token t)])))])
 
 (defn- wrap-条-in-html [head body]
   (assert (= (:token head) :条))
@@ -151,7 +151,7 @@
         (let [content (s/map-on-binary-partitions
                        #(= (:token %) :to-be-recognized)
                        (within-款项 {:条 (:nth head)} (seq (:text t)))
-                       #(str/join (map token/str-token %))
+                       #(str/join (map tk/str-token %))
                        wrap-item-string-in-html)]
           (condp = (:token t)
             :款 (recur (conj ps [:p {:class "款"
@@ -224,7 +224,7 @@
                (recur (rest tls)
                       (conj elmts (default-fn (:text tl)))))))))]])))
 
-(defn tokenized-lines [ls]
+(defn- tokenized-lines [ls]
   (let [[before-ts after-ls] (l/recognize-table-of-contents ls)]
     (if (empty? before-ts) ;;table of contents is not found
       (l/draw-skeleton ls)
