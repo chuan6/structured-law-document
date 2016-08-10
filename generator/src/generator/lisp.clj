@@ -75,3 +75,18 @@
         [true (without-prefix cs word)]
         (reduced [false cs])))
     [true cs] word-sets)))
+
+(defn map-on-binary-partitions
+  {:test
+   #(let [f map-on-binary-partitions]
+      (tt/comprehend-tests
+       (t/is (= [-2 0 -4]
+                (f pos? [-1 -1 1 1 -1 -1 -1 -1]
+                   (partial apply -) (partial apply +))))))}
+  [pred coll yes-fn no-fn]
+  (->> (partition-by pred coll)
+       (map #((let [representative (first %)]
+                (if (pred representative)
+                  yes-fn
+                  no-fn))
+              %))))
