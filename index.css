@@ -42,13 +42,20 @@ h2, h3 {
   background-color: inherit;
 }
 
-.title, .款, .项 {
-  padding: 0 1.62em 0 1em;
+.title {
+  padding-left: 1em;
+  padding-right: 1em;
+  font-weight: bold;
+}
+
+.款, .项 {
+  padding: 0.5em 1em;
+  margin: 0;
 }
 
 .entry {
-  margin: 0.5em 8px 0.5em 8px;
-  border-left: 2px solid red;
+  margin: 1em 0.5em;
+  border-left: 1px solid red;
   line-height: 1.62;
 }
 
@@ -63,12 +70,6 @@ h2, h3 {
   box-shadow: 0 0 0.1em silver;
 }
 
-.entry p {
-  padding-top: 0.5em;
-  padding-bottom: 0.5em;
-  margin: 0;
-}
-
 nav, .章, .节 {
   margin-left: 8px;
   margin-right: 8px;
@@ -80,8 +81,4 @@ nav, .章, .节 {
 
 nav ul {
   line-height: 1.62;
-}
-
-.title {
-  font-weight: bold;
 }

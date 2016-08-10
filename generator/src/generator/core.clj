@@ -75,7 +75,7 @@
                                  tk/parse
                                  (tk/update-leaves :id genid)))))
           (recur (rest cs) (conj ts {:token :to-be-recognized
-                                     :text (first cs)})))))))
+                                     :text (str (first cs))})))))))
 
 (defn wrap-item-string-in-html
   {:test
