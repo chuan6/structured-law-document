@@ -57,85 +57,37 @@
                   "本法第四十条、第四十一条的规定解除劳动合同：")
           sb (seq b)]
       (tt/comprehend-tests
-       (t/is (= a (str/join (map tk/str-token (f {} sa)))))
-       (t/is (= b (str/join (map tk/str-token (f {} sb)))))))}
+       (t/is (= a (str/join (map :text (f {} sa)))))
+       (t/is (= b (str/join (map :text (f {} sb)))))))}
   [context cs]
   (let [genid (partial tk/generate-id context)
-        flags [#{[\本]}
-               #{[\规 \定] [\法] [\条]}
-               #{[\第]}
-               (set (map vector numchar-zh-set))]]
+        flags [#{[\本] [\前]}
+               #{[\规 \定] [\法] [\条] [\款]}
+               #{[\第]}]]
     (loop [cs cs ts []]
       (if (empty? cs)
         ts
         (if (s/seq-match flags cs)
           (let [[items rests] (tk/read-items cs)]
-            (recur rests (s/flatten-and-vector
-                          ts (-> items
-                                 tk/parse
-                                 (tk/update-leaves :id genid)))))
+            (recur rests (into ts (-> items
+                                      tk/parse
+                                      (tk/update-leaves :id genid)
+                                      flatten
+                                      tk/second-pass))))
           (recur (rest cs) (conj ts {:token :to-be-recognized
                                      :text (str (first cs))})))))))
 
-(defn wrap-item-string-in-html
-  {:test
-   #(let [f wrap-item-string-in-html
-          ts [{:token :法 :nth :this :text "本法"}
-              {:token :条 :nth 39 :text "三十九"
-               :第? true :unit? true :id "条39"}
-              {:token :separator :text "和"}
-              {:token :条 :nth 40 :text "四十"
-               :第? true :unit? true}
-              {:token :款 :nth 1}
-              {:token :项 :nth 1 :text "一"
-               :第? true :unit? true :id "条40款1项1"}
-              {:token :separator :text "、"}
-              {:token :项 :nth 2 :text "二"
-               :第? true :unit? true :id "条40款1项2"}]
-              ;; ts2 [{:token :规定 :nth :this :text "本规定"}
-              ;;  {:token :条 :nth 10 :text "十"
-              ;;   :第? true :unit? false :id "条10"}
-              ;;  {:token :separator :text "、"}
-              ;;  {:token :条 :nth 18 :text "十八"
-              ;;   :第? false :unit? false :id "条18"}
-              ;;  {:token :separator :text "、"}
-              ;;  {:token :条 :nth 26 :text "二十六"
-              ;;   :第? false :unit? false :id "条26"}
-              ;;  {:token :separator :text "、"}
-              ;;  {:token :条 :nth 27 :text "二十七"
-              ;;   :第? false :unit? true :id "条27"}]
-          ]
-      (tt/comprehend-tests
-       (t/is (= (html [:span
-                       "本法"
-                       [:a {:href "#条39"} "第三十九条"]
-                       "和第四十条"
-                       [:a {:href "#条40款1项1"} "第一项"]
-                       "、"
-                       [:a {:href "#条40款1项2"} "第二项"]])
-                (html (f ts))))
-       ;; (t/is (= (html [:span
-       ;;                 "本规定第"
-       ;;                 [:a {:href "#条10"} "十"]
-       ;;                 "、"
-       ;;                 [:a {:href "#条18"} "十八"]
-       ;;                 "、"
-       ;;                 [:a {:href "#条26"} "二十六"]
-       ;;                 "、"
-       ;;                 [:a {:href "#条27"} "二十七"]
-       ;;                 "条"])
-       ;;          (html (f ts2))))
-       ))}
-  [ts]
-  [:span (let [ts' (flatten
-                    (s/map-on-binary-partitions
-                     :id ts
-                     identity #(str/join (map tk/str-token %))))]
-           (for [t ts'
-                 :let [id (:id t)]]
-             (if-not id
-               t
-               [:a {:href (str \# id)} (tk/str-token t)])))])
+(defn wrap-item-string-in-html [ts]
+  (let [a-x-z (fn [t])]
+    [:span (let [ts' (flatten
+                      (s/map-on-binary-partitions
+                       :id ts
+                       identity #(str/join (map :text %))))]
+             (for [t ts'
+                   :let [id (:id t)]]
+               (if-not id
+                 t
+                 [:a {:href (str \# id)} (:text t)])))]))
 
 (defn- wrap-条-in-html [head body]
   (assert (= (:token head) :条))
@@ -148,25 +100,30 @@
            i-款 0]
       (if (nil? t)
         ps
-        (let [content (s/map-on-binary-partitions
-                       #(= (:token %) :to-be-recognized)
-                       (within-款项 {:条 (:nth head)} (seq (:text t)))
-                       #(str/join (map tk/str-token %))
-                       wrap-item-string-in-html)]
-          (condp = (:token t)
-            :款 (recur (conj ps [:p {:class "款"
-                                     :id (str "条" (:nth head)
-                                              "款" (inc i-款))}
-                                 content])
-                       ts
-                       (inc i-款))
-            :项 (recur (conj ps [:p {:class "项"
-                                     :id (str "条" (:nth head)
-                                              "款" i-款
-                                              "项" (:nth t))}
-                                 content])
-                       ts
-                       i-款))))))])
+        (condp = (:token t)
+          :款 (recur (conj ps [:p {:class "款"
+                                   :id (str "条" (:nth head)
+                                            "款" (inc i-款))}
+                               (s/map-on-binary-partitions
+                                #(= (:token %) :to-be-recognized)
+                                (within-款项 {:条 (:nth head)
+                                              :款 (inc i-款)} (seq (:text t)))
+                                #(str/join (map :text %))
+                                wrap-item-string-in-html)])
+                     ts
+                     (inc i-款))
+          :项 (recur (conj ps [:p {:class "项"
+                                   :id (str "条" (:nth head)
+                                            "款" i-款
+                                            "项" (:nth t))}
+                               (s/map-on-binary-partitions
+                                #(= (:token %) :to-be-recognized)
+                                (within-款项 {:条 (:nth head)
+                                              :款 i-款} (seq (:text t)))
+                                #(str/join (map :text %))
+                                wrap-item-string-in-html)])
+                     ts
+                     i-款)))))])
 
 (defn- wrap-outline-in-html [outline]
   (assert (= (:token outline) :table-of-contents))
