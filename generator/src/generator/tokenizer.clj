@@ -180,6 +180,118 @@
     (parse-tree (list (first recognized-items)))
     (rest recognized-items))))
 
+(defn second-pass
+  {:test
+   #(let [f second-pass]
+      (tt/comprehend-tests
+       (t/is (= [{:token :法 :nth :this :text "本法"}
+                 {:token :条 :nth 39 :text "第三十九条" :第? true :unit? true :id "条39"}
+                 {:token :separator :text "和"}
+                 {:token :条 :nth 40 :text "第四十条" :第? true :unit? true}
+                 {:token :款 :nth 1}
+                 {:token :项 :nth 1 :text "第一项" :第? true :unit? true :id "条40款1项1"}
+                 {:token :separator :text "、"}
+                 {:token :项 :nth 2 :text "第二项" :第? true :unit? true :id "条40款1项2"}]
+                (f [{:token :法 :nth :this :text "本法"}
+                    {:token :条 :nth 39 :text "三十九" :第? true :unit? true :id "条39"}
+                    {:token :separator :text "和"}
+                    {:token :条 :nth 40 :text "四十" :第? true :unit? true}
+                    {:token :款 :nth 1}
+                    {:token :项 :nth 1 :text "一" :第? true :unit? true :id "条40款1项1"}
+                    {:token :separator :text "、"}
+                    {:token :项 :nth 2 :text "二" :第? true :unit? true :id "条40款1项2"}])))
+       (t/is (= [{:token :规定 :nth :this :text "本规定"}
+                 {:text "第"}
+                 {:token :条 :nth 10 :text "十" :第? true :unit? false :id "条10"}
+                 {:token :separator :text "、"}
+                 {:token :条 :nth 18 :text "十八" :第? false :unit? false :id "条18"}
+                 {:token :separator :text "、"}
+                 {:token :条 :nth 26 :text "二十六" :第? false :unit? false :id "条26"}
+                 {:token :separator :text "、"}
+                 {:token :条 :nth 27 :text "二十七" :第? false :unit? true :id "条27"}
+                 {:text "条"}]
+                (f [{:token :规定 :nth :this :text "本规定"}
+                    {:token :条 :nth 10 :text "十" :第? true :unit? false :id "条10"}
+                    {:token :separator :text "、"}
+                    {:token :条 :nth 18 :text "十八" :第? false :unit? false :id "条18"}
+                    {:token :separator :text "、"}
+                    {:token :条 :nth 26 :text "二十六" :第? false :unit? false :id "条26"}
+                    {:token :separator :text "、"}
+                    {:token :条 :nth 27 :text "二十七" :第? false :unit? true :id "条27"}])))
+       (t/is (= [{:token :款 :nth :prev :text "前款"}
+                 {:token :项 :nth 5 :text "第（五）" :第? true :unit? false}
+                 {:token :separator :text "、"}
+                 {:token :项 :nth 6 :text "第（六）" :第? true :unit? true}
+                 {:text "项"}]
+                (f [{:token :款 :nth :prev :text "前款"}
+                    {:token :项 :nth 5 :text "（五）" :第? true :unit? false}
+                    {:token :separator :text "、"}
+                    {:token :项 :nth 6 :text "（六）" :第? true :unit? true}])))))}
+  [ts]
+  (let [item-set #{:法 :规定 :条 :款 :项}
+        tri-ts (partition 3 1 (concat ts [nil nil]))
+        prev-item   (fn [ts]
+                      (cond (empty? ts)
+                            nil
+
+                            (item-set (:token (peek ts)))
+                            (peek ts)
+
+                            :else
+                            (recur (pop ts))))
+        succ-item   (fn [suc ssuc]
+                      (cond (item-set (:token suc)) suc
+                            (item-set (:token ssuc)) ssuc))
+        merge-both  (fn [t]
+                      [(cond-> t
+                         (:第? t) (update :text (partial str "第"))
+                         (:unit? t) (update :text str (name (:token t))))])
+        merge-left  (fn [t] (assert (:unit? t))
+                      [(cond-> t
+                         (:第? t) (update :text (partial str "第")))
+                       {:text (name (:token t))}])
+        merge-right (fn [t] (assert (:第? t))
+                      [{:text "第"}
+                       (cond-> t
+                         (:unit? t) (update :text str (name (:token t))))])]
+    (loop [tts tri-ts
+           ts' []]
+      (if (empty? tts)
+        ts'
+        (let [[t tsuc tssuc] (first tts)]
+          (assert t)
+          (cond (= (:token t) :separator)
+                (recur (rest tts) (conj ts' t))
+
+                (item-set (:token t))
+                (if-not (or (:第? t) (:unit? t))
+                  (recur (rest tts) (conj ts' t))
+                  (let [pre (prev-item ts')
+                        suc (succ-item tsuc tssuc)]
+                    (cond
+                      ;;in the middle of a group
+                      (= (:token pre) (:token t) (:token suc))
+                      (recur (rest tts) (into ts' (merge-both t)))
+
+                      ;;at the beginning of a group
+                      (= (:token t) (:token suc))
+                      (do (assert (:第? t))
+                          (recur (rest tts) (into ts'
+                                                  (if (:第? suc)
+                                                    (merge-both t)
+                                                    (merge-right t)))))
+
+                      ;;at the end of a group
+                      (= (:token pre) (:token t))
+                      (do (assert (:unit? t))
+                          (recur (rest tts) (into ts'
+                                                  (if (:unit? pre)
+                                                    (merge-both t)
+                                                    (merge-left t)))))
+
+                      :standalone
+                      (recur (rest tts) (into ts' (merge-both t))))))))))))
+
 (defn generate-id
   {:test
    #(let [f generate-id]
@@ -287,4 +399,3 @@
                 {:token :条头 :nth i
                  :text (str/join
                         (s/flatten-and-vector begin body end))})))))
-
