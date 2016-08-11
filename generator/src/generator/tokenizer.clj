@@ -180,6 +180,9 @@
     (parse-tree (list (first recognized-items)))
     (rest recognized-items))))
 
+(def item-type-set #{:法 :规定 :条 :款 :项})
+(def item-type-str (comp name :token))
+
 (defn second-pass
   {:test
    #(let [f second-pass]
@@ -228,69 +231,60 @@
                     {:token :separator :text "、"}
                     {:token :项 :nth 6 :text "（六）" :第? true :unit? true}])))))}
   [ts]
-  (let [item-set #{:法 :规定 :条 :款 :项}
-        tri-ts (partition 3 1 (concat ts [nil nil]))
-        prev-item   (fn [ts]
-                      (cond (empty? ts)
-                            nil
+  (letfn [(prev-item [ts]
+            (if (empty? ts)
+              nil
+              (let [t (peek ts)]
+                (if (item-type-set (:token t))
+                  t
+                  (recur (pop ts))))))
 
-                            (item-set (:token (peek ts)))
-                            (peek ts)
+          (succ-item [[suc ssuc]]
+            (cond (item-type-set (:token suc)) suc
+                  (item-type-set (:token ssuc)) ssuc))
 
-                            :else
-                            (recur (pop ts))))
-        succ-item   (fn [suc ssuc]
-                      (cond (item-set (:token suc)) suc
-                            (item-set (:token ssuc)) ssuc))
-        merge-both  (fn [t]
-                      [(cond-> t
-                         (:第? t) (update :text (partial str "第"))
-                         (:unit? t) (update :text str (name (:token t))))])
-        merge-left  (fn [t] (assert (:unit? t))
-                      [(cond-> t
-                         (:第? t) (update :text (partial str "第")))
-                       {:text (name (:token t))}])
-        merge-right (fn [t] (assert (:第? t))
-                      [{:text "第"}
-                       (cond-> t
-                         (:unit? t) (update :text str (name (:token t))))])]
-    (loop [tts tri-ts
-           ts' []]
-      (if (empty? tts)
-        ts'
-        (let [[t tsuc tssuc] (first tts)]
-          (assert t)
-          (cond (= (:token t) :separator)
-                (recur (rest tts) (conj ts' t))
+          (extend-to [t left? right?]
+            (cond-> t
+              (and left? (:第? t)) (update :text (partial str "第"))
+              (and right? (:unit? t)) (update :text str (item-type-str t))))
 
-                (item-set (:token t))
-                (if-not (or (:第? t) (:unit? t))
-                  (recur (rest tts) (conj ts' t))
-                  (let [pre (prev-item ts')
-                        suc (succ-item tsuc tssuc)]
-                    (cond
-                      ;;in the middle of a group
-                      (= (:token pre) (:token t) (:token suc))
-                      (recur (rest tts) (into ts' (merge-both t)))
+          (merge-both [t]
+            [(extend-to t true true)])
 
-                      ;;at the beginning of a group
-                      (= (:token t) (:token suc))
-                      (do (assert (:第? t))
-                          (recur (rest tts) (into ts'
-                                                  (if (:第? suc)
-                                                    (merge-both t)
-                                                    (merge-right t)))))
+          (merge-left [t] (assert (:unit? t))
+            [(extend-to t true false) {:text (item-type-str t)}])
 
-                      ;;at the end of a group
-                      (= (:token pre) (:token t))
-                      (do (assert (:unit? t))
-                          (recur (rest tts) (into ts'
-                                                  (if (:unit? pre)
-                                                    (merge-both t)
-                                                    (merge-left t)))))
+          (merge-right [t] (assert (:第? t))
+            [{:text "第"} (extend-to t false true)])]
+    (reduce
+     (fn [ts' [t tsuc tssuc]]
+       (assert t)
+       (cond (= (:token t) :separator)
+             (conj ts' t)
 
-                      :standalone
-                      (recur (rest tts) (into ts' (merge-both t))))))))))))
+             (item-type-set (:token t))
+             (into ts'
+                   (if-not (or (:第? t) (:unit? t))
+                     [t]
+                     (let [pre (prev-item ts')
+                           suc (succ-item [tsuc tssuc])]
+                       (cond
+                         ;;in the middle of a group
+                         (= (:token pre)
+                            (:token t)
+                            (:token suc)) (merge-both t)
+                         ;;at the beginning of a group
+                         (= (:token t)
+                            (:token suc)) (if (:第? suc)
+                                            (merge-both t)
+                                            (merge-right t))
+                         ;;at the end of a group
+                         (= (:token pre)
+                            (:token t))   (if (:unit? pre)
+                                            (merge-both t)
+                                            (merge-left t))
+                         :standalone      (merge-both t)))))))
+     [] (partition 3 1 (concat ts [nil nil])))))
 
 (defn generate-id
   {:test
@@ -307,18 +301,16 @@
   [context src]
   (str/join
    (loop [r () s src]
-     (cond (empty? s)
-           r
-
-           (= (count s) 1)
-           (let [c-t (:token (peek s))]
+     (if (empty? s)
+       r
+       (let [c (peek s)]
+         (if (= (count s) 1)
+           (let [c-t (:token c)]
              (assert (= (:nth (peek s)) :this))
-             (cond-> r
-               (nil? (#{:法 :规定} c-t)) (into [(context c-t) (name c-t)])))
-
-           :else
-           (let [c (peek s)]
-             (recur (into r [(:nth c) (name (:token c))]) (pop s)))))))
+             (if (#{:法 :规定} c-t)
+               r
+               (into r [(context c-t) (item-type-str c)])))
+           (recur (into r [(:nth c) (item-type-str c)]) (pop s))))))))
 
 (defn str-token
   {:test
