@@ -61,10 +61,9 @@
        (t/is (= b (str/join (map :text (f {} sb)))))))}
   [context cs]
   (let [genid (partial tk/generate-id context)
-        flags [#{[\本]}
-               #{[\规 \定] [\法] [\条]}
-               #{[\第]}
-               (set (map vector numchar-zh-set))]]
+        flags [#{[\本] [\前]}
+               #{[\规 \定] [\法] [\条] [\款]}
+               #{[\第]}]]
     (loop [cs cs ts []]
       (if (empty? cs)
         ts
@@ -101,25 +100,30 @@
            i-款 0]
       (if (nil? t)
         ps
-        (let [content (s/map-on-binary-partitions
-                       #(= (:token %) :to-be-recognized)
-                       (within-款项 {:条 (:nth head)} (seq (:text t)))
-                       #(str/join (map :text %))
-                       wrap-item-string-in-html)]
-          (condp = (:token t)
-            :款 (recur (conj ps [:p {:class "款"
-                                     :id (str "条" (:nth head)
-                                              "款" (inc i-款))}
-                                 content])
-                       ts
-                       (inc i-款))
-            :项 (recur (conj ps [:p {:class "项"
-                                     :id (str "条" (:nth head)
-                                              "款" i-款
-                                              "项" (:nth t))}
-                                 content])
-                       ts
-                       i-款))))))])
+        (condp = (:token t)
+          :款 (recur (conj ps [:p {:class "款"
+                                   :id (str "条" (:nth head)
+                                            "款" (inc i-款))}
+                               (s/map-on-binary-partitions
+                                #(= (:token %) :to-be-recognized)
+                                (within-款项 {:条 (:nth head)
+                                              :款 (inc i-款)} (seq (:text t)))
+                                #(str/join (map :text %))
+                                wrap-item-string-in-html)])
+                     ts
+                     (inc i-款))
+          :项 (recur (conj ps [:p {:class "项"
+                                   :id (str "条" (:nth head)
+                                            "款" i-款
+                                            "项" (:nth t))}
+                               (s/map-on-binary-partitions
+                                #(= (:token %) :to-be-recognized)
+                                (within-款项 {:条 (:nth head)
+                                              :款 i-款} (seq (:text t)))
+                                #(str/join (map :text %))
+                                wrap-item-string-in-html)])
+                     ts
+                     i-款)))))])
 
 (defn- wrap-outline-in-html [outline]
   (assert (= (:token outline) :table-of-contents))

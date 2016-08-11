@@ -106,6 +106,8 @@
                         (when (= (take n cs) target)
                           target)))))
 
+(def adj->nth {\本 :this \前 :prev})
+
 (defn read-items
   {:test
    #(let [f read-items]
@@ -126,22 +128,21 @@
                  [\有 \关 \规 \定]]
                 (f "本规定第十、十八、二十六、二十七条有关规定")))))}
   [char-seq]
-  (let [adj->nth {\本 :this}]
-   (loop [[c & more-cs :as cs] char-seq
-          ts []]
-     (if-let [s-t (separators c)]
-       (recur more-cs (conj ts s-t))
-       (if-let [adj (adj->nth c)]
-         (when-let [processed (match-item-types more-cs)]
-           (recur (s/without-prefix more-cs processed)
-                  (let [processed-str (str/join processed)]
-                    (conj ts {:token (keyword processed-str)
-                              :nth adj
-                              :text (str c processed-str)}))))
-         (case c
-           \第 (when-let [[ts' rest-cs] (nth-items cs)]
-                 (recur rest-cs (into ts ts')))
-           [ts cs]))))))
+  (loop [[c & more-cs :as cs] char-seq
+         ts []]
+    (if-let [s-t (separators c)]
+      (recur more-cs (conj ts s-t))
+      (if-let [adj (adj->nth c)]
+        (when-let [processed (match-item-types more-cs)]
+          (recur (s/without-prefix more-cs processed)
+                 (let [processed-str (str/join processed)]
+                   (conj ts {:token (keyword processed-str)
+                             :nth adj
+                             :text (str c processed-str)}))))
+        (case c
+          \第 (when-let [[ts' rest-cs] (nth-items cs)]
+                (recur rest-cs (into ts ts')))
+          [ts cs])))))
 
 (def parse-tree (partial z/zipper
                          seq? ;branch?
@@ -297,7 +298,9 @@
        (t/is (= "条1款2项3" (f {} [{:token :法 :nth :this}
                                    {:token :条 :nth 1}
                                    {:token :款 :nth 2}
-                                   {:token :项 :nth 3}])))))}
+                                   {:token :项 :nth 3}])))
+       (t/is (= "条1款1项5") (f {:条 1 :款 2} [{:token :款 :nth :prev}
+                                               {:token :项 :nth 5}]))))}
   [context src]
   (str/join
    (loop [r () s src]
@@ -306,10 +309,14 @@
        (let [c (peek s)]
          (if (= (count s) 1)
            (let [c-t (:token c)]
-             (assert (= (:nth (peek s)) :this))
+             (assert (t/is ((set (vals adj->nth)) (:nth c))))
              (if (#{:法 :规定} c-t)
                r
-               (into r [(context c-t) (item-type-str c)])))
+               (let [r' (into r [(({:this identity
+                                    :prev dec} (:nth c)) (context c-t)) (item-type-str c)])]
+                 (if (= c-t :款)
+                   (recur r' [{:token :条 :nth :this}])
+                   r'))))
            (recur (into r [(:nth c) (item-type-str c)]) (pop s))))))))
 
 (defn str-token
