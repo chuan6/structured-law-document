@@ -130,9 +130,10 @@
   (let [[head & item-list] (:list outline)]
     [:nav {:id "outline"}
      [:h2 head]
-     [:ul (for [item item-list]
-            [:li [:a {:href (str "#" (space-filled item))}
-                  item]])]]))
+     [:ul {:class "entry"}
+      (for [item item-list]
+        [:li [:a {:href (str "#" (space-filled item))}
+              item]])]]))
 
 (defn- wrap-in-html [tokenized-lines]
   (html
@@ -201,7 +202,10 @@
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
-  (mainfn {"劳动合同法.txt" "../index.html"
-           "网络预约出租汽车经营服务管理暂行办法.txt" "../index_notready.html"}))
+  (mainfn {"劳动合同法.txt"
+           "../劳动合同法.html"
+
+           "网络预约出租汽车经营服务管理暂行办法.txt"
+           "../网络预约出租汽车经营服务管理暂行办法.html"}))
 
 (-main)

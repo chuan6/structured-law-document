@@ -70,7 +70,7 @@ h2, h3 {
   box-shadow: 0 0 0.1em silver;
 }
 
-nav, .章, .节 {
+nav h2, .章, .节 {
   margin-left: 8px;
   margin-right: 8px;
 }
