@@ -133,6 +133,7 @@ window.addEventListener("load", function () {
 
 window.addEventListener("hashchange", function (e) {
     var hash = decodeURI(window.location.hash);
+
     if (hash === "#" + backButton.peek()) {
         backButton.pop();
     }
@@ -140,9 +141,13 @@ window.addEventListener("hashchange", function (e) {
 
 window.addEventListener("click", function (e) {
     var id = getEnclosingID(e.target);
+    var y = window.pageYOffset;
 
+    // if the click is originated from an on screen element,
+    // prevent page from scrolling after location.hash update
     if (e.target.tagName !== "A") {
-        location.href = "#" + id;
+        window.location.hash = "#" + id;
+        window.scrollTo(0, y);
         return;
     }
 
