@@ -139,12 +139,13 @@ window.addEventListener("hashchange", function (e) {
 });
 
 window.addEventListener("click", function (e) {
-    var id;
+    var id = getEnclosingID(e.target);
 
-    if (e.target.tagName !== "A")
+    if (e.target.tagName !== "A") {
+        location.href = "#" + id;
         return;
+    }
 
-    id = getEnclosingID(e.target);
     if (id !== "back-button") {
         backButton.push(id);
     }
