@@ -2,12 +2,6 @@ function px(x) {
     return "" + x + "px";
 }
 
-function getAvailHeightFn (scrollbarHeight) {
-    return function () {
-        return window.innerHeight - scrollbarHeight;
-    };
-}
-
 function horizontalExtra(computed) {
     var x =  parseFloat(computed.marginLeft)
         + parseFloat(computed.marginRight)
@@ -18,67 +12,8 @@ function horizontalExtra(computed) {
     return x;
 }
 
-function multiCols (container) {
-    var i;
-
-    container.style.columnWidth =
-        container.style.MozColumnWidth =
-        container.style.WebkitColumnWidth = px(300);
-    container.style.columnGap =
-        container.style.MozColumnGap =
-        container.style.WebkitColumnGap = 0;
-}
-
-function singleCol (container) {
-    var i, w;
-
-    container.style.columnWidth =
-        container.style.MozColumnWidth =
-        container.style.WebkitColumnWidth = "normal";
-    container.style.columnGap =
-        container.style.MozColumnGap =
-        container.style.WebkitColumnGap = "normal";
-}
-
-function dynamicLayoutFn(container, es) {
-    var isSingleCol;
-    var h = getAvailHeightFn(32);
-
-    return function () {
-        var computed, minEntryWidth, shouldBeSingleCol;
-
-        computed = window.getComputedStyle(es[0]);
-        minEntryWidth = parseFloat(computed.minWidth) + horizontalExtra(computed);
-        shouldBeSingleCol = true; //(window.innerWidth < minEntryWidth * 2);
-        if (shouldBeSingleCol !== isSingleCol) {
-            if (shouldBeSingleCol) {
-                container.style.height = "auto";
-                singleCol(container);
-            } else {
-                container.style.height = px(h());
-                multiCols(container);
-            }
-            isSingleCol = shouldBeSingleCol;
-        } else if (!shouldBeSingleCol) {
-            container.style.height = px(h());
-        }
-    };
-}
-
-window.addEventListener("load", function () {
-    var container = document.getElementById("entries-container");
-    var entries = document.getElementsByClassName ("entry");
-    var layout = dynamicLayoutFn(container, entries);
-
-    layout();
-
-    window.onresize = function () {
-        layout();
-    };
-});
-
 function getEnclosingID(elmt) {
-    return elmt.id? elmt.id : getEnclosingID(elmt.parentNode);
+    return elmt.id || (elmt.parentNode? getEnclosingID(elmt.parentNode) : null);
 }
 
 function updateHrefToID(a, id) {
@@ -133,19 +68,64 @@ window.addEventListener("load", function () {
 
 window.addEventListener("hashchange", function (e) {
     var hash = decodeURI(window.location.hash);
+
     if (hash === "#" + backButton.peek()) {
         backButton.pop();
     }
 });
 
+function editHashAndScrollLazily(hash, dontScroll) {
+    var backToPrevY = function () {
+        var y = window.pageYOffset;
+        return function () {
+            window.scrollTo(0, y);
+        };
+    }();
+
+    var elmt = document.getElementById(hash.slice(1));
+    var x = dontScroll? 0 : (function () {
+        var rect = elmt.getBoundingClientRect();
+        var h = rect.bottom - rect.top;
+
+        if (rect.top < 0 || h > window.innerHeight) return -1;
+        // rect.top >= 0 && h <= window.innerHeight
+
+        if (rect.bottom <= window.innerHeight) return 0;
+        // rect.bottom > window.innerHeight && h <= window.innerHeight
+
+        return 1;
+    })();
+
+    window.location.hash = hash;
+
+    switch (x) {
+    case 0:
+        backToPrevY();
+        break;
+    case -1:
+        elmt.scrollIntoView(true);
+        break;
+    case 1:
+        elmt.scrollIntoView(false);
+    }
+}
+
 window.addEventListener("click", function (e) {
-    var id;
+    var id = getEnclosingID(e.target);
 
-    if (e.target.tagName !== "A")
+    if (!id) return;
+    // id is truthy
+
+    // if the click is originated from an on screen element,
+    // prevent page from scrolling after location.hash update
+    if (e.target.tagName !== "A") {
+        editHashAndScrollLazily(id, true);
         return;
+    } // e.target.tagName === "A"
 
-    id = getEnclosingID(e.target);
+    e.preventDefault();
     if (id !== "back-button") {
         backButton.push(id);
     }
+    editHashAndScrollLazily(e.target.getAttribute("href"));
 });

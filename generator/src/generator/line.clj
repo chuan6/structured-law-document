@@ -50,12 +50,15 @@
                    :list ["目 录" "第一章" "第二章" "第三章"]}]
                  (table-of-contents txt)))]))}
   [ls]
-  (let [head (first ls)]
+  (let [head (first ls)
+        equal-without-spaces (fn [s t]
+                               (= (str/join (str/split s #"\s"))
+                                  (str/join (str/split t #"\s"))))]
     (assert (re-matches table-of-contents-sentinel head))
     (if-let [first-item (second ls)]
       (loop [s (rest (rest ls))
              t [head first-item]]
-        (if (or (= (first s) first-item) (empty? s))
+        (if (or (equal-without-spaces (first s) first-item) (empty? s))
           [t {:token :table-of-contents :list t}]
           (recur (rest s) (conj t (first s)))))
       [[head] {:token :table-of-contents :list [head]}])))

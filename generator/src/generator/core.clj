@@ -32,9 +32,11 @@
       (tt/comprehend-tests
        (t/is (= "az" (f "az")))
        (t/is (= "a z" (f "a z")))
-       (t/is (= "a z" (f "a  z")))))}
+       (t/is (= "a z" (f "a  z")))
+       (t/is (= "a z" (f "a　z"))) ;U+3000 - ideographic space
+       ))}
   [s]
-  (str/join " " (str/split s #"\s+")))
+  (str/join " " (str/split s #"[\s\u3000]+")))
 
 (defn space-filled
   {:test
@@ -130,9 +132,11 @@
   (let [[head & item-list] (:list outline)]
     [:nav {:id "outline"}
      [:h2 head]
-     [:ul (for [item item-list]
-            [:li [:a {:href (str "#" (space-filled item))}
-                  item]])]]))
+     [:ul {:class "entry"}
+      (for [item item-list
+            :let [[i unit] (l/nth-item item)]]
+        [:li [:a {:href (str "#" (name unit) i)}
+              item]])]]))
 
 (defn- wrap-in-html [tokenized-lines]
   (html
@@ -160,14 +164,14 @@
                :章
                (let [txt (:text tl)]
                  (recur (rest tls)
-                        (conj elmts [:h2 {:id (space-filled txt)
+                        (conj elmts [:h2 {:id (str "章" (:nth tl))
                                           :class "章"}
                                      txt])))
 
                :节
                (let [txt (:text tl)]
                  (recur (rest tls)
-                        (conj elmts [:h3 {:id (space-filled txt)
+                        (conj elmts [:h3 {:id (str "节" (:nth tl))
                                           :class "节"}
                                      txt])))
 
@@ -201,7 +205,19 @@
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
-  (mainfn {"劳动合同法.txt" "../index.html"
-           "网络预约出租汽车经营服务管理暂行办法.txt" "../index_notready.html"}))
+  (mainfn {"劳动合同法.txt"
+           "../劳动合同法.html"
+
+           "网络预约出租汽车经营服务管理暂行办法.txt"
+           "../网络预约出租汽车经营服务管理暂行办法.html"
+
+           "高等教育法.txt"
+           "../高等教育法.html"
+
+           "种子法.txt"
+           "../种子法.html"
+
+           "体育法.txt"
+           "../体育法.html"}))
 
 (-main)
