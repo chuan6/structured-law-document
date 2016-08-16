@@ -1,5 +1,6 @@
 (ns generator.core
-  (:require [clojure.java.io :as io]
+  (:require [clj-http.util :as http]
+            [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :as t]
             [generator.line :as l]
@@ -12,6 +13,9 @@
   (:gen-class))
 
 (defn default-fn [l] [:p l])
+
+(defn- encode-id [s]
+  (str/replace (http/url-encode s) #"%" "."))
 
 (defn use-chinese-paren
   {:test
@@ -89,11 +93,12 @@
                    :let [id (:id t)]]
                (if-not id
                  t
-                 [:a {:href (str \# id)} (:text t)])))]))
+                 [:a {:href (str \# (encode-id id))}
+                  (:text t)])))]))
 
 (defn- wrap-条-in-html [head body]
   (assert (= (:token head) :条))
-  [:section {:class "entry" :id (str \条 (:nth head))}
+  [:section {:class "entry" :id (encode-id (str \条 (:nth head)))}
    [:div {:class "title"}
     [:b (:text head)]]
    (seq
@@ -104,8 +109,8 @@
         ps
         (condp = (:token t)
           :款 (recur (conj ps [:p {:class "款"
-                                   :id (str "条" (:nth head)
-                                            "款" (inc i-款))}
+                                   :id (encode-id (str "条" (:nth head)
+                                                        "款" (inc i-款)))}
                                (s/map-on-binary-partitions
                                 #(= (:token %) :to-be-recognized)
                                 (within-款项 {:条 (:nth head)
@@ -115,9 +120,9 @@
                      ts
                      (inc i-款))
           :项 (recur (conj ps [:p {:class "项"
-                                   :id (str "条" (:nth head)
-                                            "款" i-款
-                                            "项" (:nth t))}
+                                   :id (encode-id (str "条" (:nth head)
+                                                        "款" i-款
+                                                        "项" (:nth t)))}
                                (s/map-on-binary-partitions
                                 #(= (:token %) :to-be-recognized)
                                 (within-款项 {:条 (:nth head)
@@ -135,7 +140,7 @@
      [:ul {:class "entry"}
       (for [item item-list
             :let [[i unit] (l/nth-item item)]]
-        [:li [:a {:href (str "#" (name unit) i)}
+        [:li [:a {:href (str "#" (encode-id (str (name unit) i)))}
               item]])]]))
 
 (defn- wrap-in-html [tokenized-lines]
@@ -164,14 +169,14 @@
                :章
                (let [txt (:text tl)]
                  (recur (rest tls)
-                        (conj elmts [:h2 {:id (str "章" (:nth tl))
+                        (conj elmts [:h2 {:id (encode-id (str "章" (:nth tl)))
                                           :class "章"}
                                      txt])))
 
                :节
                (let [txt (:text tl)]
                  (recur (rest tls)
-                        (conj elmts [:h3 {:id (str "节" (:nth tl))
+                        (conj elmts [:h3 {:id (encode-id (str "节" (:nth tl)))
                                           :class "节"}
                                      txt])))
 
