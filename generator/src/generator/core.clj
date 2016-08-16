@@ -93,7 +93,7 @@
 
 (defn- wrap-条-in-html [head body]
   (assert (= (:token head) :条))
-  [:div {:class "entry" :id (str \条 (:nth head))}
+  [:section {:class "entry" :id (str \条 (:nth head))}
    [:div {:class "title"}
     [:b (:text head)]]
    (seq
@@ -149,7 +149,7 @@
      [:link {:rel "stylesheet" :href "index.css"}]
      [:script {:src "main.js"}]]
     [:body
-     [:div {:id "entries-container"}
+     [:article {:id "entries-container"}
       (seq
        (loop [tls tokenized-lines
               elmts []]
