@@ -81,22 +81,33 @@ function editHashAndScrollLazily(hash, dontScroll) {
             window.scrollTo(0, y);
         };
     }();
-    var isInViewport = function () {
-        var elmt = document.getElementById(hash.slice(1));
-        return function () {
-            var rect = elmt.getBoundingClientRect();
-            return (rect.top >= 0 && rect.bottom <= window.innerHeight);
-        };
-    }();
 
-    if (dontScroll === undefined) { //determine if dontScroll
-        dontScroll = isInViewport();
-        console.log("dontScroll: ", dontScroll);
-    }
+    var elmt = document.getElementById(hash.slice(1));
+    var x = dontScroll? 0 : (function () {
+        var rect = elmt.getBoundingClientRect();
+        var h = rect.bottom - rect.top;
+
+        if (rect.top < 0 || h > window.innerHeight) return -1;
+        // rect.top >= 0 && h <= window.innerHeight
+
+        if (rect.bottom <= window.innerHeight) return 0;
+        // rect.bottom > window.innerHeight && h <= window.innerHeight
+
+        return 1;
+    })();
 
     window.location.hash = hash;
 
-    if (dontScroll) backToPrevY();
+    switch (x) {
+    case 0:
+        backToPrevY();
+        break;
+    case -1:
+        elmt.scrollIntoView(true);
+        break;
+    case 1:
+        elmt.scrollIntoView(false);
+    }
 }
 
 window.addEventListener("click", function (e) {
