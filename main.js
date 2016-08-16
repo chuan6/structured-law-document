@@ -13,7 +13,7 @@ function horizontalExtra(computed) {
 }
 
 function getEnclosingID(elmt) {
-    return elmt.id? elmt.id : getEnclosingID(elmt.parentNode);
+    return elmt.id || (elmt.parentNode? getEnclosingID(elmt.parentNode) : null);
 }
 
 function updateHrefToID(a, id) {
@@ -74,19 +74,47 @@ window.addEventListener("hashchange", function (e) {
     }
 });
 
+function editHashAndScrollLazily(hash, dontScroll) {
+    var backToPrevY = function () {
+        var y = window.pageYOffset;
+        return function () {
+            window.scrollTo(0, y);
+        };
+    }();
+    var isInViewport = function () {
+        var elmt = document.getElementById(hash.slice(1));
+        return function () {
+            var rect = elmt.getBoundingClientRect();
+            return (rect.top >= 0 && rect.bottom <= window.innerHeight);
+        };
+    }();
+
+    if (dontScroll === undefined) { //determine if dontScroll
+        dontScroll = isInViewport();
+        console.log("dontScroll: ", dontScroll);
+    }
+
+    window.location.hash = hash;
+
+    if (dontScroll) backToPrevY();
+}
+
 window.addEventListener("click", function (e) {
     var id = getEnclosingID(e.target);
-    var y = window.pageYOffset;
+
+    if (!id) return;
+    // id is truthy
 
     // if the click is originated from an on screen element,
     // prevent page from scrolling after location.hash update
     if (e.target.tagName !== "A") {
-        window.location.hash = "#" + id;
-        window.scrollTo(0, y);
+        editHashAndScrollLazily(id, true);
         return;
-    }
+    } // e.target.tagName === "A"
 
+    e.preventDefault();
     if (id !== "back-button") {
         backButton.push(id);
     }
+    editHashAndScrollLazily(e.target.getAttribute("href"));
 });
