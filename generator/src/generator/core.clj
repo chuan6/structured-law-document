@@ -152,7 +152,8 @@
              :content "width=device-width, initial-scale=1"}]
      [:title (:text (first tokenized-lines))]
      [:link {:rel "stylesheet" :href "index.css"}]
-     [:script {:src "main.js"}]]
+     [:script {:src "main.js"}]
+     [:script {:src "ganalytics.js"}]]
     [:body
      [:article {:id "entries-container"}
       (seq
