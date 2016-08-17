@@ -18,7 +18,7 @@ h2, h3 {
   position: fixed;
   border: none;
   outline: none;
-  background-color: red;
+  background-color: rgba(255, 0, 0, 0.9);
   color: white;
   border-radius: 1.62em;
   height: 3.24em;
