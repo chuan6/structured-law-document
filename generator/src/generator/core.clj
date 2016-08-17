@@ -136,7 +136,7 @@
   (assert (= (:token outline) :table-of-contents))
   (let [[head & item-list] (:list outline)]
     [:nav {:id "outline"}
-     [:h2 head]
+     [:h2 {:id (encode-id "章0") :class "章"} head]
      [:ul {:class "entry"}
       (for [item item-list
             :let [[i unit] (l/nth-item item)]]

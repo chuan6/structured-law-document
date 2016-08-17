@@ -39,7 +39,6 @@ h2, h3 {
 
 .entry, .title, nav {
   min-width: 256px;
-  background-color: inherit;
 }
 
 .title {
@@ -48,7 +47,7 @@ h2, h3 {
   font-weight: bold;
 }
 
-.款, .项 {
+.款, .项, nav li {
   padding: 0.5em 1em;
   margin: 0;
 }
@@ -70,15 +69,35 @@ h2, h3 {
   box-shadow: 0 0 0.1em silver;
 }
 
+#outline:target, .entry:target, .款:target, .项:target {
+  background-color: #FFFFD8;
+  /* radius = (line-height + padding-top + padding-bottom) / 2
+     so that for blocks that consists of only one line, the
+     right border is perfectly round.
+   */
+  border-top-right-radius: 1.31em;
+  border-bottom-right-radius: 1.31em;
+  /* blur-radius = (line-height - font-height) / 2
+     so that the shadow wouldn't extend to the other line,
+     above or below.
+   */
+  box-shadow: 0 0 0.31em silver;
+}
+
 nav h2, .章, .节 {
   margin-left: 8px;
   margin-right: 8px;
+  line-height: 1.62em;
+  text-align: center;
 }
 
-#outline:target, .章:target, .节:target, .entry:target, .款:target, .项:target {
+.章:target, .节:target {
   background-color: #FFFFD8;
+  border-radius: 1.31em;
+  box-shadow: 0 0 0.31em silver;
 }
 
 nav ul {
-  line-height: 1.62;
+  padding-left: 0;
+  list-style-type: none;
 }
