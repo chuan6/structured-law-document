@@ -1,3 +1,21 @@
+function strSlice(s, end) {
+    var e = escape(s), t = "";
+    var i, n;
+
+    for (i = 0; i < end && e; i++) {
+        if (e[0] === "%" && e[1] === "u") {//four-digit format
+            n = 6;
+        } else if (e[0] === "%") {//two-digit format
+            n = 3;
+        } else {//one-digit format
+            n = 1;
+        }
+        t += e.slice(0, n);
+        e = e.slice(n);
+    }
+    return [unescape(t), e];
+}
+
 function px(x) {
     return "" + x + "px";
 }
@@ -62,8 +80,74 @@ var backButton = function (init) {
     };
 }("outline");
 
+var shareButton = function () {
+    var sb, text, link;
+
+    sb = document.createElement("button");
+    sb.id = "share-button";
+    sb.textContent = "分享";
+    sb.style.display = "none";
+
+    return {
+        "element": sb,
+        "showAt": function (y) {
+            var top = y + window.pageYOffset - 26;
+
+            sb.style.top = px(top);
+            sb.style.display = "block";
+        },
+        "setContent": function (s, ref) {
+            text = s;
+            link = ref;
+        },
+        "getContent": function () {
+            var nchars = 50;
+            var sliced = strSlice(text, nchars);
+            return sliced[0] + (sliced[1]? "……":"") + " " + link;
+        }
+    };
+}();
+
+var overlay = function () {
+    var ol, content, buttonPanel, docancel;
+
+    ol = document.createElement("div");
+    ol.id = "overlay";
+    ol.style.display = "none";
+    ol.onclick = function (e) {
+        e.stopPropagation();
+    };
+
+    content = document.createElement("textarea");
+    content.id = "copy-text";
+
+    buttonPanel = document.createElement("div");
+    docancel = document.createElement("button");
+    docancel.textContent = "取消";
+    docancel.onclick = function (e) {
+        ol.style.display = "none";
+        e.stopPropagation();
+    };
+    buttonPanel.appendChild(docancel);
+
+    ol.appendChild(content);
+    ol.appendChild(buttonPanel);
+
+    return {
+        "element": ol,
+        "setContent": function (s) {
+            content.textContent = s;
+        },
+        "show": function () {
+            ol.style.display = "block";
+        }
+    };
+}();
+
 window.addEventListener("load", function () {
     document.body.appendChild(backButton.element);
+    document.body.appendChild(shareButton.element);
+    document.body.appendChild(overlay.element);
 });
 
 window.addEventListener("hashchange", function (e) {
@@ -112,14 +196,27 @@ function editHashAndScrollLazily(hash, dontScroll) {
 
 window.addEventListener("click", function (e) {
     var id = getEnclosingID(e.target);
+    var elmt;
 
     if (!id) return;
     // id is truthy
+
+    elmt = document.getElementById(id);
+
+    if (id === "share-button") {
+        overlay.setContent(shareButton.getContent());
+        overlay.show();
+        return;
+    }
 
     // if the click is originated from an on screen element,
     // prevent page from scrolling after location.hash update
     if (e.target.tagName !== "A") {
         editHashAndScrollLazily(id, true);
+        shareButton.showAt(elmt.getBoundingClientRect().top);
+        shareButton.setContent(
+            elmt.textContent,
+            window.location.href);
         return;
     } // e.target.tagName === "A"
 

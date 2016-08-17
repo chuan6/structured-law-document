@@ -14,18 +14,13 @@ h2, h3 {
   max-width: 512px;
 }
 
-#back-button {
-  position: fixed;
+#back-button, #share-button, #overlay button {
   border: none;
   outline: none;
-  background-color: rgba(255, 0, 0, 0.9);
-  color: white;
   border-radius: 1.62em;
   height: 3.24em;
   width: 3.24em;
   box-shadow: 0 0 1em grey;
-  right: 1em;
-  bottom: 1em;
   font-size: 100%;
   font-weight: bold;
   line-height: 3.24em;
@@ -33,8 +28,25 @@ h2, h3 {
   text-decoration: none;
 }
 
-#back-button::-moz-focus-inner {
+#back-button::-moz-focus-inner, #share-button::-moz-focus-inner {
   border: none;
+}
+
+#back-button {
+  position: fixed;
+  background-color: rgba(255, 0, 0, 0.9);
+  color: white;
+  right: 1em;
+  bottom: 1em;
+  z-index: 1000;
+}
+
+#share-button {
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.65);
+  color: white;
+  right: 1em;
+  z-index: 10;
 }
 
 .entry, .title, nav {
@@ -100,4 +112,35 @@ nav h2, .章, .节 {
 nav ul {
   padding-left: 0;
   list-style-type: none;
+}
+
+#overlay {
+  position: fixed;
+  overflow: auto;
+  text-align: center;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  z-index: 2000;
+  background-color: rgba(255, 255, 255, 0.97);
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+
+#copy-text {
+  margin: 1em auto;
+  padding: 8px;
+  border: 1px solid silver;
+  box-shadow: 0 0 0.5em silver;
+  max-width: 494px;
+  width: 95%;
+  height: 8em;
+}
+
+#copy-text>div {
+  width: 100%;
+  text-align: center;
 }
