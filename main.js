@@ -105,7 +105,6 @@ function shareButtonClosure(elmt) {
 function overlayClosure(elmt, content, docancel) {
     var computed, textareaWidth;
 
-    elmt.style.display = "none";
     elmt.onclick = function (e) {
         e.stopPropagation();
     };
@@ -121,7 +120,7 @@ function overlayClosure(elmt, content, docancel) {
             content.value = s;
         },
         "show": function () {
-            elmt.style.display = "";
+            elmt.style.display = "block";
             computed = window.getComputedStyle(content);
             textareaWidth =
                 parseFloat(window.getComputedStyle(content.parentNode).width)

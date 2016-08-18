@@ -118,6 +118,7 @@ nav ul {
 
 #overlay {
   position: fixed;
+  display: none;
   overflow: auto;
   text-align: center;
   top: 0;
