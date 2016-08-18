@@ -116,7 +116,10 @@ function overlayClosure(elmt, content, docancel, docopy) {
 
     docopy.onclick = function (e) {
         content.focus();
-        document.execCommand("selectAll");
+        content.select();
+        // copy might not work on some browsers, but at least
+        // select() makes it easier for user to manually copy
+        // the content in textarea
         document.execCommand("copy");
         // set readonly to prevent software keyboard from showing
         // on devices such as phones
