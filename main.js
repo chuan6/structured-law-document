@@ -1,10 +1,29 @@
+function strSlice(s, end) {
+    var e = escape(s), t = "";
+    var i, n;
+
+    for (i = 0; i < end && e; i++) {
+        if (e[0] === "%" && e[1] === "u") {//four-digit format
+            n = 6;
+        } else if (e[0] === "%") {//two-digit format
+            n = 3;
+        } else {//one-digit format
+            n = 1;
+        }
+        t += e.slice(0, n);
+        e = e.slice(n);
+    }
+    return [unescape(t), e];
+}
+
 function px(x) {
     return "" + x + "px";
 }
 
-function horizontalExtra(computed) {
-    var x =  parseFloat(computed.marginLeft)
-        + parseFloat(computed.marginRight)
+function horizontalExtra(computed, withMargin) {
+    var f = (withMargin===undefined? true : withMargin);
+    var x =  parseFloat(f? computed.marginLeft : "0")
+        + parseFloat(f? computed.marginRight : "0")
         + parseFloat(computed.borderLeftWidth)
         + parseFloat(computed.borderRightWidth)
         + parseFloat(computed.paddingLeft)
@@ -24,14 +43,10 @@ function updateHrefToID(a, id) {
     }
 }
 
-var backButton = function (init) {
-    var bb;
+function backButtonClosure(elmt, init) {
     var stack, top;
 
-    bb = document.createElement("a");
-    bb.id = "back-button";
-    bb.textContent = "返回";
-    updateHrefToID(bb, init);
+    updateHrefToID(elmt, init);
 
     stack = [init];
 
@@ -40,13 +55,13 @@ var backButton = function (init) {
     };
 
     return {
-        "element": bb,
+        "element": elmt,
         "push": function (id) {
             console.log("before push:", stack);
             if (id !== top()) {
                 // only push new id that is different from the top
                 stack.push(id);
-                updateHrefToID(bb, id);
+                updateHrefToID(elmt, id);
             }
             console.log("after push:", stack);
         },
@@ -55,15 +70,92 @@ var backButton = function (init) {
             if (stack.length > 1) {
                 stack.pop();
             }
-            updateHrefToID(bb, top());
+            updateHrefToID(elmt, top());
             console.log("after pop:", stack);
         },
         "peek": top
     };
-}("outline");
+}
+
+function shareButtonClosure(elmt) {
+    var text, link;
+
+    elmt.style.display = "none";
+
+    return {
+        "element": elmt,
+        "showAt": function (y) {
+            var top = y + window.pageYOffset - 26;
+
+            elmt.style.top = px(top);
+            elmt.style.display = "";
+        },
+        "setContent": function (s, ref) {
+            text = s;
+            link = ref;
+        },
+        "getContent": function () {
+            var nchars = 50;
+            var sliced = strSlice(text, nchars);
+            return sliced[0] + (sliced[1]? "……":"") + " " + link;
+        }
+    };
+}
+
+function overlayClosure(elmt, content, docancel, docopy) {
+    var computed, textareaWidth;
+
+    elmt.onclick = function (e) {
+        e.stopPropagation();
+    };
+
+    docancel.onclick = function (e) {
+        elmt.style.display = "none";
+        e.stopPropagation();
+    };
+
+    docopy.onclick = function (e) {
+        content.focus();
+        document.execCommand("selectAll");
+        document.execCommand("copy");
+        // set readonly to prevent software keyboard from showing
+        // on devices such as phones
+        content.setAttribute("readonly", true);
+        e.stopPropagation();
+    };
+
+    return {
+        "element": elmt,
+        "setContent": function (s) {
+            content.value = s;
+        },
+        "show": function () {
+            elmt.style.display = "block";
+            computed = window.getComputedStyle(content);
+            textareaWidth =
+                parseFloat(window.getComputedStyle(content.parentNode).width)
+                - horizontalExtra(computed, false);
+            content.style.width = px(textareaWidth);
+            content.style.height = px(60000 / textareaWidth);
+        }
+    };
+}
+
+var backButton, shareButton, overlay;
 
 window.addEventListener("load", function () {
-    document.body.appendChild(backButton.element);
+    backButton = backButtonClosure(
+        document.getElementById("back-button"),
+        "outline");
+
+    shareButton = shareButtonClosure(
+        document.getElementById("share-button"));
+
+    overlay = overlayClosure(
+        document.getElementById("overlay"),
+        document.getElementById("share-text"),
+        document.getElementById("cancel-overlay"),
+        document.getElementById("do-copy"));
 });
 
 window.addEventListener("hashchange", function (e) {
@@ -112,14 +204,27 @@ function editHashAndScrollLazily(hash, dontScroll) {
 
 window.addEventListener("click", function (e) {
     var id = getEnclosingID(e.target);
+    var elmt;
 
     if (!id) return;
     // id is truthy
+
+    elmt = document.getElementById(id);
+
+    if (id === "share-button") {
+        overlay.setContent(shareButton.getContent());
+        overlay.show();
+        return;
+    }
 
     // if the click is originated from an on screen element,
     // prevent page from scrolling after location.hash update
     if (e.target.tagName !== "A") {
         editHashAndScrollLazily(id, true);
+        shareButton.showAt(elmt.getBoundingClientRect().top);
+        shareButton.setContent(
+            elmt.textContent,
+            window.location.href);
         return;
     } // e.target.tagName === "A"
 
