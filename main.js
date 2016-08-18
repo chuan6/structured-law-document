@@ -20,9 +20,10 @@ function px(x) {
     return "" + x + "px";
 }
 
-function horizontalExtra(computed) {
-    var x =  parseFloat(computed.marginLeft)
-        + parseFloat(computed.marginRight)
+function horizontalExtra(computed, withMargin) {
+    var f = (withMargin===undefined? true : withMargin);
+    var x =  parseFloat(f? computed.marginLeft : "0")
+        + parseFloat(f? computed.marginRight : "0")
         + parseFloat(computed.borderLeftWidth)
         + parseFloat(computed.borderRightWidth)
         + parseFloat(computed.paddingLeft)
@@ -42,14 +43,10 @@ function updateHrefToID(a, id) {
     }
 }
 
-var backButton = function (init) {
-    var bb;
+function backButtonClosure(elmt, init) {
     var stack, top;
 
-    bb = document.createElement("a");
-    bb.id = "back-button";
-    bb.textContent = "返回";
-    updateHrefToID(bb, init);
+    updateHrefToID(elmt, init);
 
     stack = [init];
 
@@ -58,13 +55,13 @@ var backButton = function (init) {
     };
 
     return {
-        "element": bb,
+        "element": elmt,
         "push": function (id) {
             console.log("before push:", stack);
             if (id !== top()) {
                 // only push new id that is different from the top
                 stack.push(id);
-                updateHrefToID(bb, id);
+                updateHrefToID(elmt, id);
             }
             console.log("after push:", stack);
         },
@@ -73,28 +70,25 @@ var backButton = function (init) {
             if (stack.length > 1) {
                 stack.pop();
             }
-            updateHrefToID(bb, top());
+            updateHrefToID(elmt, top());
             console.log("after pop:", stack);
         },
         "peek": top
     };
-}("outline");
+}
 
-var shareButton = function () {
-    var sb, text, link;
+function shareButtonClosure(elmt) {
+    var text, link;
 
-    sb = document.createElement("button");
-    sb.id = "share-button";
-    sb.textContent = "分享";
-    sb.style.display = "none";
+    elmt.style.display = "none";
 
     return {
-        "element": sb,
+        "element": elmt,
         "showAt": function (y) {
             var top = y + window.pageYOffset - 26;
 
-            sb.style.top = px(top);
-            sb.style.display = "block";
+            elmt.style.top = px(top);
+            elmt.style.display = "";
         },
         "setContent": function (s, ref) {
             text = s;
@@ -106,48 +100,52 @@ var shareButton = function () {
             return sliced[0] + (sliced[1]? "……":"") + " " + link;
         }
     };
-}();
+}
 
-var overlay = function () {
-    var ol, content, buttonPanel, docancel;
+function overlayClosure(elmt, content, docancel) {
+    var computed, textareaWidth;
 
-    ol = document.createElement("div");
-    ol.id = "overlay";
-    ol.style.display = "none";
-    ol.onclick = function (e) {
+    elmt.style.display = "none";
+    elmt.onclick = function (e) {
         e.stopPropagation();
     };
 
-    content = document.createElement("textarea");
-    content.id = "copy-text";
-
-    buttonPanel = document.createElement("div");
-    docancel = document.createElement("button");
-    docancel.textContent = "取消";
     docancel.onclick = function (e) {
-        ol.style.display = "none";
+        elmt.style.display = "none";
         e.stopPropagation();
     };
-    buttonPanel.appendChild(docancel);
-
-    ol.appendChild(content);
-    ol.appendChild(buttonPanel);
 
     return {
-        "element": ol,
+        "element": elmt,
         "setContent": function (s) {
             content.textContent = s;
         },
         "show": function () {
-            ol.style.display = "block";
+            elmt.style.display = "";
+            computed = window.getComputedStyle(content);
+            textareaWidth =
+                parseFloat(window.getComputedStyle(content.parentNode).width)
+                - horizontalExtra(computed, false);
+            content.style.width = px(textareaWidth);
+            content.style.height = px(60000 / textareaWidth);
         }
     };
-}();
+}
+
+var backButton, shareButton, overlay;
 
 window.addEventListener("load", function () {
-    document.body.appendChild(backButton.element);
-    document.body.appendChild(shareButton.element);
-    document.body.appendChild(overlay.element);
+    backButton = backButtonClosure(
+        document.getElementById("back-button"),
+        "outline");
+
+    shareButton = shareButtonClosure(
+        document.getElementById("share-button"));
+
+    overlay = overlayClosure(
+        document.getElementById("overlay"),
+        document.getElementById("share-text"),
+        document.getElementById("cancel-overlay"));
 });
 
 window.addEventListener("hashchange", function (e) {

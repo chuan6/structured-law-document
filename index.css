@@ -1,5 +1,6 @@
 body {
   font-family: sans-serif;
+  font-size: 16px;
   margin: 0 auto;
   background-color: white;
 }
@@ -8,13 +9,14 @@ h2, h3 {
   font-family: "仿宋", FangSong, serif;
 }
 
-#entries-container {
+.entries-container {
   margin: 0 auto;
+  padding: 0 0.5em;
   background-color: inherit;
   max-width: 512px;
 }
 
-#back-button, #share-button, #overlay button {
+#back-button, #share-button, #cancel-overlay {
   border: none;
   outline: none;
   border-radius: 1.62em;
@@ -65,7 +67,7 @@ h2, h3 {
 }
 
 .entry {
-  margin: 1em 0.5em;
+  margin: 1em 0;
   border-left: 1px solid red;
   line-height: 1.62;
 }
@@ -123,24 +125,22 @@ nav ul {
   bottom: 0;
   right: 0;
   z-index: 2000;
-  background-color: rgba(255, 255, 255, 0.97);
+  background-color: rgba(255, 255, 255, 0.96);
   width: 100%;
   padding: 0;
   margin: 0;
   border: 0;
 }
 
-#copy-text {
+#share-text {
+  /* Horizontal margin should be 0; the value is set
+     dynamically. Using "auto" here allows centerring
+     effect on the block when browser width is being
+     adjusted.
+   */
   margin: 1em auto;
-  padding: 8px;
+  padding: 1em 1em;
   border: 1px solid silver;
   box-shadow: 0 0 0.5em silver;
-  max-width: 494px;
-  width: 95%;
-  height: 8em;
-}
-
-#copy-text>div {
-  width: 100%;
-  text-align: center;
+  font-size: 16px;
 }

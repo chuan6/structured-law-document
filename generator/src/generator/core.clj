@@ -155,7 +155,7 @@
      [:script {:src "main.js"}]
      [:script {:src "ganalytics.js"}]]
     [:body
-     [:article {:id "entries-container"}
+     [:article {:class "entries-container"}
       (seq
        (loop [tls tokenized-lines
               elmts []]
@@ -189,7 +189,13 @@
 
                :to-be-recognized
                (recur (rest tls)
-                      (conj elmts (default-fn (:text tl)))))))))]])))
+                      (conj elmts (default-fn (:text tl)))))))))]
+     [:a {:id "back-button"} "返回"]
+     [:button {:id "share-button"} "分享"]
+     [:div {:id "overlay"}
+      [:div {:class "entries-container"}
+       [:textarea {:id "share-text"}]
+       [:div [:button {:id "cancel-overlay"} "取消"]]]]])))
 
 (defn- tokenized-lines [ls]
   (let [[before-ts after-ls] (l/recognize-table-of-contents ls)]
