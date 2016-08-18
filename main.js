@@ -102,7 +102,7 @@ function shareButtonClosure(elmt) {
     };
 }
 
-function overlayClosure(elmt, content, docancel) {
+function overlayClosure(elmt, content, docancel, docopy) {
     var computed, textareaWidth;
 
     elmt.onclick = function (e) {
@@ -111,6 +111,13 @@ function overlayClosure(elmt, content, docancel) {
 
     docancel.onclick = function (e) {
         elmt.style.display = "none";
+        e.stopPropagation();
+    };
+
+    docopy.onclick = function (e) {
+        content.focus();
+        document.execCommand("selectAll");
+        document.execCommand("copy");
         e.stopPropagation();
     };
 
@@ -144,7 +151,8 @@ window.addEventListener("load", function () {
     overlay = overlayClosure(
         document.getElementById("overlay"),
         document.getElementById("share-text"),
-        document.getElementById("cancel-overlay"));
+        document.getElementById("cancel-overlay"),
+        document.getElementById("do-copy"));
 });
 
 window.addEventListener("hashchange", function (e) {

@@ -195,7 +195,9 @@
      [:div {:id "overlay"}
       [:div {:class "entries-container"}
        [:textarea {:id "share-text" :maxlength "1024"}]
-       [:div [:button {:id "cancel-overlay"} "取消"]]]]])))
+       [:div {:id "overlay-button-panel"}
+        [:button {:id "do-copy"} "复制"]
+        [:button {:id "cancel-overlay"} "取消"]]]]])))
 
 (defn- tokenized-lines [ls]
   (let [[before-ts after-ls] (l/recognize-table-of-contents ls)]
