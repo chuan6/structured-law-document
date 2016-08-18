@@ -143,13 +143,6 @@
         [:li [:a {:href (str "#" (encode-id (str (name unit) i)))}
               item]])]]))
 
-(defn- html-button [attrs text]
-  [:button
-   ;; attach dummy :onclick, so that iOS will recognized the button
-   ;; as clickable; see iOS Developer Library: https://goo.gl/gy5eZY
-   (assoc attrs :onclick "void(0)")
-   text])
-
 (defn- wrap-in-html [tokenized-lines]
   (html
    (html5
@@ -162,7 +155,9 @@
      [:script {:src "main.js"}]
      [:script {:src "ganalytics.js"}]]
     [:body
-     [:article {:class "entries-container"}
+     [:article {:class "entries-container"
+                :onclick "void(0)" ; for iOS compatibility
+                }
       (seq
        (loop [tls tokenized-lines
               elmts []]
@@ -198,13 +193,13 @@
                (recur (rest tls)
                       (conj elmts (default-fn (:text tl)))))))))]
      [:a {:id "back-button"} "返回"]
-     (html-button {:id "share-button"} "分享")
+     [:button {:id "share-button"} "分享"]
      [:div {:id "overlay"}
       [:div {:class "entries-container"}
        [:textarea {:id "share-text" :maxlength "1024"}]
        [:div {:id "overlay-button-panel"}
-        (html-button {:id "do-copy"} "复制")
-        (html-button {:id "cancel-overlay"} "取消")]]]])))
+        [:button {:id "do-copy"} "复制"]
+        [:button {:id "cancel-overlay"} "取消"]]]]])))
 
 (defn- tokenized-lines [ls]
   (let [[before-ts after-ls] (l/recognize-table-of-contents ls)]
