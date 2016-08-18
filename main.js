@@ -118,6 +118,9 @@ function overlayClosure(elmt, content, docancel, docopy) {
         content.focus();
         document.execCommand("selectAll");
         document.execCommand("copy");
+        // set readonly to prevent software keyboard from showing
+        // on devices such as phones
+        content.setAttribute("readonly", true);
         e.stopPropagation();
     };
 
