@@ -194,7 +194,7 @@
      [:button {:id "share-button"} "分享"]
      [:div {:id "overlay"}
       [:div {:class "entries-container"}
-       [:textarea {:id "share-text"}]
+       [:textarea {:id "share-text" :maxlength "1024"}]
        [:div [:button {:id "cancel-overlay"} "取消"]]]]])))
 
 (defn- tokenized-lines [ls]

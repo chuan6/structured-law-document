@@ -118,7 +118,7 @@ function overlayClosure(elmt, content, docancel) {
     return {
         "element": elmt,
         "setContent": function (s) {
-            content.textContent = s;
+            content.value = s;
         },
         "show": function () {
             elmt.style.display = "";
