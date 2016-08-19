@@ -203,9 +203,11 @@
 
 (defn- tokenized-lines [ls]
   (let [[before-ts after-ls] (l/recognize-table-of-contents ls)]
-    (if (empty? before-ts) ;;table of contents is not found
-      (l/draw-skeleton ls)
-      (into before-ts (l/draw-skeleton after-ls)))))
+    (if (seq before-ts)
+      (into before-ts (l/draw-skeleton after-ls))
+      ;;otherwise, table of contents is not found
+      ;;generate it automatically
+      (-> ls l/draw-skeleton l/attach-table-of-contents))))
 
 (defn- mainfn [inname->outpath]
   (dorun
