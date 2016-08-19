@@ -116,7 +116,10 @@ function overlayClosure(elmt, content, docancel, docopy) {
 
     docopy.onclick = function (e) {
         content.focus();
-        document.execCommand("selectAll");
+        content.select();
+        // copy might not work on some browsers, but at least
+        // select() makes it easier for user to manually copy
+        // the content in textarea
         document.execCommand("copy");
         // set readonly to prevent software keyboard from showing
         // on devices such as phones
@@ -166,7 +169,7 @@ window.addEventListener("hashchange", function (e) {
     }
 });
 
-function editHashAndScrollLazily(hash, dontScroll) {
+function editHashAndScroll(hash, dontScroll, lazyScroll) {
     var backToPrevY = function () {
         var y = window.pageYOffset;
         return function () {
@@ -185,7 +188,7 @@ function editHashAndScrollLazily(hash, dontScroll) {
         if (rect.bottom <= window.innerHeight) return 0;
         // rect.bottom > window.innerHeight && h <= window.innerHeight
 
-        return 1;
+        return lazyScroll? 1 : -1;
     })();
 
     window.location.hash = hash;
@@ -220,7 +223,7 @@ window.addEventListener("click", function (e) {
     // if the click is originated from an on screen element,
     // prevent page from scrolling after location.hash update
     if (e.target.tagName !== "A") {
-        editHashAndScrollLazily(id, true);
+        editHashAndScroll(id, true);
         shareButton.showAt(elmt.getBoundingClientRect().top);
         shareButton.setContent(
             elmt.textContent,
@@ -232,5 +235,8 @@ window.addEventListener("click", function (e) {
     if (id !== "back-button") {
         backButton.push(id);
     }
-    editHashAndScrollLazily(e.target.getAttribute("href"));
+    editHashAndScroll(
+        e.target.getAttribute("href"),
+        false,
+        id==="back-button");
 });

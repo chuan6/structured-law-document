@@ -155,7 +155,9 @@
      [:script {:src "main.js"}]
      [:script {:src "ganalytics.js"}]]
     [:body
-     [:article {:class "entries-container"}
+     [:article {:class "entries-container"
+                :onclick "void(0)" ; for iOS compatibility
+                }
       (seq
        (loop [tls tokenized-lines
               elmts []]
@@ -196,14 +198,16 @@
       [:div {:class "entries-container"}
        [:textarea {:id "share-text" :maxlength "1024"}]
        [:div {:id "overlay-button-panel"}
-        [:button {:id "do-copy"} "复制"]
+        [:button {:id "do-copy"} "完成"]
         [:button {:id "cancel-overlay"} "取消"]]]]])))
 
 (defn- tokenized-lines [ls]
   (let [[before-ts after-ls] (l/recognize-table-of-contents ls)]
-    (if (empty? before-ts) ;;table of contents is not found
-      (l/draw-skeleton ls)
-      (into before-ts (l/draw-skeleton after-ls)))))
+    (if (seq before-ts)
+      (into before-ts (l/draw-skeleton after-ls))
+      ;;otherwise, table of contents is not found
+      ;;generate it automatically
+      (-> ls l/draw-skeleton l/attach-table-of-contents))))
 
 (defn- mainfn [inname->outpath]
   (dorun
@@ -232,6 +236,9 @@
            "../种子法.html"
 
            "体育法.txt"
-           "../体育法.html"}))
+           "../体育法.html"
+
+           "婚姻法.txt"
+           "../婚姻法.html"}))
 
 (-main)
