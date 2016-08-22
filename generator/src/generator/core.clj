@@ -140,7 +140,11 @@
      [:ul {:class "entry"}
       (for [item item-list
             :let [[i unit] (l/nth-item item)]]
-        [:li [:a {:href (str "#" (encode-id (str (name unit) i)))}
+        [:li [:a {:href (if (#{:章 :节} unit)
+                          (str "#" (encode-id (str (name unit) i)))
+                          (if-let [[i cs] (l/则 item)]
+                            (str "#" (encode-id (str "则" i)))
+                            (str "#" (encode-id (space-filled item)))))}
               item]])]]))
 
 (defn- wrap-in-html [tokenized-lines]
@@ -169,6 +173,12 @@
                (recur (rest tls)
                       (conj elmts (wrap-outline-in-html tl)))
 
+               :则
+               (let [txt (:text tl)]
+                 (recur (rest tls)
+                        (conj elmts [:h2 {:id (encode-id (str "则" (:nth tl)))
+                                          :class "章"}
+                                     txt])))
                :章
                (let [txt (:text tl)]
                  (recur (rest tls)
@@ -239,6 +249,9 @@
            "../体育法.html"
 
            "婚姻法.txt"
-           "../婚姻法.html"}))
+           "../婚姻法.html"
+
+           "合同法.txt"
+           "../合同法.html"}))
 
 (-main)
