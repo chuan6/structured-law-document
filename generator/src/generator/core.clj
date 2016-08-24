@@ -156,7 +156,7 @@
 
                    ;;(< next curr)
                    :else
-                   (let [[sub-elmt ys'] (f ys gen-id)
+                   (let [[sub-elmt ys'] (outline-html ys gen-id)
                          elmt' (conj elmt sub-elmt)]
                      (recur elmt' ys'))))))))))
 
