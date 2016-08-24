@@ -125,7 +125,7 @@ nav h2, .章, .节 {
   box-shadow: 0 0 0.31em silver;
 }
 
-nav ul {
+nav>ul {
   padding-left: 0;
   list-style-type: none;
 }

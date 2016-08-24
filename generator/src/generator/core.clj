@@ -132,20 +132,43 @@
                      ts
                      i-款)))))])
 
+(defn- gen-outline-id [t]
+  (encode-id (str (name (:token t)) (:nth t))))
+
+(defn- outline-html [ts gen-id]
+  (let [level (fn [t] ((:token t) {:节 1 :章 2 :则 3}))
+        list-item (fn [t] [:li [:a {:href (str "#" (gen-id t))}
+                                (:text t)]])]
+   (if (empty? ts)
+     ()
+     (let [curr (level (first ts))
+           [xs ys] (split-with #(= (level %) curr) ts)]
+       (loop [elmt [:ul (for [x xs] (list-item x))]
+              ys ys]
+         (if (empty? ys)
+           [elmt ()]
+           (let [next (level (first ys))]
+             (cond (> next curr)
+                   [elmt ys]
+
+                   (= next curr)
+                   (recur (conj elmt (list-item (first ys))) (rest ys))
+
+                   ;;(< next curr)
+                   :else
+                   (let [[sub-elmt ys'] (f ys gen-id)
+                         elmt' (conj elmt sub-elmt)]
+                     (recur elmt' ys'))))))))))
+
 (defn- wrap-outline-in-html [outline]
   (assert (= (:token outline) :table-of-contents))
-  (let [[head & item-list] (:list outline)]
-    [:nav {:id "outline"}
+  (let [kv {:则 1 :章 2 :节 3}
+        head (:text outline)
+        item-list (l/draw-skeleton (:list outline))]
+    [:section
      [:h2 {:id (encode-id "章0") :class "章"} head]
-     [:ul {:class "entry"}
-      (for [item item-list
-            :let [[i unit] (l/nth-item item)]]
-        [:li [:a {:href (if (#{:章 :节} unit)
-                          (str "#" (encode-id (str (name unit) i)))
-                          (if-let [[i cs] (l/则 item)]
-                            (str "#" (encode-id (str "则" i)))
-                            (str "#" (encode-id (space-filled item)))))}
-              item]])]]))
+     [:nav {:id "outline" :class "entry"}
+      (first (outline-html item-list gen-outline-id))]]))
 
 (defn- wrap-in-html [tokenized-lines]
   (html
@@ -176,20 +199,20 @@
                :则
                (let [txt (:text tl)]
                  (recur (rest tls)
-                        (conj elmts [:h2 {:id (encode-id (str "则" (:nth tl)))
+                        (conj elmts [:h2 {:id (gen-outline-id tl)
                                           :class "章"}
                                      txt])))
                :章
                (let [txt (:text tl)]
                  (recur (rest tls)
-                        (conj elmts [:h2 {:id (encode-id (str "章" (:nth tl)))
+                        (conj elmts [:h2 {:id (gen-outline-id tl)
                                           :class "章"}
                                      txt])))
 
                :节
                (let [txt (:text tl)]
                  (recur (rest tls)
-                        (conj elmts [:h3 {:id (encode-id (str "节" (:nth tl)))
+                        (conj elmts [:h3 {:id (gen-outline-id tl)
                                           :class "节"}
                                      txt])))
 
@@ -252,6 +275,10 @@
            "../婚姻法.html"
 
            "合同法.txt"
-           "../合同法.html"}))
+           "../合同法.html"
+
+           "民法通则.txt"
+           "../民法通则.html"
+           }))
 
 (-main)
