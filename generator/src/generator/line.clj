@@ -82,11 +82,13 @@
       (tt/comprehend-tests
        [(t/is (= [["目 录"]
                   {:token :table-of-contents
-                   :list ["目 录"]}]
+                   :text "目 录"
+                   :list []}]
                  (table-of-contents ["目 录"])))
         (t/is (= [["目 录" "第一章" "第二章" "第三章"]
                   {:token :table-of-contents
-                   :list ["目 录" "第一章" "第二章" "第三章"]}]
+                   :text "目 录"
+                   :list ["第一章" "第二章" "第三章"]}]
                  (table-of-contents txt)))]))}
   [ls]
   (let [head (first ls)
@@ -96,11 +98,11 @@
     (assert (re-matches table-of-contents-sentinel head))
     (if-let [first-item (second ls)]
       (loop [s (rest (rest ls))
-             t [head first-item]]
+             t [first-item]]
         (if (or (equal-without-spaces (first s) first-item) (empty? s))
-          [t {:token :table-of-contents :list t}]
+          [(cons head t) {:token :table-of-contents :text head :list t}]
           (recur (rest s) (conj t (first s)))))
-      [[head] {:token :table-of-contents :list [head]}])))
+      [[head] {:token :table-of-contents :text head :list []}])))
 
 (defn recognize-table-of-contents
   {:test
@@ -108,11 +110,11 @@
           txt ["前言" "目 录" "第一章" "第二章" "第三章" "第一章" "……"]]
       (tt/comprehend-tests
        [(t/is (= [[] []] (f ["第一章"])))
-        (t/is (= [[{:token :table-of-contents :list ["目 录"]}] []]
+        (t/is (= [[{:token :table-of-contents :text "目 录" :list []}] []]
                  (f ["目 录"])))
         (t/is (= [[{:token :to-be-recognized :text "前言"}
-                   {:token :table-of-contents
-                    :list ["目 录" "第一章" "第二章" "第三章"]}]
+                   {:token :table-of-contents :text "目 录"
+                    :list ["第一章" "第二章" "第三章"]}]
                   ["第一章" "……"]]
                  (f txt)))]))}
   ([ls] (recognize-table-of-contents ls []))
@@ -195,7 +197,8 @@
        (t/is (= [] (f ())))
        (t/is (= ["前言"] (map :text (f (take 1 tls)))))
        (t/is (= {:token :table-of-contents
-                 :list ["目录" "第一章" "第二章" "第三章" "第一节"]}
+                 :text "目录"
+                 :list ["第一章" "第二章" "第三章" "第一节"]}
                 (second (f tls))))))}
   [tls]
   (let [[prelude tls'] (split-with #(= (:token %)
@@ -205,5 +208,6 @@
                     (map :text))]
     (cond-> (vec prelude)
       (seq titles) (conj {:token :table-of-contents
-                          :list (cons "目录" titles)})
+                          :text "目录"
+                          :list titles})
       true (into tls'))))
