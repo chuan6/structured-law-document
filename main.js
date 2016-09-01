@@ -205,9 +205,11 @@ function editHashAndScroll(hash, dontScroll, lazyScroll) {
     }
 }
 
-window.addEventListener("click", function (e) {
+function tapHandler(e) {
     var id = getEnclosingID(e.target);
     var elmt;
+
+    console.log("tapped on ", id);
 
     if (!id) return;
     // id is truthy
@@ -239,4 +241,53 @@ window.addEventListener("click", function (e) {
         e.target.getAttribute("href"),
         false,
         id==="back-button");
+}
+
+var tap = function() {
+    var status = 0; //0 - initial; 1 - started; 2 - moved
+    var x, y;
+
+    return {
+        // Return true if the op is accepted as part of a tap;
+        // return false if otherwise.
+        "start": function(e, isTouch) {
+            if (status === 0) {
+                status = 1;
+                if (!isTouch) {
+                    x = e.layerX;
+                    y = e.layerY;
+                }
+                return true;
+            } else {
+                return false;
+            }
+        },
+        "move": function(e) {
+            status = 2;
+            return true;
+        },
+        "end": function(e, isTouch) {
+            if (status === 1) {
+                status = 0;
+                if (!isTouch && (x !== e.layerX || y !== e.layerY)) {
+                    return false;
+                }
+                return true;
+            } else {
+                return false;
+            }
+        }
+    };
+}();
+window.addEventListener("mousedown", function(e) { tap.start(e, false); });
+window.addEventListener("mouseup", function(e) {
+    if (tap.end(e, false)) tapHandler(e);
+});
+window.addEventListener("touchstart", function(e) { tap.start(e, true); });
+window.addEventListener("touchmove", function(e) { tap.move(e); });
+window.addEventListener("touchend", function(e) {
+    if (tap.end(e, true)) {
+        e.preventDefault();
+        tapHandler(e);
+    }
 });
