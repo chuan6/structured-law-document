@@ -263,8 +263,12 @@ var tap = function() {
             }
         },
         "move": function(e) {
-            status = 2;
-            return true;
+            if (status === 1) {
+                status = 2;
+                return true;
+            } else {
+                return false;
+            }
         },
         "end": function(e, isTouch) {
             if (status === 1) {
@@ -274,6 +278,7 @@ var tap = function() {
                 }
                 return true;
             } else {
+                status = 0;
                 return false;
             }
         }
@@ -283,9 +288,16 @@ window.addEventListener("mousedown", function(e) { tap.start(e, false); });
 window.addEventListener("mouseup", function(e) {
     if (tap.end(e, false)) tapHandler(e);
 });
-window.addEventListener("touchstart", function(e) { tap.start(e, true); });
-window.addEventListener("touchmove", function(e) { tap.move(e); });
+window.addEventListener("touchstart", function(e) {
+    console.log("touchstart");
+    tap.start(e, true);
+});
+window.addEventListener("touchmove", function(e) {
+    console.log("touchmove");
+    tap.move(e);
+});
 window.addEventListener("touchend", function(e) {
+    console.log("touchend");
     if (tap.end(e, true)) {
         e.preventDefault();
         tapHandler(e);
