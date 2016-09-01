@@ -170,17 +170,25 @@
      [:nav {:id "outline" :class "entry"}
       (first (outline-html item-list gen-outline-id))]]))
 
+(defn- html-head [title css & scripts]
+  [:head {:lang "zh-CN"}
+   [:meta {:charset "utf-8"}]
+   [:meta {:name "viewport"
+           :content "width=device-width, initial-scale=1"}]
+   [:title title]
+   [:link {:rel "stylesheet" :href css}]
+   (for [s scripts]
+     [:script {:src s}])])
+
+(def ^:private top-level-path (partial str "../"))
+
 (defn- wrap-in-html [tokenized-lines]
   (html
    (html5
-    [:head {:lang "zh-CN"}
-     [:meta {:charset "utf-8"}]
-     [:meta {:name "viewport"
-             :content "width=device-width, initial-scale=1"}]
-     [:title (:text (first tokenized-lines))]
-     [:link {:rel "stylesheet" :href "index.css"}]
-     [:script {:src "main.js"}]
-     [:script {:src "ganalytics.js"}]]
+    (html-head (:text (first tokenized-lines))
+               (top-level-path "index.css")
+               (top-level-path "main.js")
+               (top-level-path "ganalytics.js"))
     [:body
      [:article {:class "entries-container"
                 :onclick "void(0)" ; for iOS compatibility
@@ -242,51 +250,57 @@
       ;;generate it automatically
       (-> ls l/draw-skeleton l/attach-table-of-contents))))
 
-(defn- mainfn [inname->outpath]
-  (dorun
-   (for [[in out] inname->outpath]
-     (with-open [r (io/reader (io/file (io/resource in)))]
-       (->> (line-seq r)
-            (remove str/blank?)
-            (map (comp use-chinese-paren space-clapsed str/trim))
-            tokenized-lines
-            wrap-in-html
-            (spit out))))))
+(defn- index-page [entry-paths]
+  (html
+   (html5
+    (html-head "法律文本富网页化"
+               "index.css"
+               "ganalytics.js")
+    [:body
+     [:div {:class "entries-container"}
+      [:nav {:id "outline"}
+       [:ul {:class "entry"}
+        (for [[n p] entry-paths]
+          [:li [:a {:href p} n]])]]]])))
+
+(defn- txt->page [name]
+  (let [page-path "pages/"]
+    [(str name ".txt")
+     (str page-path name ".html")]))
+
+(defn- mainfn [names]
+  (let [f (memoize txt->page)]
+    (dorun
+     ;; create all the document pages
+     (for [n names
+           :let [[in out] (f n)]]
+       (with-open [r (io/reader (io/file (io/resource in)))]
+         (->> (line-seq r)
+              (remove str/blank?)
+              (map (comp use-chinese-paren space-clapsed str/trim))
+              tokenized-lines
+              wrap-in-html
+              (spit (top-level-path out)))))
+     ;; create the index page
+     (spit (top-level-path "index.html")
+           (index-page (for [n names
+                             :let [[_ out] (f n)]]
+                         [n out]))))))
 
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
-  (mainfn {"劳动合同法.txt"
-           "../劳动合同法.html"
-
-           "网络预约出租汽车经营服务管理暂行办法.txt"
-           "../网络预约出租汽车经营服务管理暂行办法.html"
-
-           "高等教育法.txt"
-           "../高等教育法.html"
-
-           "种子法.txt"
-           "../种子法.html"
-
-           "体育法.txt"
-           "../体育法.html"
-
-           "婚姻法.txt"
-           "../婚姻法.html"
-
-           "合同法.txt"
-           "../合同法.html"
-
-           "民法通则.txt"
-           "../民法通则.html"
-
-           "网络借贷信息中介机构业务活动管理暂行办法.txt"
-           "../网络借贷信息中介机构业务活动管理暂行办法.html"
-
-           "互联网广告管理暂行办法.txt"
-           "../互联网广告管理暂行办法.html"
-
-           "个体工商户条例.txt"
-           "../个体工商户条例.html"}))
+  (mainfn
+   ["劳动合同法"
+    "网络预约出租汽车经营服务管理暂行办法"
+    "高等教育法"
+    "种子法"
+    "体育法"
+    "婚姻法"
+    "合同法"
+    "民法通则"
+    "网络借贷信息中介机构业务活动管理暂行办法"
+    "互联网广告管理暂行办法"
+    "个体工商户条例"]))
 
 (-main)
