@@ -180,7 +180,7 @@
    (for [s scripts]
      [:script {:src s}])])
 
-(def ^:private top-level-path (partial str "../"))
+(def ^:private top-level-path (partial str ""))
 
 (defn- wrap-in-html [tokenized-lines]
   (html
@@ -264,7 +264,7 @@
           [:li [:a {:href p} n]])]]]])))
 
 (defn- txt->page [name]
-  (let [page-path "pages/"]
+  (let [page-path ""]
     [(str name ".txt")
      (str page-path name ".html")]))
 
