@@ -102,19 +102,89 @@ function shareButtonClosure(elmt) {
     };
 }
 
+var tapOn = (function () {
+    var tap = (function () {
+        var status = 0; //0 - initial; 1 - started; 2 - moved
+        var x, y;
+
+        return {
+            // Return true if the op is accepted as part of a tap;
+            // return false if otherwise.
+            "start": function(e, isTouch) {
+                if (status === 0) {
+                    status = 1;
+                    if (!isTouch) {
+                        x = e.layerX;
+                        y = e.layerY;
+                    }
+                    return true;
+                } else {
+                    return false;
+                }
+            },
+            "move": function(e) {
+                if (status === 1) {
+                    status = 2;
+                    return true;
+                } else {
+                    return false;
+                }
+            },
+            "end": function(e, isTouch) {
+                if (status === 1) {
+                    status = 0;
+                    if (!isTouch && (x !== e.layerX || y !== e.layerY)) {
+                        return false;
+                    }
+                    return true;
+                } else {
+                    status = 0;
+                    return false;
+                }
+            }
+        };
+    }());
+
+    return function(elmt, handler) {
+        elmt.addEventListener("mousedown", function(e) {
+            tap.start(e, false);
+        });
+        elmt.addEventListener("mouseup", function(e) {
+            if (tap.end(e, false)) handler(e);
+        });
+        elmt.addEventListener("touchstart", function(e) {
+            console.log("touchstart");
+            tap.start(e, true);
+        });
+        elmt.addEventListener("touchmove", function(e) {
+            console.log("touchmove");
+            tap.move(e);
+        });
+        elmt.addEventListener("touchend", function(e) {
+            console.log("touchend");
+            if (tap.end(e, true)) {
+                e.preventDefault();
+                handler(e);
+            }
+        });
+    }
+}());
+
 function overlayClosure(elmt, content, docancel, docopy) {
     var computed, textareaWidth;
 
-    elmt.onclick = function (e) {
-        e.stopPropagation();
-    };
 
-    docancel.onclick = function (e) {
+    tapOn(elmt, function (e) {
+        e.stopPropagation();
+    });
+
+    tapOn(docancel, function (e) {
+        console.log("docancel");
         elmt.style.display = "none";
         e.stopPropagation();
-    };
+    });
 
-    docopy.onclick = function (e) {
+    tapOn(docopy, function (e) {
         content.focus();
         content.select();
         // copy might not work on some browsers, but at least
@@ -125,7 +195,7 @@ function overlayClosure(elmt, content, docancel, docopy) {
         // on devices such as phones
         content.setAttribute("readonly", true);
         e.stopPropagation();
-    };
+    });
 
     return {
         "element": elmt,
@@ -178,6 +248,7 @@ function editHashAndScroll(hash, dontScroll, lazyScroll) {
     }();
 
     var elmt = document.getElementById(hash.slice(1));
+    console.assert(elmt, "element at " + hash + " should not be null");
     var x = dontScroll? 0 : (function () {
         var rect = elmt.getBoundingClientRect();
         var h = rect.bottom - rect.top;
@@ -225,7 +296,7 @@ function tapHandler(e) {
     // if the click is originated from an on screen element,
     // prevent page from scrolling after location.hash update
     if (e.target.tagName !== "A") {
-        editHashAndScroll(id, true);
+        editHashAndScroll("#" + id, true);
         shareButton.showAt(elmt.getBoundingClientRect().top);
         shareButton.setContent(
             elmt.textContent,
@@ -243,63 +314,4 @@ function tapHandler(e) {
         id==="back-button");
 }
 
-var tap = function() {
-    var status = 0; //0 - initial; 1 - started; 2 - moved
-    var x, y;
-
-    return {
-        // Return true if the op is accepted as part of a tap;
-        // return false if otherwise.
-        "start": function(e, isTouch) {
-            if (status === 0) {
-                status = 1;
-                if (!isTouch) {
-                    x = e.layerX;
-                    y = e.layerY;
-                }
-                return true;
-            } else {
-                return false;
-            }
-        },
-        "move": function(e) {
-            if (status === 1) {
-                status = 2;
-                return true;
-            } else {
-                return false;
-            }
-        },
-        "end": function(e, isTouch) {
-            if (status === 1) {
-                status = 0;
-                if (!isTouch && (x !== e.layerX || y !== e.layerY)) {
-                    return false;
-                }
-                return true;
-            } else {
-                status = 0;
-                return false;
-            }
-        }
-    };
-}();
-window.addEventListener("mousedown", function(e) { tap.start(e, false); });
-window.addEventListener("mouseup", function(e) {
-    if (tap.end(e, false)) tapHandler(e);
-});
-window.addEventListener("touchstart", function(e) {
-    console.log("touchstart");
-    tap.start(e, true);
-});
-window.addEventListener("touchmove", function(e) {
-    console.log("touchmove");
-    tap.move(e);
-});
-window.addEventListener("touchend", function(e) {
-    console.log("touchend");
-    if (tap.end(e, true)) {
-        e.preventDefault();
-        tapHandler(e);
-    }
-});
+tapOn(window, tapHandler);
