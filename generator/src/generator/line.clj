@@ -211,3 +211,49 @@
                           :text "目录"
                           :list titles})
       true (into tls'))))
+
+(defn inject-contexts
+  {:test
+   #(let [f inject-contexts]
+      (tt/comprehend-tests
+       (t/is (empty? (f ())))
+       (t/is (= [{:token :则 :nth :general :text "x"
+                  :context {:则 :general}}]
+                (f [{:token :则 :nth :general :text "x"}])))
+       (let [s [{:token :to-be-recognized :text "a" :context {}}
+                {:token :to-be-recognized :text "b" :context {}}]]
+         (t/is (= s (f s))))
+       (let [s [{:token :章 :nth 3 :text "第三章 法 人"}
+                {:token :节 :nth 1 :text "第一节 一般规定"}
+                {:token :条 :nth 36 :text "第三十六条"}
+                {:token :款 :nth 1 :text "法人是具有民事权利……"}
+                {:token :款 :nth 2 :text "法人的民事权利能力……"}
+                {:token :条 :nth 37 :text "第三十七条"}
+                {:token :款 :nth 1 :text "法人应当具备下列条件："}
+                {:token :项 :nth 1 :text "（一）依法成立；"}]]
+         (t/is (= [{:token :章 :nth 3 :text "第三章 法 人"
+                    :context {:章 3}}
+                   {:token :节 :nth 1 :text "第一节 一般规定"
+                    :context {:章 3 :节 1}}
+                   {:token :条 :nth 36 :text "第三十六条"
+                    :context {:章 3 :节 1 :条 36}}
+                   {:token :款 :nth 1 :text "法人是具有民事权利……"
+                    :context {:章 3 :节 1 :条 36 :款 1}}
+                   {:token :款 :nth 2 :text "法人的民事权利能力……"
+                    :context {:章 3 :节 1 :条 36 :款 2}}
+                   {:token :条 :nth 37 :text "第三十七条"
+                    :context {:章 3 :节 1 :条 37 :款 2}}
+                   {:token :款 :nth 1 :text "法人应当具备下列条件："
+                    :context {:章 3 :节 1 :条 37 :款 1}}
+                   {:token :项 :nth 1 :text "（一）依法成立；"
+                    :context {:章 3 :节 1 :条 37 :款 1 :项 1}}]
+                  (f s))))))}
+  [tls]
+  (reduce
+   (fn [ret {t :token :as x}]
+     (let [curr (:context (peek ret))
+           succ (cond-> curr
+                  (not= t :to-be-recognized) (assoc t (:nth x)))]
+       (conj ret (cond-> x
+                   succ (assoc :context succ)))))
+   [] tls))

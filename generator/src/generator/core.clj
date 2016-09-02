@@ -132,12 +132,19 @@
                      ts
                      i-款)))))])
 
-(defn- gen-outline-id [t]
-  (encode-id (str (name (:token t)) (:nth t))))
+(defn- gen-outline-id [context t]
+  (letfn [(gen-str [context t]
+            (let [r (str (name t) (t context))]
+              (case t
+                :则 r
+                :章 r
+                :节 (str (gen-str context :章) r))))]
+    (encode-id (gen-str context t))))
 
 (defn- outline-html [ts gen-id]
   (let [level (fn [t] ((:token t) {:节 1 :章 2 :则 3}))
-        list-item (fn [t] [:li [:a {:href (str "#" (gen-id t))}
+        list-item (fn [t] [:li [:a {:href (str "#" (gen-id (:context t)
+                                                           (:token t)))}
                                 (:text t)]])]
    (if (empty? ts)
      ()
@@ -160,11 +167,14 @@
                          elmt' (conj elmt sub-elmt)]
                      (recur elmt' ys'))))))))))
 
+(def ^:private draw-skeleton-with-contexts
+  (comp l/inject-contexts l/draw-skeleton))
+
 (defn- wrap-outline-in-html [outline]
   (assert (= (:token outline) :table-of-contents))
   (let [kv {:则 1 :章 2 :节 3}
         head (:text outline)
-        item-list (l/draw-skeleton (:list outline))]
+        item-list (draw-skeleton-with-contexts (:list outline))]
     [:section
      [:h2 {:id (encode-id "章0") :class "章"} head]
      [:nav {:id "outline" :class "entry"}
@@ -196,7 +206,7 @@
               elmts []]
          (if (empty? tls)
            elmts
-           (let [{t :token :as tl} (first tls)]
+           (let [{t :token ct :context :as tl} (first tls)]
              (case t
                :table-of-contents
                (recur (rest tls)
@@ -205,20 +215,20 @@
                :则
                (let [txt (:text tl)]
                  (recur (rest tls)
-                        (conj elmts [:h2 {:id (gen-outline-id tl)
+                        (conj elmts [:h2 {:id (gen-outline-id ct :则)
                                           :class "章"}
                                      txt])))
                :章
                (let [txt (:text tl)]
                  (recur (rest tls)
-                        (conj elmts [:h2 {:id (gen-outline-id tl)
+                        (conj elmts [:h2 {:id (gen-outline-id ct :章)
                                           :class "章"}
                                      txt])))
 
                :节
                (let [txt (:text tl)]
                  (recur (rest tls)
-                        (conj elmts [:h3 {:id (gen-outline-id tl)
+                        (conj elmts [:h3 {:id (gen-outline-id ct :节)
                                           :class "节"}
                                      txt])))
 
@@ -243,10 +253,10 @@
 (defn- tokenized-lines [ls]
   (let [[before-ts after-ls] (l/recognize-table-of-contents ls)]
     (if (seq before-ts)
-      (into before-ts (l/draw-skeleton after-ls))
+      (into before-ts (draw-skeleton-with-contexts after-ls))
       ;;otherwise, table of contents is not found
       ;;generate it automatically
-      (-> ls l/draw-skeleton l/attach-table-of-contents))))
+      (-> ls draw-skeleton-with-contexts l/attach-table-of-contents))))
 
 (defn- index-page [entry-paths]
   (html
