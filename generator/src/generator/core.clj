@@ -61,7 +61,8 @@
                 :节 (str (gen-str context :章) r)
                 :条 r
                 :款 (str (gen-str context :条) r)
-                :项 (str (gen-str context :款) r))))]
+                :项 (str (gen-str context :款) r)
+                :目 (str (gen-str context :项) r))))]
     (encode-id (gen-str context t))))
 
 (defn within-款项
@@ -110,17 +111,30 @@
 
 (defn- wrap-条-in-html [head body]
   (assert (= (:token head) :条))
-  [:section {:class "entry" :id (encode-id (str \条 (:nth head)))}
-   [:div {:class "title"}
-    [:b (:text head)]]
-   (for [t  body]
-     [:p {:class (name (:token t))
-          :id (entry-id (:context t) (:token t))}
-      (s/map-on-binary-partitions
-       #(= (:token %) :to-be-recognized)
-       (within-款项 (:context t) (seq (:text t)))
-       #(str/join (map :text %))
-       wrap-item-string-in-html)])])
+  (let [attr-and-content
+        (fn [t]
+          [;;attributes
+           {:class (name (:token t))
+            :id (entry-id (:context t) (:token t))}
+           ;;content
+           (s/map-on-binary-partitions
+            #(= (:token %) :to-be-recognized)
+            (within-款项 (:context t) (seq (:text t)))
+            #(str/join (map :text %))
+            wrap-item-string-in-html)])]
+   [:section {:class "entry" :id (encode-id (str \条 (:nth head)))}
+    [:div {:class "title"}
+     [:b (:text head)]]
+    (s/map-on-binary-partitions
+     #(= (:token %) :目)
+     body
+     (fn create-ol [items]
+       [:ol
+        (for [it items]
+          (into [:li] (attr-and-content it)))])
+     (fn create-ps [items]
+       (for [it items]
+         (into [:p] (attr-and-content it)))))]))
 
 (defn- outline-html [ts gen-id]
   (let [level (fn [t] ((:token t) {:节 1 :章 2 :则 3}))
@@ -215,7 +229,7 @@
 
                :条
                (let [[lines-within lines-after]
-                     (split-with #(#{:款 :项} (:token %)) (rest tls))]
+                     (split-with #(#{:款 :项 :目} (:token %)) (rest tls))]
                  (recur lines-after
                         (conj elmts (wrap-条-in-html tl lines-within))))
 
@@ -289,6 +303,7 @@
     "民法通则"
     "网络借贷信息中介机构业务活动管理暂行办法"
     "互联网广告管理暂行办法"
-    "个体工商户条例"]))
+    "个体工商户条例"
+    "出口退（免）税企业分类管理办法"]))
 
 (-main)
