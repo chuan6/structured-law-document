@@ -52,6 +52,18 @@
   [s]
   (str/replace s #"\s" "-"))
 
+(defn- entry-id [context t]
+  (letfn [(gen-str [context t]
+            (let [r (str (name t) (t context))]
+              (case t
+                :则 r
+                :章 r
+                :节 (str (gen-str context :章) r)
+                :条 r
+                :款 (str (gen-str context :条) r)
+                :项 (str (gen-str context :款) r))))]
+    (encode-id (gen-str context t))))
+
 (defn within-款项
   {:test
    #(let [f within-款项
@@ -101,45 +113,14 @@
   [:section {:class "entry" :id (encode-id (str \条 (:nth head)))}
    [:div {:class "title"}
     [:b (:text head)]]
-   (seq
-    (loop [ps []
-           [t & ts] body
-           i-款 0]
-      (if (nil? t)
-        ps
-        (condp = (:token t)
-          :款 (recur (conj ps [:p {:class "款"
-                                   :id (encode-id (str "条" (:nth head)
-                                                        "款" (inc i-款)))}
-                               (s/map-on-binary-partitions
-                                #(= (:token %) :to-be-recognized)
-                                (within-款项 {:条 (:nth head)
-                                              :款 (inc i-款)} (seq (:text t)))
-                                #(str/join (map :text %))
-                                wrap-item-string-in-html)])
-                     ts
-                     (inc i-款))
-          :项 (recur (conj ps [:p {:class "项"
-                                   :id (encode-id (str "条" (:nth head)
-                                                        "款" i-款
-                                                        "项" (:nth t)))}
-                               (s/map-on-binary-partitions
-                                #(= (:token %) :to-be-recognized)
-                                (within-款项 {:条 (:nth head)
-                                              :款 i-款} (seq (:text t)))
-                                #(str/join (map :text %))
-                                wrap-item-string-in-html)])
-                     ts
-                     i-款)))))])
-
-(defn- gen-outline-id [context t]
-  (letfn [(gen-str [context t]
-            (let [r (str (name t) (t context))]
-              (case t
-                :则 r
-                :章 r
-                :节 (str (gen-str context :章) r))))]
-    (encode-id (gen-str context t))))
+   (for [t  body]
+     [:p {:class (name (:token t))
+          :id (entry-id (:context t) (:token t))}
+      (s/map-on-binary-partitions
+       #(= (:token %) :to-be-recognized)
+       (within-款项 (:context t) (seq (:text t)))
+       #(str/join (map :text %))
+       wrap-item-string-in-html)])])
 
 (defn- outline-html [ts gen-id]
   (let [level (fn [t] ((:token t) {:节 1 :章 2 :则 3}))
@@ -178,7 +159,7 @@
     [:section
      [:h2 {:id (encode-id "章0") :class "章"} head]
      [:nav {:id "outline" :class "entry"}
-      (first (outline-html item-list gen-outline-id))]]))
+      (first (outline-html item-list entry-id))]]))
 
 (defn- html-head [title css & scripts]
   [:head {:lang "zh-CN"}
@@ -215,20 +196,20 @@
                :则
                (let [txt (:text tl)]
                  (recur (rest tls)
-                        (conj elmts [:h2 {:id (gen-outline-id ct :则)
+                        (conj elmts [:h2 {:id (entry-id ct :则)
                                           :class "章"}
                                      txt])))
                :章
                (let [txt (:text tl)]
                  (recur (rest tls)
-                        (conj elmts [:h2 {:id (gen-outline-id ct :章)
+                        (conj elmts [:h2 {:id (entry-id ct :章)
                                           :class "章"}
                                      txt])))
 
                :节
                (let [txt (:text tl)]
                  (recur (rest tls)
-                        (conj elmts [:h3 {:id (gen-outline-id ct :节)
+                        (conj elmts [:h3 {:id (entry-id ct :节)
                                           :class "节"}
                                      txt])))
 
