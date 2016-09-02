@@ -36,6 +36,21 @@
         (when (and (seq processed) (= processed body))
           [i (s/flatten-and-vector begin body end)])))))
 
+(defn digits
+  {:test
+   #(let [f digits]
+      (tt/comprehend-tests
+       (t/is (= [1 [\x]] (f "1.x")))
+       (t/is (= [1 [\x]] (f "1．x")))
+       (t/is (= [1 [\x]] (f "1. x")))))}
+  [cs]
+  (let [[ds cs'] (split-with (set (seq "0123456789")) cs)
+        cs' (drop-while #{\space \.
+                          \．; U+FF0E, fullwidth full stop
+                          } cs')]
+    (when (and (seq ds) (seq cs'))
+      [(Integer/parseInt (str/join ds)) cs'])))
+
 (defn 则
   {:test
    #(let [f 则]
@@ -136,6 +151,8 @@
                  "第一条 cde"
                  "第三人fgh"
                  "（一）ijk"
+                 "1.x"
+                 "2.y"
                  "（二）lmn"
                  "opq"
                  "第二条 rst"
@@ -149,12 +166,14 @@
        (t/is (= {:token :款 :nth 1 :text "cde"}          (nth r 3)))
        (t/is (= {:token :款 :nth 2 :text "第三人fgh"}    (nth r 4)))
        (t/is (= {:token :项 :nth 1 :text "（一）ijk"}    (nth r 5)))
-       (t/is (= {:token :项 :nth 2 :text "（二）lmn"}    (nth r 6)))
-       (t/is (= {:token :款 :nth 3 :text "opq"}          (nth r 7)))
-       (t/is (= {:token :条 :nth 2 :text "第二条"}       (nth r 8)))
-       (t/is (= {:token :款 :nth 1 :text "rst"}          (nth r 9)))
-       (t/is (= {:token :则 :nth :special :text "分 则"} (nth r 10)))
-       (t/is (= {:token :章 :nth 2 :text "第二章 ……"}  (nth r 11)))))}
+       (t/is (= {:token :目 :nth 1 :text "x"}            (nth r 6)))
+       (t/is (= {:token :目 :nth 2 :text "y"}            (nth r 7)))
+       (t/is (= {:token :项 :nth 2 :text "（二）lmn"}    (nth r 8)))
+       (t/is (= {:token :款 :nth 3 :text "opq"}          (nth r 9)))
+       (t/is (= {:token :条 :nth 2 :text "第二条"}       (nth r 10)))
+       (t/is (= {:token :款 :nth 1 :text "rst"}          (nth r 11)))
+       (t/is (= {:token :则 :nth :special :text "分 则"} (nth r 12)))
+       (t/is (= {:token :章 :nth 2 :text "第二章 ……"}  (nth r 13)))))}
   [lines]
   (let [new-ret (fn [ret t l & i]
                   (cond-> (-> ret
@@ -165,25 +184,30 @@
      #(update % :text str/join)
      (:lines
       (reduce
-       (fn [{env :env :as ret} line]
-         (let [[i unit processed] (nth-item line)]
-           (if (#{:章 :节 :条} unit)
-             (cond (#{:章 :节} unit)
-                   (new-ret ret {:token unit :nth i :text line} unit)
+       (fn take-another-line [{env :env :as ret} line]
+         (or
+          (let [[i unit processed] (nth-item line)]
+            (cond (#{:章 :节} unit)
+                  (new-ret ret {:token unit :nth i :text line} unit)
 
-                   (= unit :条)
-                   (recur
-                    (new-ret ret {:token unit :nth i :text processed} :款 0)
-                    (rest (s/without-prefix line processed))))
-             (if-let [[i _] (则 line)]
-               (new-ret ret {:token :则 :nth i :text line} :则)
-               (apply new-ret ret
-                      (if (#{:款 :项} (:level env))
-                        (if-let [[i _] (括号数字 line)]
-                          [{:token :项 :nth i :text line} :项]
-                          (let [i (inc (:i-款 env))]
-                            [{:token :款 :nth i :text line} :款 i]))
-                        [{:token :to-be-recognized :text line} nil]))))))
+                  (= unit :条)
+                  (take-another-line
+                   (new-ret ret {:token unit :nth i :text processed} :款 0)
+                   (rest (s/without-prefix line processed)))))
+
+          (when-let [[i _] (则 line)]
+            (new-ret ret {:token :则 :nth i :text line} :则))
+
+          (and (#{:款 :项 :目} (:level env))
+               (or
+                (when-let [[i _] (括号数字 line)]
+                  (new-ret ret {:token :项 :nth i :text line} :项))
+                (when-let [[i line'] (digits line)]
+                  (new-ret ret {:token :目 :nth i :text line'} :目))
+                (let [i (inc (:i-款 env))]
+                  (new-ret ret {:token :款 :nth i :text line} :款 i))))
+
+          (new-ret ret {:token :to-be-recognized :text line} nil)))
        {:env {:level nil :i-款 nil} :lines []}
        lines)))))
 
