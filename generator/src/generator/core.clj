@@ -180,15 +180,13 @@
    (for [s scripts]
      [:script {:src s}])])
 
-(def ^:private top-level-path (partial str "../"))
-
 (defn- wrap-in-html [tokenized-lines]
   (html
    (html5
     (html-head (:text (first tokenized-lines))
-               (top-level-path "index.css")
-               (top-level-path "main.js")
-               (top-level-path "ganalytics.js"))
+               "index.css"
+               "main.js"
+               "ganalytics.js")
     [:body
      [:article {:class "entries-container"
                 :onclick "void(0)" ; for iOS compatibility
@@ -263,10 +261,9 @@
         (for [[n p] entry-paths]
           [:li [:a {:href p} n]])]]]])))
 
-(defn- txt->page [name]
-  (let [page-path "pages/"]
-    [(str name ".txt")
-     (str page-path name ".html")]))
+(defn- txt->page [n]
+  [(str n ".txt")
+   (str n ".html")])
 
 (defn- mainfn [names]
   (let [f (memoize txt->page)]
@@ -280,12 +277,12 @@
               (map (comp use-chinese-paren space-clapsed str/trim))
               tokenized-lines
               wrap-in-html
-              (spit (top-level-path out)))))
-     ;; create the index page
-     (spit (top-level-path "index.html")
-           (index-page (for [n names
-                             :let [[_ out] (f n)]]
-                         [n out]))))))
+              (spit (str "../" out))))))
+    ;; create the index page
+    (spit "../index.html"
+          (index-page (for [n names
+                            :let [[_ out] (f n)]]
+                        [n out])))))
 
 (defn -main
   "I don't do a whole lot ... yet."
