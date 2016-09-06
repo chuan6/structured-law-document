@@ -185,10 +185,10 @@
    (for [s scripts]
      [:script {:src s}])])
 
-(defn- wrap-in-html [link-to-original tokenized-lines]
+(defn- wrap-in-html [page-name link-to-original tokenized-lines]
   (html
    (html5
-    (html-head (:text (first tokenized-lines))
+    (html-head page-name
                "index.css"
                "main.js"
                "ganalytics.js")
@@ -289,7 +289,7 @@
               (remove str/blank?)
               (map (comp use-chinese-paren space-clapsed str/trim))
               tokenized-lines
-              (wrap-in-html l)
+              (wrap-in-html n l)
               (spit (str "../" out))))))
     ;; create the index page
     (spit "../index.html"
