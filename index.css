@@ -6,8 +6,18 @@ body {
   scroll-behavior: smooth;
 }
 
-h2, h3 {
+#the-title, h2, h3 {
   font-family: "仿宋", FangSong, serif;
+}
+
+#the-title {
+  text-align: center;
+  color: red;
+}
+
+#the-title+hr {
+  border-top: 1px solid red;
+  margin: 0;
 }
 
 .entries-container {
@@ -102,7 +112,7 @@ h2, h3 {
   box-shadow: 0 0 0.1em silver;
 }
 
-#ref-to-original:target, #outline:target, .entry:target, .款:target, .项:target, .目:target {
+#the-title:target, #ref-to-original:target, #outline:target, .entry:target, .款:target, .项:target, .目:target {
   background-color: #FFFFD8;
   /* radius = (line-height + padding-top + padding-bottom) / 2
      so that for blocks that consists of only one line, the
@@ -117,14 +127,14 @@ h2, h3 {
   box-shadow: 0 0 0.31em silver;
 }
 
-nav h2, .章, .节 {
+#the-title, nav h2, .章, .节 {
   margin-left: 8px;
   margin-right: 8px;
   line-height: 1.62em;
   text-align: center;
 }
 
-.章:target, .节:target {
+#the-title:target, .章:target, .节:target {
   background-color: #FFFFD8;
   border-radius: 1.31em;
   box-shadow: 0 0 0.31em silver;

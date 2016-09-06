@@ -279,6 +279,9 @@ function editHashAndScroll(hash, dontScroll, lazyScroll) {
 function tapHandler(e) {
     var id = getEnclosingID(e.target);
     var elmt;
+    var isInPageAnchor = function (s) {
+        return s.split("://", 2).length === 1;
+    };
 
     console.log("tapped on ", id);
 
@@ -304,14 +307,19 @@ function tapHandler(e) {
         return;
     } // e.target.tagName === "A"
 
-    e.preventDefault();
-    if (id !== "back-button") {
-        backButton.push(id);
+    if (isInPageAnchor(e.target.getAttribute("href"))) {
+        e.preventDefault();
+        if (id !== "back-button") {
+            backButton.push(id);
+        }
+        editHashAndScroll(
+            e.target.getAttribute("href"),
+            false,
+            id==="back-button");
+    } else {
+        // e.target is an <a> element with an external link
+        e.target.click();
     }
-    editHashAndScroll(
-        e.target.getAttribute("href"),
-        false,
-        id==="back-button");
 }
 
 tapOn(window, tapHandler);

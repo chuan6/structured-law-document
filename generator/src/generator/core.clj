@@ -185,10 +185,10 @@
    (for [s scripts]
      [:script {:src s}])])
 
-(defn- wrap-in-html [link-to-original tokenized-lines]
+(defn- wrap-in-html [page-name link-to-original tokenized-lines]
   (html
    (html5
-    (html-head (:text (first tokenized-lines))
+    (html-head page-name
                "index.css"
                "main.js"
                "ganalytics.js")
@@ -199,11 +199,11 @@
       [:div {:class "entry"}
        [:p {:id "ref-to-original"}
         "原文请见："
-        [:a {:href link-to-original}
-         (-> link-to-original
-             clojure.java.io/as-url
-             .getHost
-             (str "/……"))]]]
+        [:a {:href link-to-original :target "_blank"}
+         (str (-> link-to-original
+                  clojure.java.io/as-url
+                  .getHost)
+              "/……")]]]
       (seq
        (loop [tls tokenized-lines
               elmts []]
@@ -211,6 +211,13 @@
            elmts
            (let [{t :token ct :context :as tl} (first tls)]
              (case t
+               :title
+               (let [txt (:text tl)]
+                 (recur (rest tls)
+                        (into elmts
+                              [[:h1 {:id "the-title"} txt]
+                               [:hr]])))
+
                :table-of-contents
                (recur (rest tls)
                       (conj elmts (wrap-outline-in-html tl)))
@@ -253,13 +260,17 @@
         [:button {:id "do-copy"} "完成"]
         [:button {:id "cancel-overlay"} "取消"]]]]])))
 
-(defn- tokenized-lines [ls]
-  (let [[before-ts after-ls] (l/recognize-table-of-contents ls)]
-    (if (seq before-ts)
-      (into before-ts (draw-skeleton-with-contexts after-ls))
-      ;;otherwise, table of contents is not found
-      ;;generate it automatically
-      (-> ls draw-skeleton-with-contexts l/attach-table-of-contents))))
+(defn- tokenized-lines [n ls]
+  (let [[before-ts after-ls] (l/recognize-title ls n)]
+    (into
+     before-ts
+     (let [ls' (if (seq before-ts) after-ls ls)
+           [before-ts' after-ls'] (l/recognize-table-of-contents ls')]
+       (if (seq before-ts')
+         (into before-ts' (draw-skeleton-with-contexts after-ls'))
+         ;;otherwise, table of contents is not found
+         ;;generate it automatically
+         (-> ls' draw-skeleton-with-contexts l/attach-table-of-contents))))))
 
 (defn- index-page [entry-paths]
   (html
@@ -288,8 +299,8 @@
          (->> (line-seq r)
               (remove str/blank?)
               (map (comp use-chinese-paren space-clapsed str/trim))
-              tokenized-lines
-              (wrap-in-html l)
+              (tokenized-lines n)
+              (wrap-in-html n l)
               (spit (str "../" out))))))
     ;; create the index page
     (spit "../index.html"
