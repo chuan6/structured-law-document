@@ -211,6 +211,13 @@
            elmts
            (let [{t :token ct :context :as tl} (first tls)]
              (case t
+               :title
+               (let [txt (:text tl)]
+                 (recur (rest tls)
+                        (into elmts
+                              [[:h1 {:id "the-title"} txt]
+                               [:hr]])))
+
                :table-of-contents
                (recur (rest tls)
                       (conj elmts (wrap-outline-in-html tl)))
@@ -253,13 +260,17 @@
         [:button {:id "do-copy"} "完成"]
         [:button {:id "cancel-overlay"} "取消"]]]]])))
 
-(defn- tokenized-lines [ls]
-  (let [[before-ts after-ls] (l/recognize-table-of-contents ls)]
-    (if (seq before-ts)
-      (into before-ts (draw-skeleton-with-contexts after-ls))
-      ;;otherwise, table of contents is not found
-      ;;generate it automatically
-      (-> ls draw-skeleton-with-contexts l/attach-table-of-contents))))
+(defn- tokenized-lines [n ls]
+  (let [[before-ts after-ls] (l/recognize-title ls n)]
+    (into
+     before-ts
+     (let [ls' (if (seq before-ts) after-ls ls)
+           [before-ts' after-ls'] (l/recognize-table-of-contents ls')]
+       (if (seq before-ts')
+         (into before-ts' (draw-skeleton-with-contexts after-ls'))
+         ;;otherwise, table of contents is not found
+         ;;generate it automatically
+         (-> ls' draw-skeleton-with-contexts l/attach-table-of-contents))))))
 
 (defn- index-page [entry-paths]
   (html
@@ -288,7 +299,7 @@
          (->> (line-seq r)
               (remove str/blank?)
               (map (comp use-chinese-paren space-clapsed str/trim))
-              tokenized-lines
+              (tokenized-lines n)
               (wrap-in-html n l)
               (spit (str "../" out))))))
     ;; create the index page

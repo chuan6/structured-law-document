@@ -119,6 +119,30 @@
           (recur (rest s) (conj t (first s)))))
       [[head] {:token :table-of-contents :text head :list []}])))
 
+(defn recognize-title
+  {:test
+   #(let [f recognize-title
+          txt ["前言" "这是标题" "目录" "……"]]
+      (tt/comprehend-tests
+       (t/is (= [[] []] (f (take 1 txt) "标题")))
+       (t/is (= {:token :title :text (second txt)}
+                (first (first (f (rest txt) "标题")))))
+       (t/is (= [[{:token :to-be-recognized :text (first txt)}
+                  {:token :title :text (second txt)}]
+                 (rest (rest txt))]
+                (let [[ts ls] (f txt "标题")]
+                  [(take 2 ts) ls])))))}
+  ([ls s] (recognize-title ls [] s))
+  ([ls ts s]
+   (if (empty? ls)
+     [[] []]
+     (let [l (first ls)]
+       (if (.endsWith l s)
+         [(conj ts {:token :title :text l}) (rest ls)]
+         (recur (rest ls)
+                (conj ts {:token :to-be-recognized :text l})
+                s))))))
+
 (defn recognize-table-of-contents
   {:test
    #(let [f recognize-table-of-contents
