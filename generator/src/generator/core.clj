@@ -199,11 +199,11 @@
       [:div {:class "entry"}
        [:p {:id "ref-to-original"}
         "原文请见："
-        [:a {:href link-to-original}
-         (-> link-to-original
-             clojure.java.io/as-url
-             .getHost
-             (str "/……"))]]]
+        [:a {:href link-to-original :target "_blank"}
+         (str (-> link-to-original
+                  clojure.java.io/as-url
+                  .getHost)
+              "/……")]]]
       (seq
        (loop [tls tokenized-lines
               elmts []]
