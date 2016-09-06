@@ -75,7 +75,7 @@ h2, h3 {
   font-weight: bold;
 }
 
-.款, .项, nav li {
+#ref-to-original, .款, .项, nav li {
   padding: 0.5em 1em;
   margin: 0;
 }
@@ -102,7 +102,7 @@ h2, h3 {
   box-shadow: 0 0 0.1em silver;
 }
 
-#outline:target, .entry:target, .款:target, .项:target, .目:target {
+#ref-to-original:target, #outline:target, .entry:target, .款:target, .项:target, .目:target {
   background-color: #FFFFD8;
   /* radius = (line-height + padding-top + padding-bottom) / 2
      so that for blocks that consists of only one line, the
