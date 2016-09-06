@@ -185,7 +185,7 @@
    (for [s scripts]
      [:script {:src s}])])
 
-(defn- wrap-in-html [tokenized-lines]
+(defn- wrap-in-html [link-to-original tokenized-lines]
   (html
    (html5
     (html-head (:text (first tokenized-lines))
@@ -196,6 +196,14 @@
      [:article {:class "entries-container"
                 :onclick "void(0)" ; for iOS compatibility
                 }
+      [:div {:class "entry"}
+       [:p {:id "ref-to-original"}
+        "原文请见："
+        [:a {:href link-to-original}
+         (-> link-to-original
+             clojure.java.io/as-url
+             .getHost
+             (str "/……"))]]]
       (seq
        (loop [tls tokenized-lines
               elmts []]
@@ -274,18 +282,18 @@
   (let [f (memoize txt->page)]
     (dorun
      ;; create all the document pages
-     (for [n names
+     (for [[n l] names
            :let [[in out] (f n)]]
        (with-open [r (io/reader (io/file (io/resource in)))]
          (->> (line-seq r)
               (remove str/blank?)
               (map (comp use-chinese-paren space-clapsed str/trim))
               tokenized-lines
-              wrap-in-html
+              (wrap-in-html l)
               (spit (str "../" out))))))
     ;; create the index page
     (spit "../index.html"
-          (index-page (for [n names
+          (index-page (for [[n _] names
                             :let [[_ out] (f n)]]
                         [n out])))))
 
@@ -293,17 +301,40 @@
   "I don't do a whole lot ... yet."
   [& args]
   (mainfn
-   ["劳动合同法"
-    "网络预约出租汽车经营服务管理暂行办法"
-    "高等教育法"
-    "种子法"
-    "体育法"
-    "婚姻法"
-    "合同法"
-    "民法通则"
-    "网络借贷信息中介机构业务活动管理暂行办法"
-    "互联网广告管理暂行办法"
-    "个体工商户条例"
-    "出口退（免）税企业分类管理办法"]))
+   [["劳动合同法"
+     "http://www.npc.gov.cn/wxzl/gongbao/2013-04/15/content_1811058.htm"]
+
+    ["网络预约出租汽车经营服务管理暂行办法"
+     "http://zizhan.mot.gov.cn/zfxxgk/bnssj/zcfgs/201607/t20160728_2068633.html"]
+
+    ["高等教育法"
+     "http://www.moe.edu.cn/publicfiles/business/htmlfiles/moe/moe_619/200407/1311.html"]
+
+    ["种子法"
+     "http://www.forestry.gov.cn/Zhuanti/content_lqgg/817306.html"]
+
+    ["体育法"
+     "http://www.sport.gov.cn/n16/n1092/n16819/312031.html"]
+
+    ["婚姻法"
+     "http://www.npc.gov.cn/wxzl/gongbao/2001-05/30/content_5136774.htm"]
+
+    ["合同法"
+     "http://www.npc.gov.cn/wxzl/wxzl/2000-12/06/content_4732.htm"]
+
+    ["民法通则"
+     "http://www.npc.gov.cn/wxzl/wxzl/2000-12/06/content_4470.htm"]
+
+    ["网络借贷信息中介机构业务活动管理暂行办法"
+     "http://www.cbrc.gov.cn/chinese/home/docDOC_ReadView/D934AAE7E05849D185CD497936D767CF.html"]
+
+    ["互联网广告管理暂行办法"
+     "http://www.saic.gov.cn/zwgk/zyfb/zjl/xxzx/201607/t20160708_169638.html"]
+
+    ["个体工商户条例"
+     "http://www.gov.cn/zwgk/2011-04/28/content_1853972.htm"]
+
+    ["出口退（免）税企业分类管理办法"
+     "http://www.chinatax.gov.cn/n810341/n810755/c2217201/content.html"]]))
 
 (-main)
