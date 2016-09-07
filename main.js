@@ -90,6 +90,10 @@ function shareButtonClosure(elmt) {
             elmt.style.top = px(top);
             elmt.style.display = "";
         },
+        "clear": function () {
+            text = link = null;
+            elmt.style.display = "none";
+        },
         "setContent": function (s, ref) {
             text = s;
             link = ref;
@@ -167,7 +171,7 @@ var tapOn = (function () {
                 handler(e);
             }
         });
-    }
+    };
 }());
 
 function overlayClosure(elmt, content, docancel, docopy) {
@@ -248,7 +252,7 @@ function editHashAndScroll(hash, dontScroll, lazyScroll) {
     }();
 
     var elmt = document.getElementById(hash.slice(1));
-    console.assert(elmt, "element at " + hash + " should not be null");
+    console.assert(elmt || dontScroll);
     var x = dontScroll? 0 : (function () {
         var rect = elmt.getBoundingClientRect();
         var h = rect.bottom - rect.top;
@@ -276,6 +280,33 @@ function editHashAndScroll(hash, dontScroll, lazyScroll) {
     }
 }
 
+var elmtOnTarget = (function () {
+    var targetID = null;
+
+    return {
+        "update": function (elmt) {
+            var id = elmt.id;
+            console.assert(id, "element passed here must have an ID");
+
+            if (id === targetID) { // clear
+                console.log("elmtOnTarget: clear");
+                editHashAndScroll("", true);
+                shareButton.clear();
+                targetID = null;
+            } else { // set
+                console.log("elmtOnTarget: set");
+                editHashAndScroll("#" + id, true);
+                shareButton.showAt(elmt.getBoundingClientRect().top);
+                shareButton.setContent(
+                    elmt.textContent,
+                    window.location.href);
+                targetID = id;
+            }
+        }
+    };
+})();
+
+
 function tapHandler(e) {
     var id = getEnclosingID(e.target);
     var elmt;
@@ -299,11 +330,7 @@ function tapHandler(e) {
     // if the click is originated from an on screen element,
     // prevent page from scrolling after location.hash update
     if (e.target.tagName !== "A") {
-        editHashAndScroll("#" + id, true);
-        shareButton.showAt(elmt.getBoundingClientRect().top);
-        shareButton.setContent(
-            elmt.textContent,
-            window.location.href);
+        elmtOnTarget.update(elmt);
         return;
     } // e.target.tagName === "A"
 
