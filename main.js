@@ -296,7 +296,7 @@ function textContent(x) {
 
         s += textContent(cs[0]);
         for (i = 1; i < cs.length; i++) {
-            s += (cs[i].tagName==="P"? "\u2936 ":"")
+            s += (cs[i].tagName==="P"? "|":"")
                 +  textContent(cs[i]);
         }
         return s;
