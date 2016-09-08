@@ -149,7 +149,7 @@ var tapOn = (function () {
         };
     }());
 
-    return function(elmt, handler) {
+    return function(elmt, handler, doPreventDefault=true) {
         elmt.addEventListener("mousedown", function(e) {
             tap.start(e, false);
         });
@@ -167,7 +167,7 @@ var tapOn = (function () {
         elmt.addEventListener("touchend", function(e) {
             console.log("touchend");
             if (tap.end(e, true)) {
-                e.preventDefault();
+                if (doPreventDefault) e.preventDefault();
                 handler(e);
             }
         });
@@ -180,7 +180,7 @@ function overlayClosure(elmt, content, docancel, docopy) {
 
     tapOn(elmt, function (e) {
         e.stopPropagation();
-    });
+    }, false);
 
     tapOn(docancel, function (e) {
         console.log("docancel");
