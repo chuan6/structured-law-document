@@ -99,7 +99,7 @@ function shareButtonClosure(elmt) {
             link = ref;
         },
         "getContent": function () {
-            var nchars = 50;
+            var nchars = 64;
             var sliced = strSlice(text, nchars);
             return sliced[0] + (sliced[1]? "……":"") + " " + link;
         }
@@ -280,6 +280,31 @@ function editHashAndScroll(hash, dontScroll, lazyScroll) {
     }
 }
 
+function textContent(x) {
+    var s = "", i, cs;
+
+    if (x.nodeType === 3) {
+        return x.textContent;
+    }
+
+    if (x instanceof HTMLElement) {
+        cs = x.childNodes;
+
+        if (cs.length === 0) {
+            return s;
+        } // cs.length > 0
+
+        s += textContent(cs[0]);
+        for (i = 1; i < cs.length; i++) {
+            s += (cs[i].tagName==="P"? "\u2936 ":"")
+                +  textContent(cs[i]);
+        }
+        return s;
+    }
+
+    return null;
+}
+
 var elmtOnTarget = (function () {
     var targetID = null;
 
@@ -298,7 +323,7 @@ var elmtOnTarget = (function () {
                 editHashAndScroll("#" + id, true);
                 shareButton.showAt(elmt.getBoundingClientRect().top);
                 shareButton.setContent(
-                    elmt.textContent,
+                    textContent(elmt),
                     window.location.href);
                 targetID = id;
             }
