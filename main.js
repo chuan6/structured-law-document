@@ -185,6 +185,7 @@ function overlayClosure(elmt, content, docancel, docopy) {
     tapOn(docancel, function (e) {
         console.log("docancel");
         elmt.style.display = "none";
+        content.removeAttribute("readonly");
         e.stopPropagation();
     });
 
