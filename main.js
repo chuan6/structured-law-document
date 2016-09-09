@@ -149,7 +149,7 @@ var tapOn = (function () {
         };
     }());
 
-    return function(elmt, handler, doPreventDefault=true) {
+    return function(elmt, handler, doPreventDefault) {
         elmt.addEventListener("mousedown", function(e) {
             tap.start(e, false);
         });
@@ -187,7 +187,7 @@ function overlayClosure(elmt, content, docancel, docopy) {
         elmt.style.display = "none";
         content.removeAttribute("readonly");
         e.stopPropagation();
-    });
+    }, true);
 
     tapOn(docopy, function (e) {
         content.focus();
@@ -200,7 +200,7 @@ function overlayClosure(elmt, content, docancel, docopy) {
         // on devices such as phones
         content.setAttribute("readonly", true);
         e.stopPropagation();
-    });
+    }, true);
 
     return {
         "element": elmt,
@@ -375,4 +375,4 @@ function tapHandler(e) {
     }
 }
 
-tapOn(window, tapHandler);
+tapOn(window, tapHandler, true);
