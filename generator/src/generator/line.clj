@@ -199,7 +199,10 @@
        (t/is (= {:token :则 :nth :special :text "分 则"} (nth r 12)))
        (t/is (= {:token :章 :nth 2 :text "第二章 ……"}  (nth r 13)))))}
   [lines]
-  (let [new-ret (fn [ret t l & i]
+  (let [skip-?-space (fn [cs]
+                       (cond-> cs
+                         (= (first cs) \space) rest))
+        new-ret (fn [ret t l & i]
                   (cond-> (-> ret
                               (update :lines conj t)
                               (assoc-in [:env :level] l))
@@ -217,7 +220,7 @@
                   (= unit :条)
                   (take-another-line
                    (new-ret ret {:token unit :nth i :text processed} :款 0)
-                   (rest (s/without-prefix line processed)))))
+                   (skip-?-space (s/without-prefix line processed)))))
 
           (when-let [[i _] (则 line)]
             (new-ret ret {:token :则 :nth i :text line} :则))

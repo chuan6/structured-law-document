@@ -312,7 +312,8 @@
   "I don't do a whole lot ... yet."
   [& args]
   (mainfn
-   [["劳动合同法"
+   [
+    ["劳动合同法"
      "http://www.npc.gov.cn/wxzl/gongbao/2013-04/15/content_1811058.htm"]
 
     ["网络预约出租汽车经营服务管理暂行办法"
@@ -346,6 +347,7 @@
      "http://www.gov.cn/zwgk/2011-04/28/content_1853972.htm"]
 
     ["出口退（免）税企业分类管理办法"
-     "http://www.chinatax.gov.cn/n810341/n810755/c2217201/content.html"]]))
+     "http://www.chinatax.gov.cn/n810341/n810755/c2217201/content.html"]
+    ]))
 
 (-main)
