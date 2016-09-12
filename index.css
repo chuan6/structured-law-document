@@ -173,6 +173,7 @@ nav>ul {
   border: 1px solid silver;
   box-shadow: 0 0 0.5em silver;
   font-size: 16px;
+  word-wrap: break-word;
 }
 
 #overlay-button-panel>button {

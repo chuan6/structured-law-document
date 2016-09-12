@@ -90,12 +90,16 @@ function shareButtonClosure(elmt) {
             elmt.style.top = px(top);
             elmt.style.display = "";
         },
+        "clear": function () {
+            text = link = null;
+            elmt.style.display = "none";
+        },
         "setContent": function (s, ref) {
             text = s;
             link = ref;
         },
         "getContent": function () {
-            var nchars = 50;
+            var nchars = 64;
             var sliced = strSlice(text, nchars);
             return sliced[0] + (sliced[1]? "……":"") + " " + link;
         }
@@ -145,7 +149,7 @@ var tapOn = (function () {
         };
     }());
 
-    return function(elmt, handler) {
+    return function(elmt, handler, doPreventDefault) {
         elmt.addEventListener("mousedown", function(e) {
             tap.start(e, false);
         });
@@ -163,11 +167,11 @@ var tapOn = (function () {
         elmt.addEventListener("touchend", function(e) {
             console.log("touchend");
             if (tap.end(e, true)) {
-                e.preventDefault();
+                if (doPreventDefault) e.preventDefault();
                 handler(e);
             }
         });
-    }
+    };
 }());
 
 function overlayClosure(elmt, content, docancel, docopy) {
@@ -176,13 +180,14 @@ function overlayClosure(elmt, content, docancel, docopy) {
 
     tapOn(elmt, function (e) {
         e.stopPropagation();
-    });
+    }, false);
 
     tapOn(docancel, function (e) {
         console.log("docancel");
         elmt.style.display = "none";
+        content.removeAttribute("readonly");
         e.stopPropagation();
-    });
+    }, true);
 
     tapOn(docopy, function (e) {
         content.focus();
@@ -195,7 +200,7 @@ function overlayClosure(elmt, content, docancel, docopy) {
         // on devices such as phones
         content.setAttribute("readonly", true);
         e.stopPropagation();
-    });
+    }, true);
 
     return {
         "element": elmt,
@@ -248,7 +253,7 @@ function editHashAndScroll(hash, dontScroll, lazyScroll) {
     }();
 
     var elmt = document.getElementById(hash.slice(1));
-    console.assert(elmt, "element at " + hash + " should not be null");
+    console.assert(elmt || dontScroll);
     var x = dontScroll? 0 : (function () {
         var rect = elmt.getBoundingClientRect();
         var h = rect.bottom - rect.top;
@@ -276,6 +281,58 @@ function editHashAndScroll(hash, dontScroll, lazyScroll) {
     }
 }
 
+function textContent(x) {
+    var s = "", i, cs;
+
+    if (x.nodeType === 3) {
+        return x.textContent;
+    }
+
+    if (x instanceof HTMLElement) {
+        cs = x.childNodes;
+
+        if (cs.length === 0) {
+            return s;
+        } // cs.length > 0
+
+        s += textContent(cs[0]);
+        for (i = 1; i < cs.length; i++) {
+            s += (cs[i].tagName==="P"? "|":"")
+                +  textContent(cs[i]);
+        }
+        return s;
+    }
+
+    return null;
+}
+
+var elmtOnTarget = (function () {
+    var targetID = null;
+
+    return {
+        "update": function (elmt) {
+            var id = elmt.id;
+            console.assert(id, "element passed here must have an ID");
+
+            if (id === targetID) { // clear
+                console.log("elmtOnTarget: clear");
+                editHashAndScroll("", true);
+                shareButton.clear();
+                targetID = null;
+            } else { // set
+                console.log("elmtOnTarget: set");
+                editHashAndScroll("#" + id, true);
+                shareButton.showAt(elmt.getBoundingClientRect().top);
+                shareButton.setContent(
+                    textContent(elmt),
+                    window.location.href);
+                targetID = id;
+            }
+        }
+    };
+})();
+
+
 function tapHandler(e) {
     var id = getEnclosingID(e.target);
     var elmt;
@@ -299,11 +356,7 @@ function tapHandler(e) {
     // if the click is originated from an on screen element,
     // prevent page from scrolling after location.hash update
     if (e.target.tagName !== "A") {
-        editHashAndScroll("#" + id, true);
-        shareButton.showAt(elmt.getBoundingClientRect().top);
-        shareButton.setContent(
-            elmt.textContent,
-            window.location.href);
+        elmtOnTarget.update(elmt);
         return;
     } // e.target.tagName === "A"
 
@@ -322,4 +375,4 @@ function tapHandler(e) {
     }
 }
 
-tapOn(window, tapHandler);
+tapOn(window, tapHandler, true);
