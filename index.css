@@ -29,13 +29,14 @@ body {
 #back-button, #share-button, #cancel-overlay, #do-copy {
   border: none;
   outline: none;
-  border-radius: 1.8em;
-  height: 3.6em;
-  width: 3.6em;
+  border-radius: 1.62em;
+  height: 3.24em;
+  width: 3.24em;
+  padding: 0; /* eliminate default button style paddings */
   box-shadow: 0 0 1em grey;
   font-size: 100%;
   font-weight: bold;
-  line-height: 3.6em;
+  line-height: 3.24em;
   text-align: center;
   text-decoration: none;
 }
