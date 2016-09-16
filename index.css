@@ -3,7 +3,6 @@ body {
   font-size: 16px;
   margin: 0 auto;
   background-color: white;
-  scroll-behavior: smooth;
 }
 
 #the-title, h2, h3 {
@@ -33,6 +32,7 @@ body {
   border-radius: 1.62em;
   height: 3.24em;
   width: 3.24em;
+  padding: 0; /* eliminate default button style paddings */
   box-shadow: 0 0 1em grey;
   font-size: 100%;
   font-weight: bold;
@@ -50,7 +50,7 @@ body {
 
 #back-button {
   position: fixed;
-  background-color: rgba(255, 0, 0, 0.9);
+  background-color: rgba(255, 0, 0, 0.87);
   color: white;
   right: 1em;
   bottom: 1em;
@@ -59,7 +59,7 @@ body {
 
 #share-button {
   position: absolute;
-  background-color: rgba(0, 128, 0, 0.9);
+  background-color: rgba(0, 128, 0, 0.87);
   color: white;
   right: 1em;
   z-index: 10;
@@ -118,8 +118,8 @@ body {
      so that for blocks that consists of only one line, the
      right border is perfectly round.
    */
-  border-top-right-radius: 1.31em;
-  border-bottom-right-radius: 1.31em;
+  border-top-right-radius: 0.65em; /* (1.62 + 0.5*2) / 4 */
+  border-bottom-right-radius: 0.65em;
   /* blur-radius = (line-height - font-height) / 2
      so that the shadow wouldn't extend to the other line,
      above or below.
@@ -136,7 +136,7 @@ body {
 
 #the-title:target, .章:target, .节:target {
   background-color: #FFFFD8;
-  border-radius: 1.31em;
+  border-radius: 0.41em; /* 1.62 / 4 */
   box-shadow: 0 0 0.31em silver;
 }
 

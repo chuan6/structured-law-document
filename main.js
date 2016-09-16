@@ -48,7 +48,7 @@ function backButtonClosure(elmt, init) {
 
     updateHrefToID(elmt, init);
 
-    stack = [init];
+    stack = [{"id": init, "y": 0}];
 
     top = function () {
         return stack[stack.length - 1];
@@ -56,11 +56,11 @@ function backButtonClosure(elmt, init) {
 
     return {
         "element": elmt,
-        "push": function (id) {
+        "push": function (id, y) {
             console.log("before push:", stack);
-            if (id !== top()) {
+            if (id !== top().id) {
                 // only push new id that is different from the top
-                stack.push(id);
+                stack.push({"id": id, "y": y});
                 updateHrefToID(elmt, id);
             }
             console.log("after push:", stack);
@@ -70,7 +70,7 @@ function backButtonClosure(elmt, init) {
             if (stack.length > 1) {
                 stack.pop();
             }
-            updateHrefToID(elmt, top());
+            updateHrefToID(elmt, top().id);
             console.log("after pop:", stack);
         },
         "peek": top
@@ -238,13 +238,15 @@ window.addEventListener("load", function () {
 
 window.addEventListener("hashchange", function (e) {
     var hash = decodeURI(window.location.hash);
+    var bbtop = backButton.peek();
 
-    if (hash === "#" + backButton.peek()) {
+    if (hash === "#" + bbtop.id) {
+        window.scrollTo(0, bbtop.y);
         backButton.pop();
     }
 });
 
-function editHashAndScroll(hash, dontScroll, lazyScroll) {
+function editHashAndScroll(hash, dontAutoScroll) {
     var backToPrevY = function () {
         var y = window.pageYOffset;
         return function () {
@@ -253,8 +255,8 @@ function editHashAndScroll(hash, dontScroll, lazyScroll) {
     }();
 
     var elmt = document.getElementById(hash.slice(1));
-    console.assert(elmt || dontScroll);
-    var x = dontScroll? 0 : (function () {
+    console.assert(elmt || dontAutoScroll);
+    var x = dontAutoScroll? 0 : (function () {
         var rect = elmt.getBoundingClientRect();
         var h = rect.bottom - rect.top;
 
@@ -264,10 +266,12 @@ function editHashAndScroll(hash, dontScroll, lazyScroll) {
         if (rect.bottom <= window.innerHeight) return 0;
         // rect.bottom > window.innerHeight && h <= window.innerHeight
 
-        return lazyScroll? 1 : -1;
+        return 1;
     })();
 
     window.location.hash = hash;
+
+    console.log(x);
 
     switch (x) {
     case 0:
@@ -277,7 +281,8 @@ function editHashAndScroll(hash, dontScroll, lazyScroll) {
         elmt.scrollIntoView(true);
         break;
     case 1:
-        elmt.scrollIntoView(false);
+        break;
+        //elmt.scrollIntoView(false);
     }
 }
 
@@ -363,12 +368,12 @@ function tapHandler(e) {
     if (isInPageAnchor(e.target.getAttribute("href"))) {
         e.preventDefault();
         if (id !== "back-button") {
-            backButton.push(id);
+            backButton.push(id, window.pageYOffset);
         }
         editHashAndScroll(
             e.target.getAttribute("href"),
-            false,
-            id==="back-button");
+            false
+        );
     } else {
         // e.target is an <a> element with an external link
         e.target.click();
