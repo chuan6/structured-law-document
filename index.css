@@ -29,13 +29,13 @@ body {
 #back-button, #share-button, #cancel-overlay, #do-copy {
   border: none;
   outline: none;
-  border-radius: 1.65em;
-  height: 3.3em;
-  width: 3.3em;
+  border-radius: 1.7em;
+  height: 3.4em;
+  width: 3.4em;
   box-shadow: 0 0 1em grey;
   font-size: 100%;
   font-weight: bold;
-  line-height: 3.3em;
+  line-height: 3.4em;
   text-align: center;
   text-decoration: none;
 }
