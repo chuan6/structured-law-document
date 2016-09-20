@@ -1,19 +1,16 @@
 function strSlice(s, end) {
-    var e = escape(s), t = "";
-    var i, n;
+    var s1 = '', s2 = '';
+    var c, i = 0;
 
-    for (i = 0; i < end && e; i++) {
-        if (e[0] === "%" && e[1] === "u") {//four-digit format
-            n = 6;
-        } else if (e[0] === "%") {//two-digit format
-            n = 3;
-        } else {//one-digit format
-            n = 1;
+    for (c of s) {
+        if (i < end) {
+            s1 += c;
+        } else {
+            s2 += c;
         }
-        t += e.slice(0, n);
-        e = e.slice(n);
+        i++;
     }
-    return [unescape(t), e];
+    return [s1, s2];
 }
 
 function px(x) {
