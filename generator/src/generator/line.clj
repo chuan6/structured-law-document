@@ -238,18 +238,21 @@
        {:env {:level nil :i-款 nil} :lines []}
        lines)))))
 
-(defn attach-table-of-contents
+(defn generate-table-of-contents
   {:test
-   #(let [f attach-table-of-contents
+   #(let [f generate-table-of-contents
           tls (draw-skeleton ["前言" "第一章" "a"
                               "第二章" "b"
                               "第三章" "第一节" "……"])]
       (tt/comprehend-tests
-       (t/is (= [] (f ())))
-       (t/is (= ["前言"] (map :text (f (take 1 tls)))))
+       (t/is (= [() nil] (f ())))
+       (t/is (= [["前言"] nil]
+                (->> [(map :text prelude) r]
+                     (let [[prelude r] (f (take 1 tls))]))))
        (t/is (= {:token :table-of-contents
                  :text "目录"
-                 :list ["第一章" "第二章" "第三章" "第一节"]}
+                 :list ["第一章" "第二章" "第三章" "第一节"]
+                 :not-in-original-text true}
                 (second (f tls))))))}
   [tls]
   (let [[prelude tls'] (split-with #(= (:token %)
@@ -257,11 +260,11 @@
         titles (->> tls'
                     (filter #(#{:章 :节} (:token %)))
                     (map :text))]
-    (cond-> (vec prelude)
-      (seq titles) (conj {:token :table-of-contents
-                          :text "目录"
-                          :list titles})
-      true (into tls'))))
+    [prelude (when (seq titles)
+               {:token :table-of-contents
+                :text "目录"
+                :list titles
+                :not-in-original-text true})]))
 
 (defn inject-contexts
   {:test
