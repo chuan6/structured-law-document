@@ -58,6 +58,11 @@ function norm(s) {
 }
 
 function getReady(href, name) {
+    var mainNode = function (w) {
+        return w.document.querySelector('.entries-container');
+    };
+    var inOriginal = withClassPred('not-in-original-text');
+
     dom.env({
         file: href,
         done: function (err, window) {
@@ -65,19 +70,23 @@ function getReady(href, name) {
 
             if (err) console.log(err);
 
-            fromHTML = norm(domText(window.document.querySelector(".entries-container"),
-                                    withClassPred('not-in-original-text')));
+            fromHTML = norm(domText(mainNode(window), inOriginal));
 
             fs.readFile(
                 'generator/resources/' + name + '.txt',
                 'utf8',
                 function (err, data) {
-                    var fromTXT;
+                    var fromTXT, isEqual;
 
                     if (err) console.log(err);
 
                     fromTXT = norm(data);
-                    console.log(name, fromTXT === fromHTML);
+                    isEqual = (fromTXT === fromHTML);
+                    if (isEqual) {
+                        console.log('pass', name);
+                    } else {
+                        console.error('fail', name);
+                    }
                 }
             );
         }
@@ -85,12 +94,13 @@ function getReady(href, name) {
 }
 
 dom.env('index.html', function (err, window) {
-    var entries, i, name;
+    var entries, e, i;
 
     if (err) console.log(err);
 
     entries = window.document.querySelectorAll('.entry a');
     for (i = 0; i < entries.length; i++) {
-        getReady(entries[i].getAttribute('href'), entries[i].textContent);
+        e = entries[i];
+        getReady(e.getAttribute('href'), e.textContent);
     }
 });
