@@ -286,8 +286,7 @@
          (let [tls (draw-skeleton-with-contexts ls')
                [prelude toc] (l/generate-table-of-contents tls)]
            (if (nil? toc) tls
-               (do (println toc)
-                   (concat prelude [toc] (s/without-prefix tls prelude))))))))))
+               (concat prelude [toc] (s/without-prefix tls prelude)))))))))
 
 (defn- index-page [entry-paths]
   (html
@@ -365,9 +364,6 @@
 
     ["出口退（免）税企业分类管理办法"
      "http://www.chinatax.gov.cn/n810341/n810755/c2217201/content.html"]
-
-    ["游泳竞赛规则2014-2018"
-     "http://miji.baidu.com/view/dcf26bc22b160b4e777fcf38"]
     ]))
 
 (-main)
