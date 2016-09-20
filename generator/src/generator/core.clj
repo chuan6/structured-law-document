@@ -185,6 +185,29 @@
    (for [s scripts]
      [:script {:src s}])])
 
+(defn- add-html-class
+  {:test
+   #(let [f add-html-class]
+      (tt/comprehend-tests
+       (t/is (= [:div {:class "a"}] (f [:div] "a")))
+       (t/is (= [:div {:class "a b"}] (f [:div {:class "a"}] "b")))
+       (t/is (= [:div {:class "a"} [:span "hello"]]
+                (f [:div [:span "hello"]] "a")))))}
+  [elmt class-name]
+  (assert (and (first elmt) (seq class-name)))
+  (let [[attrs-map children] (let [body (rest elmt)]
+                               (if (map? (first body))
+                                 [(first body) (rest body)]
+                                 [{} body]))
+        set-class (fn [s t]
+                    (if (empty? s)
+                      t
+                      (str s " " t)))]
+    (vec
+     (cons (first elmt)
+           (cons (update attrs-map :class set-class class-name)
+                 children)))))
+
 (defn- wrap-in-html [page-name link-to-original tokenized-lines]
   (html
    (html5
@@ -197,7 +220,7 @@
                 :onclick "void(0)" ; for iOS compatibility
                 }
       [:div {:class "entry"}
-       [:p {:id "ref-to-original"}
+       [:p {:id "ref-to-original" :class "not-in-original-text"}
         "原文请见："
         [:a {:href link-to-original :target "_blank"}
          (str (-> link-to-original
@@ -210,47 +233,37 @@
          (if (empty? tls)
            elmts
            (let [{t :token ct :context :as tl} (first tls)]
-             (case t
-               :title
-               (let [txt (:text tl)]
-                 (recur (rest tls)
-                        (into elmts
-                              [[:h1 {:id "the-title"} txt]
-                               [:hr]])))
-
-               :table-of-contents
-               (recur (rest tls)
-                      (conj elmts (wrap-outline-in-html tl)))
-
-               :则
-               (let [txt (:text tl)]
-                 (recur (rest tls)
-                        (conj elmts [:h2 {:id (entry-id ct :则)
-                                          :class "章"}
-                                     txt])))
-               :章
-               (let [txt (:text tl)]
-                 (recur (rest tls)
-                        (conj elmts [:h2 {:id (entry-id ct :章)
-                                          :class "章"}
-                                     txt])))
-
-               :节
-               (let [txt (:text tl)]
-                 (recur (rest tls)
-                        (conj elmts [:h3 {:id (entry-id ct :节)
-                                          :class "节"}
-                                     txt])))
-
-               :条
+             (cond
+               (= t :条)
                (let [[lines-within lines-after]
                      (split-with #(#{:款 :项 :目} (:token %)) (rest tls))]
                  (recur lines-after
                         (conj elmts (wrap-条-in-html tl lines-within))))
 
-               :to-be-recognized
-               (recur (rest tls)
-                      (conj elmts (default-fn (:text tl)))))))))]
+               (#{:title :table-of-contents :则 :章 :节 :to-be-recognized} t)
+               (let [txt (:text tl)
+                     elmt (case t
+                            :title
+                            [:div [:h1 {:id "the-title"} txt] [:hr]]
+
+                            :table-of-contents
+                            (wrap-outline-in-html tl)
+
+                            :则
+                            [:h2 {:id (entry-id ct :则) :class "章"} txt]
+
+                            :章
+                            [:h2 {:id (entry-id ct :章) :class "章"} txt]
+
+                            :节
+                            [:h3 {:id (entry-id ct :节) :class "节"} txt]
+
+                            :to-be-recognized
+                            (default-fn txt))
+                     wrapped-elmt (cond-> elmt
+                                    (:not-in-original-text tl)
+                                    (add-html-class "not-in-original-text"))]
+                 (recur (rest tls) (conj elmts wrapped-elmt))))))))]
      [:a {:id "back-button"} "返回"]
      [:button {:id "share-button"} "分享"]
      [:div {:id "overlay"}
@@ -270,7 +283,11 @@
          (into before-ts' (draw-skeleton-with-contexts after-ls'))
          ;;otherwise, table of contents is not found
          ;;generate it automatically
-         (-> ls' draw-skeleton-with-contexts l/attach-table-of-contents))))))
+         (let [tls (draw-skeleton-with-contexts ls')
+               [prelude toc] (l/generate-table-of-contents tls)]
+           (if (nil? toc) tls
+               (do (println toc)
+                   (concat prelude [toc] (s/without-prefix tls prelude))))))))))
 
 (defn- index-page [entry-paths]
   (html
@@ -348,6 +365,9 @@
 
     ["出口退（免）税企业分类管理办法"
      "http://www.chinatax.gov.cn/n810341/n810755/c2217201/content.html"]
+
+    ["游泳竞赛规则2014-2018"
+     "http://miji.baidu.com/view/dcf26bc22b160b4e777fcf38"]
     ]))
 
 (-main)
