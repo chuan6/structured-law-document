@@ -1,6 +1,5 @@
 const fs = require('fs');
 const dom = require('jsdom');
-const utf8 = require('utf8');
 
 function domText(elmt, removeFn) {
     var s = '';
@@ -68,7 +67,7 @@ function getReady(href, name) {
         done: function (err, window) {
             var fromHTML;
 
-            if (err) console.log(err);
+            if (err) throw err;
 
             fromHTML = norm(domText(mainNode(window), inOriginal));
 
@@ -96,7 +95,7 @@ function getReady(href, name) {
 dom.env('index.html', function (err, window) {
     var entries, e, i;
 
-    if (err) console.log(err);
+    if (err) throw err;
 
     entries = window.document.querySelectorAll('.entry a');
     for (i = 0; i < entries.length; i++) {
