@@ -32,45 +32,46 @@ function getEnclosingID(elmt) {
   return elmt.id || (elmt.parentNode? getEnclosingID(elmt.parentNode) : null);
 }
 
-function updateHrefToID(a, id) {
-  if (id) {
-    a.href = "#" + id;
-  } else {
-    a.removeAttribute("href");
-  }
-}
+function backButtonClosure(elmt) {
+  var stack = [];
 
-function backButtonClosure(elmt, init) {
-  var stack, top;
-
-  updateHrefToID(elmt, init);
-
-  stack = [{"id": init, "y": 0}];
-
-  top = function () {
+  var top = function () {
     return stack[stack.length - 1];
   };
 
+  var updateHref = function (id) {
+    if (id === "" || id) {
+      elmt.href = "#" + id;
+    } else {
+      elmt.removeAttribute("href");
+    }
+  };
+
+  updateHref("");
+  stack = [{id: "", y: 0}];
+
   return {
-    "element": elmt,
-    "push": function (id, y) {
-      console.log("before push:", stack);
-      if (id !== top().id) {
-        // only push new id that is different from the top
+    element: elmt,
+    peek: top,
+    push: function (id, y) {
+      var curr = top();
+
+      // only push new id that is different from the top
+      if (!curr || curr.id !== id) {
         stack.push({"id": id, "y": y});
-        updateHrefToID(elmt, id);
+        updateHref(id);
       }
-      console.log("after push:", stack);
     },
-    "pop": function () {
-      console.log("before pop:", stack);
+    pop: function () {
+      var curr;
+
       if (stack.length > 1) {
         stack.pop();
       }
-      updateHrefToID(elmt, top().id);
-      console.log("after pop:", stack);
-    },
-    "peek": top
+
+      curr = top();
+      updateHref(curr? curr.id : "");
+    }
   };
 }
 
@@ -235,8 +236,7 @@ var backButton, shareButton, overlay;
 
 window.addEventListener("load", function () {
   backButton = backButtonClosure(
-    document.getElementById("back-button"),
-    "outline");
+    document.getElementById("back-button"));
 
   shareButton = shareButtonClosure(
     document.getElementById("share-button"));
@@ -380,13 +380,12 @@ function tapHandler(e) {
 
   if (isInPageAnchor(e.target.getAttribute("href"))) {
     e.preventDefault();
-    if (id !== "back-button") {
+    if (id === "back-button") {
+      editHashAndScroll(e.target.getAttribute("href"), true);
+    } else {
       backButton.push(id, window.pageYOffset);
+      editHashAndScroll(e.target.getAttribute("href"), false);
     }
-    editHashAndScroll(
-      e.target.getAttribute("href"),
-      false
-    );
   } else {
     // e.target is an <a> element with an external link
     e.target.click();
