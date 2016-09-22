@@ -112,8 +112,7 @@ body {
   box-shadow: 0 0 0.1em silver;
 }
 
-#the-title:target, #ref-to-original:target, #outline:target, .entry:target, .款:target, .项:target, .目:target {
-  background-color: #FFFFD8;
+#ref-to-original, #outline, .entry, .款, .项, .目 {
   /* radius = (line-height + padding-top + padding-bottom) / 2
      so that for blocks that consists of only one line, the
      right border is perfectly round.
@@ -124,6 +123,10 @@ body {
      so that the shadow wouldn't extend to the other line,
      above or below.
    */
+}
+
+#the-title:target, #ref-to-original:target, #outline:target, .entry:target, .款:target, .项:target, .目:target {
+  background-color: #FFFFD8;
   box-shadow: 0 0 0.31em silver;
 }
 
@@ -134,9 +137,12 @@ body {
   text-align: center;
 }
 
+#the-title, .章, .节 {
+  border-radius: 0.41em; /* 1.62 / 4 */
+}
+
 #the-title:target, .章:target, .节:target {
   background-color: #FFFFD8;
-  border-radius: 0.41em; /* 1.62 / 4 */
   box-shadow: 0 0 0.31em silver;
 }
 
