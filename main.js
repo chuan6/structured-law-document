@@ -248,17 +248,6 @@ window.addEventListener("load", function () {
     document.getElementById("do-copy"));
 });
 
-window.addEventListener("hashchange", function (e) {
-  var hash = decodeURI(window.location.hash);
-  var bbtop = backButton.peek();
-
-  if ((hash && hash === "#" + bbtop.id)
-      || (hash === "" && bbtop.id === "")) {
-    window.scrollTo(0, bbtop.y);
-    backButton.pop();
-  }
-});
-
 function editHashAndScroll(hash, dontAutoScroll) {
   var backToPrevY = function () {
     var y = window.pageYOffset;
@@ -353,8 +342,7 @@ var elmtOnTarget = (function () {
 
 
 function tapHandler(e) {
-  var id = getEnclosingID(e.target);
-  var elmt;
+  var src = e.target, id = getEnclosingID(src), elmt, hash;
   var isInPageAnchor = function (s) {
     return s.split("://", 2).length === 1;
   };
@@ -374,22 +362,25 @@ function tapHandler(e) {
 
   // if the click is originated from an on screen element,
   // prevent page from scrolling after location.hash update
-  if (e.target.tagName !== "A") {
+  if (src.tagName !== "A") {
     elmtOnTarget.update(elmt);
     return;
-  } // e.target.tagName === "A"
+  } // src.tagName === "A"
 
-  if (isInPageAnchor(e.target.getAttribute("href"))) {
+  hash = src.getAttribute("href");
+  if (isInPageAnchor(hash)) {
     e.preventDefault();
     if (id === "back-button") {
-      editHashAndScroll(e.target.getAttribute("href"), true);
+      editHashAndScroll(hash, true);
+      window.scrollTo(0, backButton.peek().y);
+      backButton.pop();
     } else {
       backButton.push(id, window.pageYOffset);
-      editHashAndScroll(e.target.getAttribute("href"), false);
+      editHashAndScroll(hash, false);
     }
   } else {
-    // e.target is an <a> element with an external link
-    e.target.click();
+    // src is an <a> element with an external link
+    src.click();
   }
 }
 
