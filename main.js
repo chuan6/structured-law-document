@@ -252,7 +252,8 @@ window.addEventListener("hashchange", function (e) {
   var hash = decodeURI(window.location.hash);
   var bbtop = backButton.peek();
 
-  if (hash === "#" + bbtop.id) {
+  if ((hash && hash === "#" + bbtop.id)
+      || (hash === "" && bbtop.id === "")) {
     window.scrollTo(0, bbtop.y);
     backButton.pop();
   }
