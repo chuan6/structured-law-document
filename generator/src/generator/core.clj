@@ -65,6 +65,13 @@
                 :目 (str (gen-str context :项) r))))]
     (encode-id (gen-str context t))))
 
+(defn- doc-hierachy [tx]
+  (let [hval {:目 1 :项 2 :款 3 :条 4 :节 5 :章 6 :则 7}]
+    ((:token tx) hval)))
+
+(defn- 条-rise [txs]
+  (s/linear-to-tree txs doc-hierachy))
+
 (defn within-款项
   {:test
    #(let [f within-款项
@@ -109,32 +116,32 @@
                  [:a {:href (str \# (encode-id id))}
                   (:text t)])))]))
 
+(defn- wrap-entry-in-html [[x & xs]]
+  (case (:token x)
+    :条 [:section {:class "entry" :id (encode-id (str \条 (:nth x)))}
+         [:div {:class "title"}
+          [:b (:text x)]]
+         (for [x xs] (wrap-entry-in-html x))]
+
+    :目 [:p {:class "目" :id (entry-id (:context x) :目)}
+         [:span (str (:nth x) ". ")]
+         (s/map-on-binary-partitions
+          #(= (:token %) :to-be-recognized)
+          (within-款项 (:context x) (seq (:text x)))
+          #(str/join (map :text %))
+          wrap-item-string-in-html)]
+
+    [:div {:class (name (:token x)) :id (entry-id (:context x) (:token x))}
+     [:p (s/map-on-binary-partitions
+          #(= (:token %) :to-be-recognized)
+          (within-款项 (:context x) (seq (:text x)))
+          #(str/join (map :text %))
+          wrap-item-string-in-html)]
+     (for [x xs] (wrap-entry-in-html x))]))
+
 (defn- wrap-条-in-html [head body]
   (assert (= (:token head) :条))
-  (let [attr-and-content
-        (fn [t]
-          [;;attributes
-           {:class (name (:token t))
-            :id (entry-id (:context t) (:token t))}
-           ;;content
-           (s/map-on-binary-partitions
-            #(= (:token %) :to-be-recognized)
-            (within-款项 (:context t) (seq (:text t)))
-            #(str/join (map :text %))
-            wrap-item-string-in-html)])]
-   [:section {:class "entry" :id (encode-id (str \条 (:nth head)))}
-    [:div {:class "title"}
-     [:b (:text head)]]
-    (s/map-on-binary-partitions
-     #(= (:token %) :目)
-     body
-     (fn create-ol [items]
-       [:ol
-        (for [it items]
-          (into [:li] (attr-and-content it)))])
-     (fn create-ps [items]
-       (for [it items]
-         (into [:p] (attr-and-content it)))))]))
+  (wrap-entry-in-html (条-rise (cons head body))))
 
 (defn- outline-html [ts gen-id]
   (let [level (fn [t] ((:token t) {:节 1 :章 2 :则 3}))

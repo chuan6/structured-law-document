@@ -1,5 +1,6 @@
 (ns generator.lisp
   (:require [clojure.test :as t]
+            [clojure.zip :as z]
             [generator.test :as tt]))
 
 (defn without-prefix [origin prefix]
@@ -90,3 +91,57 @@
                   yes-fn
                   no-fn))
               %))))
+
+(def tree (partial z/zipper
+                   seq? ;branch?
+                   rest ;children
+                   (fn [x children] ;makenode
+                     (cons (first x) children))))
+
+(defn linear-to-tree
+  {:test
+   #(let [f linear-to-tree
+          hier (fn [x]
+                 (let [h {:章 5 :节 4 :条 3}]
+                   (h (:token x))))]
+      (tt/comprehend-tests
+       (t/is (= () (f () hier)))
+       (t/is (= '({:token :章, :value 1}
+                  ({:token :节, :value 1}
+                   ({:token :条, :value 1})
+                   ({:token :条, :value 2}))
+                  ({:token :节, :value 2}))
+                (f [{:token :章 :value 1}
+                    {:token :节 :value 1}
+                    {:token :条 :value 1}
+                    {:token :条 :value 2}
+                    {:token :节 :value 2}] hier)))))}
+  [xs h]
+  (if (empty? xs)
+    ()
+    (let [node             list
+          node-val         (comp first z/node)
+          up-to-root       (fn [loc]
+                             (last
+                              (take-while identity (iterate z/up loc))))
+          up-to-matching-h (fn [loc hval]
+                             (first
+                              (drop-while #(< (h (node-val %)) hval)
+                                          (iterate z/up loc))))]
+      (loop [loc (tree (node (first xs)))
+             rxs (rest xs)]
+        (if (empty? rxs)
+          (z/node (up-to-root loc))
+          (let [x      (first rxs)
+                x-hval (h x)
+                prev-x (node-val loc)]
+            (if (< x-hval (h (node-val loc)))
+              (recur (-> loc
+                         (z/append-child (node x))
+                         z/down)
+                     (rest rxs))
+              (recur (-> loc
+                         (up-to-matching-h x-hval)
+                         (z/insert-right (node x))
+                         z/right)
+                     (rest rxs)))))))))

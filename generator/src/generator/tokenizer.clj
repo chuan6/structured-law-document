@@ -144,12 +144,6 @@
                 (recur rest-cs (into ts ts')))
           [ts cs])))))
 
-(def parse-tree (partial z/zipper
-                         seq? ;branch?
-                         rest ;children
-                         (fn [x children] ;makenode
-                           (cons (first x) children))))
-
 (defn parse [recognized-items]
   (z/root
    (reduce
@@ -178,7 +172,7 @@
             (-> loc (z/append-child x))
             (do (println "unrecognized pattern" [curr-t x])
                 loc)))))
-    (parse-tree (list (first recognized-items)))
+    (s/tree (list (first recognized-items)))
     (rest recognized-items))))
 
 (def item-type-set #{:法 :规定 :条 :款 :项})
