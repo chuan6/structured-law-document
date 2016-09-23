@@ -120,7 +120,7 @@
   (case (:token x)
     :条 [:section {:class "entry" :id (encode-id (str \条 (:nth x)))}
          [:div {:class "title"}
-          [:b (:text x)]]
+          [:p (:text x)]]
          (for [x xs] (wrap-entry-in-html x))]
 
     :目 [:p {:class "目" :id (entry-id (:context x) :目)}
