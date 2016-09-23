@@ -5,6 +5,24 @@ body {
   background-color: white;
 }
 
+.title, .款, .项 {
+  margin: 0;
+  padding: 0;
+}
+
+.title>p:first-child, .款>p:first-child, .项>p:first-child {
+  margin: 0;
+  padding: 0.5em 1em;
+}
+
+.目 {
+  margin: 0;
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  padding-left: 2.2em;
+  padding-right: 1em;
+}
+
 #the-title, h2, h3 {
   font-family: "仿宋", FangSong, serif;
 }
@@ -80,18 +98,11 @@ body {
 }
 
 .title {
-  padding-left: 1em;
-  padding-right: 1em;
   font-weight: bold;
 }
 
-#ref-to-original, .款, .项, nav li {
+#ref-to-original, nav li {
   padding: 0.5em 1em;
-  margin: 0;
-}
-
-.entry ol {
-  padding: 0.5em 1em 0.5em 4em;
   margin: 0;
 }
 
@@ -107,7 +118,7 @@ body {
   border-radius: 0.31em;
   text-decoration: none;
   color: inherit;
-  padding: 0 0.1em;
+  padding: 0.1em 0.2em;
   margin: 0 0.1em;
   box-shadow: 0 0 0.1em silver;
 }
