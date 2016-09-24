@@ -374,6 +374,9 @@
 
     ["党政机关公文处理工作条例"
      "http://www.gov.cn/zwgk/2013-02/22/content_2337704.htm"]
+
+    ["食品安全法"
+     "http://www.gov.cn/zhengce/2015-04/25/content_2853643.htm"]
     ]))
 
 (-main)
