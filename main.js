@@ -289,23 +289,24 @@ function editHashAndScroll(hash, dontAutoScroll) {
 }
 
 function textContent(x) {
-  var s = "", i, cs;
+  var s = "", cs, i;
 
   if (x.nodeType === 3) {
     return x.textContent;
   }
 
+  if (x.tagName === "P") {
+    return "|" + x.textContent;
+  }
+
   if (x instanceof HTMLElement) {
     cs = x.childNodes;
 
-    if (cs.length === 0) {
-      return s;
-    } // cs.length > 0
+    if (cs.length === 0) return s;
+    // cs.length > 0
 
-    s += textContent(cs[0]);
-    for (i = 1; i < cs.length; i++) {
-      s += (cs[i].tagName==="P"? "|":"")
-        +  textContent(cs[i]);
+    for (i = 0; i < cs.length; i++) {
+      s += textContent(cs[i]);
     }
     return s;
   }
