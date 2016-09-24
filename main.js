@@ -151,7 +151,7 @@ var tapOn = (function () {
     elmt.addEventListener("mousedown", function(e) {
       tap.start(e, false);
     });
-    elmt.addEventListener("mouseup", function(e) {
+    elmt.addEventListener("click", function(e) {
       if (tap.end(e, false)) handler(e);
     });
     elmt.addEventListener("touchstart", function(e) {
