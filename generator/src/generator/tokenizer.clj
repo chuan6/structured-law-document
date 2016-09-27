@@ -144,36 +144,15 @@
                 (recur rest-cs (into ts ts')))
           [ts cs])))))
 
+(defn doc-hierachy [tx]
+  (let [hval {:目 1 :项 2 :款 3 :条 4 :节 5 :章 6 :则 7
+              :法 10 :规定 10}]
+    ((:token tx) hval)))
+
 (defn parse [recognized-items]
-  (z/root
-   (reduce
-    (fn [loc x]
-      (let [curr-t (:token (if (z/branch? loc)
-                             (first (z/node loc))
-                             (z/node loc)))
-            x-t (:token x)]
-        (case [curr-t x-t]
-          [:法 :条] (-> loc (z/append-child (list x)) z/down z/rightmost)
-          [:规定 :条] (-> loc (z/append-child (list x)) z/down z/rightmost)
-          [:条 :款] (-> loc (z/append-child (list x)) z/down z/rightmost)
-          [:条 :项] (-> loc (z/append-child (list {:token :款 :nth 1})) z/down z/rightmost
-                        (z/append-child (list x)) z/down z/rightmost)
-          [:款 :项] (-> loc (z/append-child (list x)) z/down z/rightmost)
-
-          [:条 :条] (recur (-> loc z/up) x)
-          [:款 :款] (recur (-> loc z/up) x)
-          [:项 :项] (recur (-> loc z/up) x)
-
-          [:款 :条] (recur (-> loc z/up z/up) x)
-          [:项 :款] (recur (-> loc z/up z/up) x)
-          [:项 :条] (recur (-> loc z/up z/up z/up) x)
-
-          (if (= x-t :separator)
-            (-> loc (z/append-child x))
-            (do (println "unrecognized pattern" [curr-t x])
-                loc)))))
-    (s/tree (list (first recognized-items)))
-    (rest recognized-items))))
+  (s/linear-to-tree recognized-items
+                    doc-hierachy
+                    {{:token :款} {:token :款 :nth 1}}))
 
 (def item-type-set #{:法 :规定 :条 :款 :项})
 (def item-type-str (comp name :token))

@@ -102,46 +102,81 @@
   {:test
    #(let [f linear-to-tree
           hier (fn [x]
-                 (let [h {:章 5 :节 4 :条 3}]
+                 (let [h {:法 10 :章 5 :节 4 :条 3 :款 2 :项 1}]
                    (h (:token x))))]
       (tt/comprehend-tests
        (t/is (= () (f () hier)))
-       (t/is (= '({:token :章, :value 1}
-                  ({:token :节, :value 1}
-                   ({:token :条, :value 1})
-                   ({:token :条, :value 2}))
-                  ({:token :节, :value 2}))
+       (t/is (= '({:token :章 :value 1}
+                  ({:token :节 :value 1}
+                   ({:token :条 :value 1}
+                    {:token :undefined :value "separator"})
+                   ({:token :条 :value 2}))
+                  ({:token :节 :value 2}))
                 (f [{:token :章 :value 1}
                     {:token :节 :value 1}
                     {:token :条 :value 1}
+                    {:token :undefined :value "separator"}
                     {:token :条 :value 2}
-                    {:token :节 :value 2}] hier)))))}
-  [xs h]
-  (if (empty? xs)
-    ()
-    (let [node             list
-          node-val         (comp first z/node)
-          up-to-root       (fn [loc]
-                             (last
-                              (take-while identity (iterate z/up loc))))
-          up-to-matching-h (fn [loc hval]
-                             (first
-                              (drop-while #(< (h (node-val %)) hval)
-                                          (iterate z/up loc))))]
-      (loop [loc (tree (node (first xs)))
-             rxs (rest xs)]
-        (if (empty? rxs)
-          (z/node (up-to-root loc))
-          (let [x      (first rxs)
-                x-hval (h x)
-                prev-x (node-val loc)]
-            (if (< x-hval (h (node-val loc)))
-              (recur (-> loc
-                         (z/append-child (node x))
-                         z/down)
-                     (rest rxs))
-              (recur (-> loc
-                         (up-to-matching-h x-hval)
-                         (z/insert-right (node x))
-                         z/right)
-                     (rest rxs)))))))))
+                    {:token :节 :value 2}] hier)))
+       (t/is (= '({:token :法}
+                  ({:token :条}
+                   {:token :separator}
+                   ({:token :款 :nth 1}
+                    ({:token :项}))))
+                (f [{:token :法} {:token :条} {:token :separator}
+                    {:token :项}]
+                   hier {{:token :款} {:token :款 :nth 1}})))))}
+  ([xs h] (linear-to-tree xs h {}))
+  ([xs h fill]
+   (if (empty? xs)
+     ()
+     (let [node     list
+           node-val (comp first z/node)
+           root     (fn [loc]
+                      (last
+                       (take-while identity (iterate z/up loc))))
+           h-inv    (when fill
+                      (reduce
+                       (fn [ret [k v]]
+                         (conj ret [(h k) v]))
+                       (sorted-map) (sort-by (comp h key) fill)))
+           absorb   (fn [loc x]
+                      (if-let [x-hier (h x)]
+                        (let [hier (h (node-val loc))
+                              path (if (empty? fill)
+                                     [x]
+                                     (conj
+                                      (mapv val
+                                            (vec
+                                             (->> h-inv
+                                                  rseq
+                                                  (drop-while
+                                                   #(>= (key %) hier))
+                                                  (take-while
+                                                   #(> (key %) x-hier)))))
+                                      x))]
+                          (cond (< x-hier hier)
+                                (reduce
+                                 (fn [loc val]
+                                   (-> loc
+                                       (z/append-child (node val))
+                                       z/down
+                                       z/rightmost))
+                                 loc path)
+
+                                (= x-hier hier)
+                                (-> loc
+                                    (z/insert-right (node x))
+                                    z/right)
+
+                                :climb
+                                (recur (z/up loc) x)))
+                        ;; possibly, a separator
+                        ;; IMPORTANT! Use x instead of (node x),
+                        ;; so that it wouldn't be a parent node.
+                        (z/append-child loc x)))]
+       (loop [loc (tree (node (first xs)))
+              rxs (rest xs)]
+         (if (empty? rxs)
+           (z/node (root loc))
+           (recur (absorb loc (first rxs)) (rest rxs))))))))

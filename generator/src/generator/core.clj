@@ -65,12 +65,10 @@
                 :目 (str (gen-str context :项) r))))]
     (encode-id (gen-str context t))))
 
-(defn- doc-hierachy [tx]
-  (let [hval {:目 1 :项 2 :款 3 :条 4 :节 5 :章 6 :则 7}]
-    ((:token tx) hval)))
+
 
 (defn- 条-rise [txs]
-  (s/linear-to-tree txs doc-hierachy))
+  (s/linear-to-tree txs tk/doc-hierachy))
 
 (defn within-款项
   {:test
@@ -371,9 +369,6 @@
 
     ["出口退（免）税企业分类管理办法"
      "http://www.chinatax.gov.cn/n810341/n810755/c2217201/content.html"]
-
-    ["党政机关公文处理工作条例"
-     "http://www.gov.cn/zwgk/2013-02/22/content_2337704.htm"]
 
     ["食品安全法"
      "http://www.gov.cn/zhengce/2015-04/25/content_2853643.htm"]
