@@ -5,6 +5,7 @@
             [generator.line :as l]
             [generator.lisp :as s]
             [generator.test :as tt]
+            [generator.tree :as tree]
             [generator.zh-digits :refer [数字 numchar-zh-set]]))
 
 (def from-第 (partial s/from-x \第))
@@ -150,9 +151,9 @@
     ((:token tx) hval)))
 
 (defn parse [recognized-items]
-  (s/linear-to-tree recognized-items
-                    doc-hierachy
-                    {{:token :款} {:token :款 :nth 1}}))
+  (tree/linear-to-tree recognized-items
+                       doc-hierachy
+                       {{:token :款} {:token :款 :nth 1}}))
 
 (def item-type-set #{:法 :规定 :条 :款 :项})
 (def item-type-str (comp name :token))
@@ -310,17 +311,6 @@
            (if (:unit? t) (name token) ""))
       (:text t))))
 
-(defn update-leaves
-  ([tree k f] (update-leaves tree [] k f))
-  ([[parent & children] path k f]
-   (let [path' (conj path parent)]
-     (if (or (empty? children)
-             (every? #(= (:token %) :separator) children))
-       (cons (assoc parent k (f path')) children)
-       (cons parent (map #(if (= (:token %) :separator)
-                            %
-                            (update-leaves % path' k f)) children))))))
-
 (let [items (comp first read-items)]
   (tt/comprehend-tests
    (for [src txts
@@ -339,7 +329,7 @@
              ({:token :项 :nth 1 :text "一" :第? true :unit? true :id "条40款1项1"}
               {:token :separator :text "、"})
              ({:token :项 :nth 2 :text "二" :第? true :unit? true :id "条40款1项2"}))))
-         (update-leaves r :id (partial generate-id {})))))
+         (tree/update-leaves r :id (partial generate-id {})))))
    (let [r (parse (items (seq "本规定第十、十八、二十六、二十七条")))]
      (t/is
       (= '({:token :规定 :nth :this :text "本规定"}
@@ -350,7 +340,7 @@
            ({:token :条 :nth 26 :text "二十六" :第? false :unit? false :id "条26"}
             {:token :separator :text "、"})
            ({:token :条 :nth 27 :text "二十七" :第? false :unit? true :id "条27"}))
-         (update-leaves r :id (partial generate-id {})))))))
+         (tree/update-leaves r :id (partial generate-id {})))))))
 
 (defn 条头
   {:test

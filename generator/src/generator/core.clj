@@ -7,6 +7,7 @@
             [generator.lisp :as s]
             [generator.test :as tt]
             [generator.tokenizer :as tk]
+            [generator.tree :as tree]
             [generator.zh-digits :refer [numchar-zh-set]]
             [hiccup.core :refer :all]
             [hiccup.page :refer :all])
@@ -68,7 +69,7 @@
 
 
 (defn- 条-rise [txs]
-  (s/linear-to-tree txs tk/doc-hierachy))
+  (tree/linear-to-tree txs tk/doc-hierachy))
 
 (defn within-款项
   {:test
@@ -95,7 +96,7 @@
           (let [[items rests] (tk/read-items cs)]
             (recur rests (into ts (-> items
                                       tk/parse
-                                      (tk/update-leaves :id genid)
+                                      (tree/update-leaves :id genid)
                                       flatten
                                       tk/second-pass))))
           (recur (rest cs) (conj ts {:token :to-be-recognized
