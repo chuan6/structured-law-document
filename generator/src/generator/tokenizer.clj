@@ -5,7 +5,7 @@
             [generator.line :as l]
             [generator.lisp :as s]
             [generator.test :as tt]
-            [generator.tree :as tree]
+            [generator.parse-tree :as pt]
             [generator.zh-digits :refer [数字 numchar-zh-set]]))
 
 (def from-第 (partial s/from-x \第))
@@ -145,15 +145,10 @@
                 (recur rest-cs (into ts ts')))
           [ts cs])))))
 
-(defn doc-hierachy [tx]
-  (let [hval {:目 1 :项 2 :款 3 :条 4 :节 5 :章 6 :则 7
-              :法 10 :规定 10}]
-    ((:token tx) hval)))
-
 (defn parse [recognized-items]
-  (tree/linear-to-tree recognized-items
-                       doc-hierachy
-                       {{:token :款} {:token :款 :nth 1}}))
+  (pt/linear-to-tree recognized-items
+                     pt/doc-hierachy
+                     [pt/款-filler]))
 
 (def item-type-set #{:法 :规定 :条 :款 :项})
 (def item-type-str (comp name :token))
@@ -329,7 +324,7 @@
              ({:token :项 :nth 1 :text "一" :第? true :unit? true :id "条40款1项1"}
               {:token :separator :text "、"})
              ({:token :项 :nth 2 :text "二" :第? true :unit? true :id "条40款1项2"}))))
-         (tree/update-leaves r :id (partial generate-id {})))))
+         (pt/update-leaves r :id (partial generate-id {})))))
    (let [r (parse (items (seq "本规定第十、十八、二十六、二十七条")))]
      (t/is
       (= '({:token :规定 :nth :this :text "本规定"}
@@ -340,7 +335,7 @@
            ({:token :条 :nth 26 :text "二十六" :第? false :unit? false :id "条26"}
             {:token :separator :text "、"})
            ({:token :条 :nth 27 :text "二十七" :第? false :unit? true :id "条27"}))
-         (tree/update-leaves r :id (partial generate-id {})))))))
+         (pt/update-leaves r :id (partial generate-id {})))))))
 
 (defn 条头
   {:test
