@@ -43,14 +43,14 @@
 
 (defn move-to-root
   {:test
-   #(tt/comprehend-tests
-     (t/is (nil? (root nil)))
-     (let [x (create :node)]
-       (t/is (= x (root x))))
-     (let [x (create (branch :root))]
-       (t/is (= (node-val x)
-                (node-val (root
-                           (add-child-and-move-to x :node)))))))}
+   #(let [f move-to-root]
+      (tt/comprehend-tests
+       (t/is (nil? (f nil)))
+       (let [x (create :node)]
+         (t/is (= x (f x))))
+       (let [x (create (branch :root))]
+         (t/is (= (node-val x)
+                  (node-val (f (add-child-and-move-to x :node))))))))}
   [loc]
   (let [no-parent? (comp nil? z/up)]
     (and loc (climb loc
