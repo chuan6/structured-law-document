@@ -21,34 +21,58 @@
                 :目 (str (gen-str context :项) r))))]
     (encode-id (gen-str context t))))
 
-(defn generate-id
+(def templates
+  {:目 [:条 :款 :项]
+   :项 [:条 :款]
+   :款 [:条]
+   :条 []
+   :节 [:章]
+   :章 []})
+
+(defn- interpret-nth-with [context {ty :token nx :nth}]
+  (if (number? nx)
+    nx
+    (do (assert (#{:this :prev} nx))
+        (({:this identity
+           :prev dec
+           } nx)
+         (ty context)))))
+
+(defn generate
   {:test
-   #(let [f generate-id]
+   #(let [f generate]
       (tt/comprehend-tests
-       (t/is (= ""          (f {} [])))
-       (t/is (= "条1"       (f {} [{:token :法 :nth :this}
-                                   {:token :条 :nth 1}])))
-       (t/is (= "条1"       (f {:条 1} [{:token :条 :nth :this}])))
-       (t/is (= "条1款2项3" (f {} [{:token :法 :nth :this}
-                                   {:token :条 :nth 1}
-                                   {:token :款 :nth 2}
-                                   {:token :项 :nth 3}])))
-       (t/is (= "条1款1项5") (f {:条 1 :款 2} [{:token :款 :nth :prev}
-                                               {:token :项 :nth 5}]))))}
-  [context src]
-  (str/join
-   (loop [r () s src]
-     (if (empty? s)
-       r
-       (let [c (peek s)]
-         (if (= (count s) 1)
-           (let [c-t (:token c)]
-             (assert (t/is ((set (vals tk/adj->nth)) (:nth c))))
-             (if (#{:法 :规定} c-t)
-               r
-               (let [r' (into r [(({:this identity
-                                    :prev dec} (:nth c)) (context c-t)) (tk/item-type-str c)])]
-                 (if (= c-t :款)
-                   (recur r' [{:token :条 :nth :this}])
-                   r'))))
-           (recur (into r [(:nth c) (tk/item-type-str c)]) (pop s))))))))
+       (t/is (nil?    (f {} [])))
+       (t/is (= "条1" (f {} [{:token :法 :nth :this}
+                             {:token :条 :nth 1}])))
+       (t/is (= "条1" (f {:条 1} [{:token :条 :nth :this}])))
+       (t/is (= "条1款2项3"
+                (f {} [{:token :法 :nth :this}
+                       {:token :条 :nth 1}
+                       {:token :款 :nth 2}
+                       {:token :项 :nth 3}])))
+       (t/is (= "条1款1项5"
+                (f {:条 1 :款 2} [{:token :款 :nth :prev}
+                                  {:token :项 :nth 5}])))))}
+  ([context tv]
+   (let [t (:token (peek tv))]
+     (when (contains? templates t)
+       (generate context tv t))))
+
+  ([context tv expect]
+   (let [interpret-nth (partial interpret-nth-with context)]
+    (if (nil? expect)
+      ""
+      (let [top (peek tv)
+            next-expect (peek (expect templates))]
+        (cond (nil? top)                ; extend
+              (str (generate context [] next-expect)
+                   (name expect) (expect context))
+
+              (= (:token top) expect)
+              (str (generate context (pop tv) next-expect)
+                   (tk/item-type-str top) (interpret-nth top))
+
+              :mismatch
+              (throw (Exception. (str "Expect " expect ", instead "
+                                      "get " (:token top))))))))))

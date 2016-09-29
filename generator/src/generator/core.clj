@@ -68,7 +68,7 @@
        (t/is (= a (str/join (map :text (f {} sa)))))
        (t/is (= b (str/join (map :text (f {} sb)))))))}
   [context cs]
-  (let [genid (partial id/generate-id context)
+  (let [genid (partial id/generate context)
         flags [#{[\本] [\前]}
                #{[\规 \定] [\法] [\条] [\款]}
                #{[\第]}]]
@@ -358,7 +358,7 @@
      "http://www.gov.cn/zhengce/2015-04/25/content_2853643.htm"]
     ]))
 
-;(-main)
+(-main)
 
 (let [items (comp first tk/read-items)]
   (tt/comprehend-tests
@@ -378,7 +378,7 @@
              ({:token :项 :nth 1 :text "一" :第? true :unit? true :id "条40款1项1"}
               {:token :separator :text "、"})
              ({:token :项 :nth 2 :text "二" :第? true :unit? true :id "条40款1项2"}))))
-         (pt/update-leaves r :id (partial id/generate-id {})))))
+         (pt/update-leaves r :id (partial id/generate {})))))
    (let [r (tk/parse (items (seq "本规定第十、十八、二十六、二十七条")))]
      (t/is
       (= '({:token :规定 :nth :this :text "本规定"}
@@ -389,4 +389,4 @@
            ({:token :条 :nth 26 :text "二十六" :第? false :unit? false :id "条26"}
             {:token :separator :text "、"})
            ({:token :条 :nth 27 :text "二十七" :第? false :unit? true :id "条27"}))
-         (pt/update-leaves r :id (partial id/generate-id {})))))))
+         (pt/update-leaves r :id (partial id/generate {})))))))
