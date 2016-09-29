@@ -63,16 +63,16 @@
    (let [interpret-nth (partial interpret-nth-with context)]
     (if (nil? expect)
       ""
-      (let [top (peek tv)
+      (let [{ty :token :as t} (peek tv)
             next-expect (peek (expect templates))]
-        (cond (nil? top)                ; extend
+        (cond (nil? t)                ; extend
               (str (generate context [] next-expect)
                    (name expect) (expect context))
 
-              (= (:token top) expect)
+              (= ty expect)
               (str (generate context (pop tv) next-expect)
-                   (tk/item-type-str top) (interpret-nth top))
+                   (tk/item-type-str ty) (interpret-nth t))
 
               :mismatch
               (throw (Exception. (str "Expect " expect ", instead "
-                                      "get " (:token top))))))))))
+                                      "get " ty)))))))))
