@@ -3,19 +3,18 @@
             [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :as t]
+            [generator.id :as id]
             [generator.line :as l]
             [generator.lisp :as s]
             [generator.test :as tt]
             [generator.tokenizer :as tk]
+            [generator.parse-tree :as pt]
             [generator.zh-digits :refer [numchar-zh-set]]
             [hiccup.core :refer :all]
             [hiccup.page :refer :all])
   (:gen-class))
 
 (defn default-fn [l] [:p l])
-
-(defn- encode-id [s]
-  (str/replace (http/url-encode s) #"%" "."))
 
 (defn use-chinese-paren
   {:test
@@ -52,23 +51,8 @@
   [s]
   (str/replace s #"\s" "-"))
 
-(defn- entry-id [context t]
-  (letfn [(gen-str [context t]
-            (let [r (str (name t) (t context))]
-              (case t
-                :则 r
-                :章 r
-                :节 (str (gen-str context :章) r)
-                :条 r
-                :款 (str (gen-str context :条) r)
-                :项 (str (gen-str context :款) r)
-                :目 (str (gen-str context :项) r))))]
-    (encode-id (gen-str context t))))
-
-
-
 (defn- 条-rise [txs]
-  (s/linear-to-tree txs tk/doc-hierachy))
+  (pt/linear-to-tree txs pt/doc-hierachy))
 
 (defn within-款项
   {:test
@@ -84,7 +68,7 @@
        (t/is (= a (str/join (map :text (f {} sa)))))
        (t/is (= b (str/join (map :text (f {} sb)))))))}
   [context cs]
-  (let [genid (partial tk/generate-id context)
+  (let [genid (partial id/generate context)
         flags [#{[\本] [\前]}
                #{[\规 \定] [\法] [\条] [\款]}
                #{[\第]}]]
@@ -95,7 +79,7 @@
           (let [[items rests] (tk/read-items cs)]
             (recur rests (into ts (-> items
                                       tk/parse
-                                      (tk/update-leaves :id genid)
+                                      (pt/update-leaves :id genid)
                                       flatten
                                       tk/second-pass))))
           (recur (rest cs) (conj ts {:token :to-be-recognized
@@ -111,17 +95,17 @@
                    :let [id (:id t)]]
                (if-not id
                  t
-                 [:a {:href (str \# (encode-id id))}
+                 [:a {:href (str \# (id/encode-id id))}
                   (:text t)])))]))
 
 (defn- wrap-entry-in-html [[x & xs]]
   (case (:token x)
-    :条 [:section {:class "entry" :id (encode-id (str \条 (:nth x)))}
+    :条 [:section {:class "entry" :id (id/encode-id (str \条 (:nth x)))}
          [:div {:class "title"}
           [:p (:text x)]]
          (for [x xs] (wrap-entry-in-html x))]
 
-    :目 [:p {:class "目" :id (entry-id (:context x) :目)}
+    :目 [:p {:class "目" :id (id/entry-id (:context x) :目)}
          [:span (str (:nth x) \uFF0E)] ;use fullwith full stop
          (s/map-on-binary-partitions
           #(= (:token %) :to-be-recognized)
@@ -129,7 +113,7 @@
           #(str/join (map :text %))
           wrap-item-string-in-html)]
 
-    [:div {:class (name (:token x)) :id (entry-id (:context x) (:token x))}
+    [:div {:class (name (:token x)) :id (id/entry-id (:context x) (:token x))}
      [:p (s/map-on-binary-partitions
           #(= (:token %) :to-be-recognized)
           (within-款项 (:context x) (seq (:text x)))
@@ -176,9 +160,9 @@
         head (:text outline)
         item-list (draw-skeleton-with-contexts (:list outline))]
     [:section
-     [:h2 {:id (encode-id "章0") :class "章"} head]
+     [:h2 {:id (id/encode-id "章0") :class "章"} head]
      [:nav {:id "outline" :class "entry"}
-      (first (outline-html item-list entry-id))]]))
+      (first (outline-html item-list id/entry-id))]]))
 
 (defn- html-head [title css & scripts]
   [:head {:lang "zh-CN"}
@@ -255,13 +239,13 @@
                             (wrap-outline-in-html tl)
 
                             :则
-                            [:h2 {:id (entry-id ct :则) :class "章"} txt]
+                            [:h2 {:id (id/entry-id ct :则) :class "章"} txt]
 
                             :章
-                            [:h2 {:id (entry-id ct :章) :class "章"} txt]
+                            [:h2 {:id (id/entry-id ct :章) :class "章"} txt]
 
                             :节
-                            [:h3 {:id (entry-id ct :节) :class "节"} txt]
+                            [:h3 {:id (id/entry-id ct :节) :class "节"} txt]
 
                             :to-be-recognized
                             (default-fn txt))
@@ -372,6 +356,40 @@
 
     ["食品安全法"
      "http://www.gov.cn/zhengce/2015-04/25/content_2853643.htm"]
+
+    ["立法法"
+     "http://www.npc.gov.cn/npc/dbdhhy/12_3/2015-03/18/content_1930713.htm"]
     ]))
 
 (-main)
+
+(let [items (comp first tk/read-items)]
+  (tt/comprehend-tests
+   (for [src tk/item-string-examples
+         :let [r (tk/parse (items src))]]
+     (do
+       ;; (clojure.pprint/pprint r)
+       ;; (println "------------------------")
+       (t/is (= src (str/join (map tk/str-token (flatten r)))))))
+   (let [r (tk/parse (items (seq "本法第三十九条和第四十条第一项、第二项")))]
+     (t/is
+      (= '({:token :法 :nth :this :text "本法"}
+           ({:token :条 :nth 39 :text "三十九" :第? true :unit? true :id "条39"}
+            {:token :separator :text "和"})
+           ({:token :条 :nth 40 :text "四十" :第? true :unit? true}
+            ({:token :款 :nth 1}
+             ({:token :项 :nth 1 :text "一" :第? true :unit? true :id "条40款1项1"}
+              {:token :separator :text "、"})
+             ({:token :项 :nth 2 :text "二" :第? true :unit? true :id "条40款1项2"}))))
+         (pt/update-leaves r :id (partial id/generate {})))))
+   (let [r (tk/parse (items (seq "本规定第十、十八、二十六、二十七条")))]
+     (t/is
+      (= '({:token :规定 :nth :this :text "本规定"}
+           ({:token :条 :nth 10 :text "十" :第? true :unit? false :id "条10"}
+            {:token :separator :text "、"})
+           ({:token :条 :nth 18 :text "十八" :第? false :unit? false :id "条18"}
+            {:token :separator :text "、"})
+           ({:token :条 :nth 26 :text "二十六" :第? false :unit? false :id "条26"}
+            {:token :separator :text "、"})
+           ({:token :条 :nth 27 :text "二十七" :第? false :unit? true :id "条27"}))
+         (pt/update-leaves r :id (partial id/generate {})))))))

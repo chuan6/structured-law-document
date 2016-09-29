@@ -1,45 +1,54 @@
 (ns generator.tokenizer
-  (:require [clojure.string :as str]
+  (:require [clojure.set :as set]
+            [clojure.string :as str]
             [clojure.test :as t]
             [clojure.zip :as z]
             [generator.line :as l]
             [generator.lisp :as s]
             [generator.test :as tt]
+            [generator.parse-tree :as pt]
             [generator.zh-digits :refer [数字 numchar-zh-set]]))
 
 (def from-第 (partial s/from-x \第))
 (def to-条 (partial s/to-x \条))
 
-(def txts ["本法第三十九条和第四十条第一项、第二项"
-           "本法第三十九条和第四十条第一项、第二项"
-           "本法第二十二条和第二十三条"
-           "本法第二十六条第一款"
-           "本法第二十六条第一款第一项"
-           "本条第一款"
-           "本法第四十条、第四十一条"
-           "本法第四十二条"
-           "本法第四十二条第二项"
-           "本法第三十八条"
-           "本法第三十六条"
-           "本法第四十条"
-           "本法第四十一条第一款"
-           "本法第四十四条第一项"
-           "本法第四十四条第四项、第五项"
-           "本法第八十七条"
-           "本法第十七条"
-           "本法第三十六条、第三十八条"
-           "本法第三十九条和第四十条第一项、第二项"
-           "本法第二十六条"
-           "本法第四十七条"
-           "本法第十四条 第二款第三项"
-           "本法第四十六条"
-           ;;"前款第（五）、第（六）项"
-           "本规定第十、十八、二十六、二十七条"
-           ])
+(def item-string-examples
+  ["本法第三十九条和第四十条第一项、第二项"
+   "本法第三十九条和第四十条第一项、第二项"
+   "本法第二十二条和第二十三条"
+   "本法第二十六条第一款"
+   "本法第二十六条第一款第一项"
+   "本条第一款"
+   "本法第四十条、第四十一条"
+   "本法第四十二条"
+   "本法第四十二条第二项"
+   "本法第三十八条"
+   "本法第三十六条"
+   "本法第四十条"
+   "本法第四十一条第一款"
+   "本法第四十四条第一项"
+   "本法第四十四条第四项、第五项"
+   "本法第八十七条"
+   "本法第十七条"
+   "本法第三十六条、第三十八条"
+   "本法第三十九条和第四十条第一项、第二项"
+   "本法第二十六条"
+   "本法第四十七条"
+   "本法第十四条 第二款第三项"
+   "本法第四十六条"
+   ;;"前款第（五）、第（六）项"
+   "本规定第十、十八、二十六、二十七条"
+   ])
 
 (defn- separators [c]
   (when (#{\space \、 \和} c)
     {:token :separator :text (str c)}))
+
+(def item-types-1 #{:章 :节 :条 :款 :项})
+(def item-types (set/union item-types-1 #{:法 :规定}))
+
+(def ^:private cs-kw (comp keyword str/join))
+(def item-type-str name)
 
 (defn nth-items
   {:test
@@ -70,15 +79,12 @@
                 (f (seq "第（五）、第（六）项有关"))))))}
   [char-seq]
   (assert (= (first char-seq) \第))
-  (let [item-types #{\条 \款 \项}
-
-        passively-assign-token
-        (fn [ts]
-          (when-let [it (:token (peek ts))]
-            (map (fn [t]
-                   (if (:token t)
-                     t
-                     (assoc t :token it))) ts)))]
+  (letfn [(passively-assign-token [ts]
+            (when-let [it (:token (peek ts))]
+              (map (fn [t]
+                     (if (:token t)
+                       t
+                       (assoc t :token it))) ts)))]
     (loop [cs char-seq
            ts []]
       (if (:unit? (peek ts))
@@ -91,20 +97,19 @@
               cs'     (s/without-prefix cs ncs)
               nx      {:nth n :text (str/join ncs) :第? 第?}]
           (when-let [c' (first cs')]
-            (if (item-types c')
+            (if (item-types-1 (cs-kw [c']))
               (recur (rest cs')
-                     (conj ts (assoc nx :unit? true :token (keyword (str c')))))
+                     (conj ts (assoc nx :unit? true :token (cs-kw [c']))))
               (when-let [s-t (separators c')]
                 (recur (rest cs')
                        (into ts [(assoc nx :unit? false) s-t]))))))))))
 
-(def item-types #{[\法] [\规 \定] [\条] [\款] [\项]})
-
-(defn match-item-types [cs]
-  (first (remove nil? (for [target item-types
-                            :let [n (count target)]]
-                        (when (= (take n cs) target)
-                          target)))))
+(defn- match-item-types [cs]
+  (let [item-type-css (map (comp seq item-type-str) item-types)]
+    (first (remove nil? (for [tycs item-type-css
+                              :let [n (count tycs)]]
+                          (when (= (take n cs) tycs)
+                            tycs))))))
 
 (def adj->nth {\本 :this \前 :prev})
 
@@ -144,18 +149,10 @@
                 (recur rest-cs (into ts ts')))
           [ts cs])))))
 
-(defn doc-hierachy [tx]
-  (let [hval {:目 1 :项 2 :款 3 :条 4 :节 5 :章 6 :则 7
-              :法 10 :规定 10}]
-    ((:token tx) hval)))
-
 (defn parse [recognized-items]
-  (s/linear-to-tree recognized-items
-                    doc-hierachy
-                    {{:token :款} {:token :款 :nth 1}}))
-
-(def item-type-set #{:法 :规定 :条 :款 :项})
-(def item-type-str (comp name :token))
+  (pt/linear-to-tree recognized-items
+                     pt/doc-hierachy
+                     [pt/款-filler]))
 
 (defn second-pass
   {:test
@@ -209,34 +206,34 @@
             (if (empty? ts)
               nil
               (let [t (peek ts)]
-                (if (item-type-set (:token t))
+                (if (item-types (:token t))
                   t
                   (recur (pop ts))))))
 
           (succ-item [[suc ssuc]]
-            (cond (item-type-set (:token suc)) suc
-                  (item-type-set (:token ssuc)) ssuc))
+            (cond (item-types (:token suc)) suc
+                  (item-types (:token ssuc)) ssuc))
 
-          (extend-to [t left? right?]
+          (extend-to [{ty :token :as t} left? right?]
             (cond-> t
               (and left? (:第? t)) (update :text (partial str "第"))
-              (and right? (:unit? t)) (update :text str (item-type-str t))))
+              (and right? (:unit? t)) (update :text str (item-type-str ty))))
 
           (merge-both [t]
             [(extend-to t true true)])
 
-          (merge-left [t] (assert (:unit? t))
-            [(extend-to t true false) {:text (item-type-str t)}])
+          (merge-left [{ty :token :as t}] (assert (:unit? t))
+            [(extend-to t true false) {:text (item-type-str ty)}])
 
           (merge-right [t] (assert (:第? t))
             [{:text "第"} (extend-to t false true)])]
     (reduce
-     (fn [ts' [t tsuc tssuc]]
+     (fn [ts' [{ty :token :as t} tsuc tssuc]]
        (assert t)
-       (cond (= (:token t) :separator)
+       (cond (= ty :separator)
              (conj ts' t)
 
-             (item-type-set (:token t))
+             (item-types ty)
              (into ts'
                    (if-not (or (:第? t) (:unit? t))
                      [t]
@@ -245,52 +242,20 @@
                        (cond
                          ;;in the middle of a group
                          (= (:token pre)
-                            (:token t)
+                            ty
                             (:token suc)) (merge-both t)
                          ;;at the beginning of a group
-                         (= (:token t)
+                         (= ty
                             (:token suc)) (if (:第? suc)
                                             (merge-both t)
                                             (merge-right t))
                          ;;at the end of a group
                          (= (:token pre)
-                            (:token t))   (if (:unit? pre)
+                            ty)           (if (:unit? pre)
                                             (merge-both t)
                                             (merge-left t))
                          :standalone      (merge-both t)))))))
      [] (partition 3 1 (concat ts [nil nil])))))
-
-(defn generate-id
-  {:test
-   #(let [f generate-id]
-      (tt/comprehend-tests
-       (t/is (= ""          (f {} [])))
-       (t/is (= "条1"       (f {} [{:token :法 :nth :this}
-                                   {:token :条 :nth 1}])))
-       (t/is (= "条1"       (f {:条 1} [{:token :条 :nth :this}])))
-       (t/is (= "条1款2项3" (f {} [{:token :法 :nth :this}
-                                   {:token :条 :nth 1}
-                                   {:token :款 :nth 2}
-                                   {:token :项 :nth 3}])))
-       (t/is (= "条1款1项5") (f {:条 1 :款 2} [{:token :款 :nth :prev}
-                                               {:token :项 :nth 5}]))))}
-  [context src]
-  (str/join
-   (loop [r () s src]
-     (if (empty? s)
-       r
-       (let [c (peek s)]
-         (if (= (count s) 1)
-           (let [c-t (:token c)]
-             (assert (t/is ((set (vals adj->nth)) (:nth c))))
-             (if (#{:法 :规定} c-t)
-               r
-               (let [r' (into r [(({:this identity
-                                    :prev dec} (:nth c)) (context c-t)) (item-type-str c)])]
-                 (if (= c-t :款)
-                   (recur r' [{:token :条 :nth :this}])
-                   r'))))
-           (recur (into r [(:nth c) (item-type-str c)]) (pop s))))))))
 
 (defn str-token
   {:test
@@ -301,56 +266,12 @@
        (t/is (= "第（二）"   (f a)))
        (t/is (= "、"     (f b)))
        (t/is (= "第（三）项"   (f c)))))}
-  [t]
-  (let [item-tokens (set (map (comp keyword str/join) item-types))
-        token (:token t)]
-    (if (item-tokens token)
-      (str (if (:第? t) \第 "")
-           (:text t)
-           (if (:unit? t) (name token) ""))
-      (:text t))))
-
-(defn update-leaves
-  ([tree k f] (update-leaves tree [] k f))
-  ([[parent & children] path k f]
-   (let [path' (conj path parent)]
-     (if (or (empty? children)
-             (every? #(= (:token %) :separator) children))
-       (cons (assoc parent k (f path')) children)
-       (cons parent (map #(if (= (:token %) :separator)
-                            %
-                            (update-leaves % path' k f)) children))))))
-
-(let [items (comp first read-items)]
-  (tt/comprehend-tests
-   (for [src txts
-         :let [r (parse (items src))]]
-     (do
-       ;; (clojure.pprint/pprint r)
-       ;; (println "------------------------")
-       (t/is (= src (str/join (map str-token (flatten r)))))))
-   (let [r (parse (items (seq "本法第三十九条和第四十条第一项、第二项")))]
-     (t/is
-      (= '({:token :法 :nth :this :text "本法"}
-           ({:token :条 :nth 39 :text "三十九" :第? true :unit? true :id "条39"}
-            {:token :separator :text "和"})
-           ({:token :条 :nth 40 :text "四十" :第? true :unit? true}
-            ({:token :款 :nth 1}
-             ({:token :项 :nth 1 :text "一" :第? true :unit? true :id "条40款1项1"}
-              {:token :separator :text "、"})
-             ({:token :项 :nth 2 :text "二" :第? true :unit? true :id "条40款1项2"}))))
-         (update-leaves r :id (partial generate-id {})))))
-   (let [r (parse (items (seq "本规定第十、十八、二十六、二十七条")))]
-     (t/is
-      (= '({:token :规定 :nth :this :text "本规定"}
-           ({:token :条 :nth 10 :text "十" :第? true :unit? false :id "条10"}
-            {:token :separator :text "、"})
-           ({:token :条 :nth 18 :text "十八" :第? false :unit? false :id "条18"}
-            {:token :separator :text "、"})
-           ({:token :条 :nth 26 :text "二十六" :第? false :unit? false :id "条26"}
-            {:token :separator :text "、"})
-           ({:token :条 :nth 27 :text "二十七" :第? false :unit? true :id "条27"}))
-         (update-leaves r :id (partial generate-id {})))))))
+  [{ty :token :as t}]
+  (if (item-types ty)
+    (str (if (:第? t) \第 "")
+         (:text t)
+         (if (:unit? t) (item-type-str ty) ""))
+    (:text t)))
 
 (defn 条头
   {:test
