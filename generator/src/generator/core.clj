@@ -358,4 +358,35 @@
      "http://www.gov.cn/zhengce/2015-04/25/content_2853643.htm"]
     ]))
 
-(-main)
+;(-main)
+
+(let [items (comp first tk/read-items)]
+  (tt/comprehend-tests
+   (for [src tk/item-string-examples
+         :let [r (tk/parse (items src))]]
+     (do
+       ;; (clojure.pprint/pprint r)
+       ;; (println "------------------------")
+       (t/is (= src (str/join (map tk/str-token (flatten r)))))))
+   (let [r (tk/parse (items (seq "本法第三十九条和第四十条第一项、第二项")))]
+     (t/is
+      (= '({:token :法 :nth :this :text "本法"}
+           ({:token :条 :nth 39 :text "三十九" :第? true :unit? true :id "条39"}
+            {:token :separator :text "和"})
+           ({:token :条 :nth 40 :text "四十" :第? true :unit? true}
+            ({:token :款 :nth 1}
+             ({:token :项 :nth 1 :text "一" :第? true :unit? true :id "条40款1项1"}
+              {:token :separator :text "、"})
+             ({:token :项 :nth 2 :text "二" :第? true :unit? true :id "条40款1项2"}))))
+         (pt/update-leaves r :id (partial id/generate-id {})))))
+   (let [r (tk/parse (items (seq "本规定第十、十八、二十六、二十七条")))]
+     (t/is
+      (= '({:token :规定 :nth :this :text "本规定"}
+           ({:token :条 :nth 10 :text "十" :第? true :unit? false :id "条10"}
+            {:token :separator :text "、"})
+           ({:token :条 :nth 18 :text "十八" :第? false :unit? false :id "条18"}
+            {:token :separator :text "、"})
+           ({:token :条 :nth 26 :text "二十六" :第? false :unit? false :id "条26"}
+            {:token :separator :text "、"})
+           ({:token :条 :nth 27 :text "二十七" :第? false :unit? true :id "条27"}))
+         (pt/update-leaves r :id (partial id/generate-id {})))))))

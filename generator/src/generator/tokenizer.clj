@@ -2,7 +2,6 @@
   (:require [clojure.string :as str]
             [clojure.test :as t]
             [clojure.zip :as z]
-            [generator.id :as id]
             [generator.line :as l]
             [generator.lisp :as s]
             [generator.test :as tt]
@@ -12,32 +11,33 @@
 (def from-第 (partial s/from-x \第))
 (def to-条 (partial s/to-x \条))
 
-(def txts ["本法第三十九条和第四十条第一项、第二项"
-           "本法第三十九条和第四十条第一项、第二项"
-           "本法第二十二条和第二十三条"
-           "本法第二十六条第一款"
-           "本法第二十六条第一款第一项"
-           "本条第一款"
-           "本法第四十条、第四十一条"
-           "本法第四十二条"
-           "本法第四十二条第二项"
-           "本法第三十八条"
-           "本法第三十六条"
-           "本法第四十条"
-           "本法第四十一条第一款"
-           "本法第四十四条第一项"
-           "本法第四十四条第四项、第五项"
-           "本法第八十七条"
-           "本法第十七条"
-           "本法第三十六条、第三十八条"
-           "本法第三十九条和第四十条第一项、第二项"
-           "本法第二十六条"
-           "本法第四十七条"
-           "本法第十四条 第二款第三项"
-           "本法第四十六条"
-           ;;"前款第（五）、第（六）项"
-           "本规定第十、十八、二十六、二十七条"
-           ])
+(def item-string-examples
+  ["本法第三十九条和第四十条第一项、第二项"
+   "本法第三十九条和第四十条第一项、第二项"
+   "本法第二十二条和第二十三条"
+   "本法第二十六条第一款"
+   "本法第二十六条第一款第一项"
+   "本条第一款"
+   "本法第四十条、第四十一条"
+   "本法第四十二条"
+   "本法第四十二条第二项"
+   "本法第三十八条"
+   "本法第三十六条"
+   "本法第四十条"
+   "本法第四十一条第一款"
+   "本法第四十四条第一项"
+   "本法第四十四条第四项、第五项"
+   "本法第八十七条"
+   "本法第十七条"
+   "本法第三十六条、第三十八条"
+   "本法第三十九条和第四十条第一项、第二项"
+   "本法第二十六条"
+   "本法第四十七条"
+   "本法第十四条 第二款第三项"
+   "本法第四十六条"
+   ;;"前款第（五）、第（六）项"
+   "本规定第十、十八、二十六、二十七条"
+   ])
 
 (defn- separators [c]
   (when (#{\space \、 \和} c)
@@ -274,37 +274,6 @@
            (:text t)
            (if (:unit? t) (name token) ""))
       (:text t))))
-
-(let [items (comp first read-items)]
-  (tt/comprehend-tests
-   (for [src txts
-         :let [r (parse (items src))]]
-     (do
-       ;; (clojure.pprint/pprint r)
-       ;; (println "------------------------")
-       (t/is (= src (str/join (map str-token (flatten r)))))))
-   (let [r (parse (items (seq "本法第三十九条和第四十条第一项、第二项")))]
-     (t/is
-      (= '({:token :法 :nth :this :text "本法"}
-           ({:token :条 :nth 39 :text "三十九" :第? true :unit? true :id "条39"}
-            {:token :separator :text "和"})
-           ({:token :条 :nth 40 :text "四十" :第? true :unit? true}
-            ({:token :款 :nth 1}
-             ({:token :项 :nth 1 :text "一" :第? true :unit? true :id "条40款1项1"}
-              {:token :separator :text "、"})
-             ({:token :项 :nth 2 :text "二" :第? true :unit? true :id "条40款1项2"}))))
-         (pt/update-leaves r :id (partial id/generate-id {})))))
-   (let [r (parse (items (seq "本规定第十、十八、二十六、二十七条")))]
-     (t/is
-      (= '({:token :规定 :nth :this :text "本规定"}
-           ({:token :条 :nth 10 :text "十" :第? true :unit? false :id "条10"}
-            {:token :separator :text "、"})
-           ({:token :条 :nth 18 :text "十八" :第? false :unit? false :id "条18"}
-            {:token :separator :text "、"})
-           ({:token :条 :nth 26 :text "二十六" :第? false :unit? false :id "条26"}
-            {:token :separator :text "、"})
-           ({:token :条 :nth 27 :text "二十七" :第? false :unit? true :id "条27"}))
-         (pt/update-leaves r :id (partial id/generate-id {})))))))
 
 (defn 条头
   {:test
