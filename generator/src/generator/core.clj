@@ -356,6 +356,9 @@
 
     ["食品安全法"
      "http://www.gov.cn/zhengce/2015-04/25/content_2853643.htm"]
+
+    ["立法法"
+     "http://www.npc.gov.cn/npc/dbdhhy/12_3/2015-03/18/content_1930713.htm"]
     ]))
 
 (-main)

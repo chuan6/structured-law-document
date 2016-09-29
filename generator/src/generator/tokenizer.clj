@@ -72,7 +72,7 @@
                 (f (seq "第（五）、第（六）项有关"))))))}
   [char-seq]
   (assert (= (first char-seq) \第))
-  (let [item-types #{\条 \款 \项}
+  (let [item-types #{\章 \节 \条 \款 \项}
 
         passively-assign-token
         (fn [ts]
@@ -100,7 +100,7 @@
                 (recur (rest cs')
                        (into ts [(assoc nx :unit? false) s-t]))))))))))
 
-(def item-types #{[\法] [\规 \定] [\条] [\款] [\项]})
+(def item-types #{[\法] [\规 \定] [\章] [\节] [\条] [\款] [\项]})
 
 (defn match-item-types [cs]
   (first (remove nil? (for [target item-types
@@ -151,7 +151,7 @@
                      pt/doc-hierachy
                      [pt/款-filler]))
 
-(def item-type-set #{:法 :规定 :条 :款 :项})
+(def item-type-set #{:法 :规定 :章 :节 :条 :款 :项})
 (def item-type-str (comp name :token))
 
 (defn second-pass
