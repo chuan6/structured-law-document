@@ -3,6 +3,7 @@
             [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :as t]
+            [generator.id :as id]
             [generator.line :as l]
             [generator.lisp :as s]
             [generator.test :as tt]
@@ -14,9 +15,6 @@
   (:gen-class))
 
 (defn default-fn [l] [:p l])
-
-(defn- encode-id [s]
-  (str/replace (http/url-encode s) #"%" "."))
 
 (defn use-chinese-paren
   {:test
@@ -53,21 +51,6 @@
   [s]
   (str/replace s #"\s" "-"))
 
-(defn- entry-id [context t]
-  (letfn [(gen-str [context t]
-            (let [r (str (name t) (t context))]
-              (case t
-                :则 r
-                :章 r
-                :节 (str (gen-str context :章) r)
-                :条 r
-                :款 (str (gen-str context :条) r)
-                :项 (str (gen-str context :款) r)
-                :目 (str (gen-str context :项) r))))]
-    (encode-id (gen-str context t))))
-
-
-
 (defn- 条-rise [txs]
   (pt/linear-to-tree txs pt/doc-hierachy))
 
@@ -85,7 +68,7 @@
        (t/is (= a (str/join (map :text (f {} sa)))))
        (t/is (= b (str/join (map :text (f {} sb)))))))}
   [context cs]
-  (let [genid (partial tk/generate-id context)
+  (let [genid (partial id/generate-id context)
         flags [#{[\本] [\前]}
                #{[\规 \定] [\法] [\条] [\款]}
                #{[\第]}]]
@@ -112,17 +95,17 @@
                    :let [id (:id t)]]
                (if-not id
                  t
-                 [:a {:href (str \# (encode-id id))}
+                 [:a {:href (str \# (id/encode-id id))}
                   (:text t)])))]))
 
 (defn- wrap-entry-in-html [[x & xs]]
   (case (:token x)
-    :条 [:section {:class "entry" :id (encode-id (str \条 (:nth x)))}
+    :条 [:section {:class "entry" :id (id/encode-id (str \条 (:nth x)))}
          [:div {:class "title"}
           [:p (:text x)]]
          (for [x xs] (wrap-entry-in-html x))]
 
-    :目 [:p {:class "目" :id (entry-id (:context x) :目)}
+    :目 [:p {:class "目" :id (id/entry-id (:context x) :目)}
          [:span (str (:nth x) \uFF0E)] ;use fullwith full stop
          (s/map-on-binary-partitions
           #(= (:token %) :to-be-recognized)
@@ -130,7 +113,7 @@
           #(str/join (map :text %))
           wrap-item-string-in-html)]
 
-    [:div {:class (name (:token x)) :id (entry-id (:context x) (:token x))}
+    [:div {:class (name (:token x)) :id (id/entry-id (:context x) (:token x))}
      [:p (s/map-on-binary-partitions
           #(= (:token %) :to-be-recognized)
           (within-款项 (:context x) (seq (:text x)))
@@ -177,9 +160,9 @@
         head (:text outline)
         item-list (draw-skeleton-with-contexts (:list outline))]
     [:section
-     [:h2 {:id (encode-id "章0") :class "章"} head]
+     [:h2 {:id (id/encode-id "章0") :class "章"} head]
      [:nav {:id "outline" :class "entry"}
-      (first (outline-html item-list entry-id))]]))
+      (first (outline-html item-list id/entry-id))]]))
 
 (defn- html-head [title css & scripts]
   [:head {:lang "zh-CN"}
@@ -256,13 +239,13 @@
                             (wrap-outline-in-html tl)
 
                             :则
-                            [:h2 {:id (entry-id ct :则) :class "章"} txt]
+                            [:h2 {:id (id/entry-id ct :则) :class "章"} txt]
 
                             :章
-                            [:h2 {:id (entry-id ct :章) :class "章"} txt]
+                            [:h2 {:id (id/entry-id ct :章) :class "章"} txt]
 
                             :节
-                            [:h3 {:id (entry-id ct :节) :class "节"} txt]
+                            [:h3 {:id (id/entry-id ct :节) :class "节"} txt]
 
                             :to-be-recognized
                             (default-fn txt))

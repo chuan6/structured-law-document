@@ -3,4 +3,4 @@ general:
 
 test:
   override:
-    - lein test generator.core generator.tokenizer generator.line generator.lisp generator.zh-digits generator.test generator.parse-tree
+    - lein test generator.core generator.tokenizer generator.line generator.lisp generator.zh-digits generator.test generator.parse-tree generator.id

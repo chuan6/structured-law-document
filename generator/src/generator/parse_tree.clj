@@ -121,11 +121,13 @@
 
 (defn update-leaves
   ([tree k f] (update-leaves tree [] k f))
-  ([[parent & children] path k f]
-   (let [path' (conj path parent)]
+  ([[v & children] path k f]
+   (let [sep-token? #(= (:token %) :separator)
+         path' (conj path v)]
      (if (or (empty? children)
-             (every? #(= (:token %) :separator) children))
-       (cons (assoc parent k (f path')) children)
-       (cons parent (map #(if (= (:token %) :separator)
-                            %
-                            (update-leaves % path' k f)) children))))))
+             (every? sep-token? children))
+       (cons (assoc v k (f path')) children)
+       (cons v (map #(if (sep-token? %)
+                       %
+                       (update-leaves % path' k f))
+                    children))))))

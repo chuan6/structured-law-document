@@ -2,6 +2,7 @@
   (:require [clojure.string :as str]
             [clojure.test :as t]
             [clojure.zip :as z]
+            [generator.id :as id]
             [generator.line :as l]
             [generator.lisp :as s]
             [generator.test :as tt]
@@ -256,38 +257,6 @@
                          :standalone      (merge-both t)))))))
      [] (partition 3 1 (concat ts [nil nil])))))
 
-(defn generate-id
-  {:test
-   #(let [f generate-id]
-      (tt/comprehend-tests
-       (t/is (= ""          (f {} [])))
-       (t/is (= "条1"       (f {} [{:token :法 :nth :this}
-                                   {:token :条 :nth 1}])))
-       (t/is (= "条1"       (f {:条 1} [{:token :条 :nth :this}])))
-       (t/is (= "条1款2项3" (f {} [{:token :法 :nth :this}
-                                   {:token :条 :nth 1}
-                                   {:token :款 :nth 2}
-                                   {:token :项 :nth 3}])))
-       (t/is (= "条1款1项5") (f {:条 1 :款 2} [{:token :款 :nth :prev}
-                                               {:token :项 :nth 5}]))))}
-  [context src]
-  (str/join
-   (loop [r () s src]
-     (if (empty? s)
-       r
-       (let [c (peek s)]
-         (if (= (count s) 1)
-           (let [c-t (:token c)]
-             (assert (t/is ((set (vals adj->nth)) (:nth c))))
-             (if (#{:法 :规定} c-t)
-               r
-               (let [r' (into r [(({:this identity
-                                    :prev dec} (:nth c)) (context c-t)) (item-type-str c)])]
-                 (if (= c-t :款)
-                   (recur r' [{:token :条 :nth :this}])
-                   r'))))
-           (recur (into r [(:nth c) (item-type-str c)]) (pop s))))))))
-
 (defn str-token
   {:test
    #(let [f str-token
@@ -324,7 +293,7 @@
              ({:token :项 :nth 1 :text "一" :第? true :unit? true :id "条40款1项1"}
               {:token :separator :text "、"})
              ({:token :项 :nth 2 :text "二" :第? true :unit? true :id "条40款1项2"}))))
-         (pt/update-leaves r :id (partial generate-id {})))))
+         (pt/update-leaves r :id (partial id/generate-id {})))))
    (let [r (parse (items (seq "本规定第十、十八、二十六、二十七条")))]
      (t/is
       (= '({:token :规定 :nth :this :text "本规定"}
@@ -335,7 +304,7 @@
            ({:token :条 :nth 26 :text "二十六" :第? false :unit? false :id "条26"}
             {:token :separator :text "、"})
            ({:token :条 :nth 27 :text "二十七" :第? false :unit? true :id "条27"}))
-         (pt/update-leaves r :id (partial generate-id {})))))))
+         (pt/update-leaves r :id (partial id/generate-id {})))))))
 
 (defn 条头
   {:test
