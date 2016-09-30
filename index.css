@@ -10,7 +10,7 @@ body {
   padding: 0;
 }
 
-.title>p:first-child, .款>p:first-child, .项>p:first-child {
+.title>p:first-child, .款>p:first-child, .项>p:not(.目) {
   margin: 0;
   padding: 0.5em 1em;
 }

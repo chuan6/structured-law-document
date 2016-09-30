@@ -114,11 +114,12 @@
           wrap-item-string-in-html)]
 
     [:div {:class (name (:token x)) :id (id/entry-id (:context x) (:token x))}
-     [:p (s/map-on-binary-partitions
-          #(= (:token %) :to-be-recognized)
-          (within-款项 (:context x) (seq (:text x)))
-          #(str/join (map :text %))
-          wrap-item-string-in-html)]
+     (for [line (str/split-lines (:text x))]
+       [:p (s/map-on-binary-partitions
+            #(= (:token %) :to-be-recognized)
+            (within-款项 (:context x) (seq line))
+            #(str/join (map :text %))
+            wrap-item-string-in-html)])
      (for [x xs] (wrap-entry-in-html x))]))
 
 (defn- wrap-条-in-html [head body]
