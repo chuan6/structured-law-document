@@ -105,13 +105,14 @@
           [:p (:text x)]]
          (for [x xs] (wrap-entry-in-html x))]
 
-    :目 [:p {:class "目" :id (id/entry-id (:context x) :目)}
-         [:span (str (:nth x) \uFF0E)] ;use fullwith full stop
-         (s/map-on-binary-partitions
-          #(= (:token %) :to-be-recognized)
-          (within-款项 (:context x) (seq (:text x)))
-          #(str/join (map :text %))
-          wrap-item-string-in-html)]
+    :目 [:div {:class "目" :id (id/entry-id (:context x) :目)}
+         [:p
+          [:span (str (:nth x) \uFF0E)] ;use fullwith full stop
+          (s/map-on-binary-partitions
+           #(= (:token %) :to-be-recognized)
+           (within-款项 (:context x) (seq (:text x)))
+           #(str/join (map :text %))
+           wrap-item-string-in-html)]]
 
     [:div {:class (name (:token x)) :id (id/entry-id (:context x) (:token x))}
      (for [line (str/split-lines (:text x))]

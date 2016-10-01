@@ -10,17 +10,22 @@ body {
   padding: 0;
 }
 
-.title>p:first-child, .款>p:first-child, .项>p:not(.目) {
+.title>p:first-child, .款>p:first-child, .项>p, .目>p {
   margin: 0;
   padding: 0.5em 1em;
 }
 
+.项>p:not(:first-child) {
+  text-indent: 1em;
+}
+
 .目 {
   margin: 0;
-  padding-top: 0.5em;
-  padding-bottom: 0.5em;
-  padding-left: 2.1em;
-  padding-right: 1em;
+  padding-left: 1em;
+}
+
+.目>p { /* 目头罗马数字字符为半角，进 0.5em 正好占一字全长 */
+  text-indent: 0.5em;
 }
 
 #the-title, h2, h3 {
