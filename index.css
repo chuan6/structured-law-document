@@ -119,13 +119,12 @@ body {
 
 .entry a {
   background-color: Azure;
-  border: 1px solid silver;
   border-radius: 0.31em;
   text-decoration: none;
   color: inherit;
-  padding: 0.1em 0.2em;
-  margin: 0 0.1em;
-  box-shadow: 0 0 0.1em silver;
+  padding: 0.1em 0.25em;
+  margin: 0 0.25em;
+  box-shadow: 0 0 0.2em grey;
 }
 
 #ref-to-original, #outline, .entry, .款, .项, .目 {
