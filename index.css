@@ -132,8 +132,8 @@ body {
      so that for blocks that consists of only one line, the
      right border is perfectly round.
    */
-  border-top-right-radius: 0.65em; /* (1.62 + 0.5*2) / 4 */
-  border-bottom-right-radius: 0.65em;
+  border-top-right-radius: 0.75em; /* (2 + 0.5*2) / 4 */
+  border-bottom-right-radius: 0.75em;
   /* blur-radius = (line-height - font-height) / 2
      so that the shadow wouldn't extend to the other line,
      above or below.
