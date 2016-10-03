@@ -1,8 +1,9 @@
 body {
-  font-family: sans-serif;
+  font-family: "Noto Sans CJK SC", "AR PL UMing CN", sans-serif;
   font-size: 16px;
   margin: 0 auto;
   background-color: white;
+  letter-spacing: 0.125em
 }
 
 .title, .款, .项 {
@@ -29,7 +30,7 @@ body {
 }
 
 #the-title, h2, h3 {
-  font-family: "仿宋", FangSong, serif;
+  font-family: "AR PL UKai CN", "仿宋", FangSong, serif;
 }
 
 #the-title {
@@ -46,7 +47,7 @@ body {
   margin: 0 auto;
   padding: 0 0.5em;
   background-color: inherit;
-  max-width: 512px;
+  max-width: 32em;
 }
 
 #back-button, #share-button, #cancel-overlay, #do-copy {
