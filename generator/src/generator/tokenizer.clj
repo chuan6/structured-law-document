@@ -38,6 +38,7 @@
    "本法第四十六条"
    ;;"前款第（五）、第（六）项"
    "本规定第十、十八、二十六、二十七条"
+   "本办法第五条第一款"
    ])
 
 (defn- separators [c]
@@ -45,7 +46,7 @@
     {:token :separator :text (str c)}))
 
 (def item-types-1 #{:章 :节 :条 :款 :项})
-(def item-types (set/union item-types-1 #{:法 :规定}))
+(def item-types (set/union item-types-1 #{:法 :规定 :办法}))
 
 (def ^:private cs-kw (comp keyword str/join))
 (def item-type-str name)
