@@ -70,7 +70,7 @@
   [context cs]
   (let [genid (partial id/generate context)
         flags [#{[\本] [\前]}
-               #{[\规 \定] [\法] [\条] [\款]}
+               #{[\办 \法] [\规 \定] [\法] [\条] [\款]}
                #{[\第]}]]
     (loop [cs cs ts []]
       (if (empty? cs)

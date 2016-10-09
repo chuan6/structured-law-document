@@ -62,7 +62,7 @@
 
 (defn doc-hierachy [tx]
   (let [hval {:目 1 :项 2 :款 3 :条 4 :节 5 :章 6 :则 7
-              :法 10 :规定 10}]
+              :法 10 :规定 10 :办法 10}]
     ((:token tx) hval)))
 
 (def 款-filler {:token :款 :nth 1})

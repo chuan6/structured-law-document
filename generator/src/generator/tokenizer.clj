@@ -45,7 +45,7 @@
     {:token :separator :text (str c)}))
 
 (def item-types-1 #{:章 :节 :条 :款 :项})
-(def item-types (set/union item-types-1 #{:法 :规定}))
+(def item-types (set/union item-types-1 #{:法 :规定 :办法}))
 
 (def ^:private cs-kw (comp keyword str/join))
 (def item-type-str name)
