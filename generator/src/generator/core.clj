@@ -136,7 +136,8 @@
      ()
      (let [curr (level (first ts))
            [xs ys] (split-with #(= (level %) curr) ts)]
-       (loop [elmt [:ul (for [x xs] (list-item x))]
+       (loop [elmt (reduce #(conj %1 (list-item %2))
+                           [:ul] xs)
               ys ys]
          (if (empty? ys)
            [elmt ()]
@@ -150,7 +151,9 @@
                    ;;(< next curr)
                    :else
                    (let [[sub-elmt ys'] (outline-html ys gen-id)
-                         elmt' (conj elmt sub-elmt)]
+                         elmt' (->> sub-elmt
+                                    (conj (peek elmt))
+                                    (conj (pop elmt)))]
                      (recur elmt' ys'))))))))))
 
 (def ^:private draw-skeleton-with-contexts

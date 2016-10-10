@@ -106,7 +106,7 @@ body {
   font-weight: bold;
 }
 
-#ref-to-original, nav li {
+#ref-to-original, nav>ul>li {
   padding: 0.5em 1em;
   margin: 0;
 }
