@@ -155,7 +155,6 @@
   (comp ln/inject-contexts ln/draw-skeleton))
 
 (defn- wrap-outline-in-html [outline]
-  (clojure.pprint/pprint outline)
   (assert (= (:token outline) :table-of-contents))
   (let [kv {:则 1 :章 2 :节 3}
         head (:text outline)
