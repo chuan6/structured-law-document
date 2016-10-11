@@ -4,7 +4,7 @@
             [clojure.string :as str]
             [clojure.test :as t]
             [generator.id :as id]
-            [generator.line :as l]
+            [generator.line :as ln]
             [generator.lisp :as s]
             [generator.test :as tt]
             [generator.tokenizer :as tk]
@@ -127,37 +127,32 @@
   (assert (= (:token head) :条))
   (wrap-entry-in-html (条-rise (cons head body))))
 
-(defn- outline-html [ts gen-id]
-  (let [level (fn [t] ((:token t) {:节 1 :章 2 :则 3}))
-        list-item (fn [t] [:li [:a {:href (str "#" (gen-id (:context t)
-                                                           (:token t)))}
-                                (:text t)]])]
-   (if (empty? ts)
-     ()
-     (let [curr (level (first ts))
-           [xs ys] (split-with #(= (level %) curr) ts)]
-       (loop [elmt (reduce #(conj %1 (list-item %2))
-                           [:ul] xs)
-              ys ys]
-         (if (empty? ys)
-           [elmt ()]
-           (let [next (level (first ys))]
-             (cond (> next curr)
-                   [elmt ys]
-
-                   (= next curr)
-                   (recur (conj elmt (list-item (first ys))) (rest ys))
-
-                   ;;(< next curr)
-                   :else
-                   (let [[sub-elmt ys'] (outline-html ys gen-id)
-                         elmt' (->> sub-elmt
-                                    (conj (peek elmt))
-                                    (conj (pop elmt)))]
-                     (recur elmt' ys'))))))))))
+(defn- outline-html [ts]
+  (letfn [(max-hier [hval ts]
+            (apply max (remove nil? (map (pt/hierachy-fn hval) ts))))
+          (rise-ts [hval ts]
+            (pt/linear-to-tree
+             (cons {:token :pseudo-root} ts)
+             (pt/hierachy-fn
+              (merge hval {:序言 (max-hier hval ts)
+                           :pseudo-root (inc (apply max (vals hval)))}))))
+          (li [{ty :token :as t}]
+            [:li
+             [:a {:href (str "#" (id/entry-id (:context t) ty))}
+              (:text t)]])
+          (to-html [ot]
+            (let [t (pt/node-val ot)
+                  r (when (pt/internal-node? ot)
+                      [:ul (for [li (pt/subtrees ot)]
+                             (to-html li))])]
+              (cond->> r
+                (seq (:text t)) (conj (li t)))))]
+    (to-html
+     (pt/create
+      (rise-ts {:节 1 :章 2 :则 3} ts)))))
 
 (def ^:private draw-skeleton-with-contexts
-  (comp l/inject-contexts l/draw-skeleton))
+  (comp ln/inject-contexts ln/draw-skeleton))
 
 (defn- wrap-outline-in-html [outline]
   (assert (= (:token outline) :table-of-contents))
@@ -167,7 +162,16 @@
     [:section
      [:h2 {:id (id/encode-id "章0") :class "章"} head]
      [:nav {:id "outline" :class "entry"}
-      (first (outline-html item-list id/entry-id))]]))
+      (outline-html item-list)]]))
+
+(defn- wrap-序言-in-html [t ts]
+  (assert (= (:token t) :序言))
+  [:section {:id (id/entry-id {} :序言) :class "entry"}
+   [:h2 {:class "章"}
+    (:text t)]
+   (for [{tx :text} ts]
+     [:div {:class "款"}
+      [:p tx]])])
 
 (defn- html-head [title css & scripts]
   [:head {:lang "zh-CN"}
@@ -234,6 +238,12 @@
                  (recur lines-after
                         (conj elmts (wrap-条-in-html tl lines-within))))
 
+               (= t :序言)
+               (let [[lines-within lines-after]
+                     (split-with #(= (:token %) :to-be-recognized) (rest tls))]
+                 (recur lines-after
+                        (conj elmts (wrap-序言-in-html tl lines-within))))
+
                (#{:title :table-of-contents :则 :章 :节 :to-be-recognized} t)
                (let [txt (:text tl)
                      elmt (case t
@@ -268,17 +278,17 @@
         [:button {:id "cancel-overlay"} "取消"]]]]])))
 
 (defn- tokenized-lines [n ls]
-  (let [[before-ts after-ls] (l/recognize-title ls n)]
+  (let [[before-ts after-ls] (ln/recognize-title ls n)]
     (into
      before-ts
      (let [ls' (if (seq before-ts) after-ls ls)
-           [before-ts' after-ls'] (l/recognize-table-of-contents ls')]
+           [before-ts' after-ls'] (ln/recognize-table-of-contents ls')]
        (if (seq before-ts')
          (into before-ts' (draw-skeleton-with-contexts after-ls'))
          ;;otherwise, table of contents is not found
          ;;generate it automatically
          (let [tls (draw-skeleton-with-contexts ls')
-               [prelude toc] (l/generate-table-of-contents tls)]
+               [prelude toc] (ln/generate-table-of-contents tls)]
            (if (nil? toc) tls
                (concat prelude [toc] (s/without-prefix tls prelude)))))))))
 
@@ -364,6 +374,9 @@
 
     ["立法法"
      "http://www.npc.gov.cn/npc/dbdhhy/12_3/2015-03/18/content_1930713.htm"]
+
+    ["宪法"
+     "http://www.npc.gov.cn/npc/xinwen/node_505.htm"]
     ]))
 
 (-main)

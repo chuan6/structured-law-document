@@ -175,6 +175,7 @@
   {:test
    #(let [f prefixed-line-token]
       (tt/comprehend-tests
+       (t/is (= {:token :序言 :text "序 言"}      (f "序 言")))
        (t/is (= {:token :则 :nth :general
                  :text "总则"}                    (f "总则")))
        (t/is (= {:token :章 :nth 1
@@ -192,6 +193,7 @@
        (t/is (= {:token :则 :nth :special
                  :text "分 则"}                   (f "分 则")))))}
   [line]
+  (assert (string? line))
   (let [skip-?-space
         (fn [cs]
           (cond-> cs
@@ -214,6 +216,8 @@
        {:token :项 :nth i :text line})
      (when-let [[i line'] (digits line)]
        {:token :目 :nth i :text (str/join line')})
+     (when (re-matches #"序\s*言" line)
+       {:token :序言 :text line})
      {:token :to-be-recognized :text line})))
 
 (defn- 款-reducer [{ret :processed i :nth-款} [x & xs]]

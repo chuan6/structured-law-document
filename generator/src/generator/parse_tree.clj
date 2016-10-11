@@ -17,7 +17,7 @@
       ({:token :款 :nth 1}
        ({:token :项}))))])
 
-(def ^:private create
+(def create
   (partial z/zipper
            seq? ;branch?
            rest ;children
@@ -26,7 +26,16 @@
 
 (def ^:private branch list)
 
-(def ^:private node-val (comp first z/node))
+(def node-val (comp first z/node))
+
+(defn subtrees [loc]
+  (->> loc
+       z/down
+       (iterate z/right)
+       (take-while identity)))
+
+(defn internal-node? [loc]
+  (and (z/branch? loc) (seq (z/children loc))))
 
 (defn- climb [loc f & args]
   (loop [loc loc]
@@ -60,10 +69,12 @@
     (and loc (climb loc
                     #(when (no-parent? %) %)))))
 
-(defn doc-hierachy [tx]
-  (let [hval {:目 1 :项 2 :款 3 :条 4 :节 5 :章 6 :则 7
-              :法 10 :规定 10 :办法 10}]
-    ((:token tx) hval)))
+(defn hierachy-fn [hval]
+  (fn [tx] ((:token tx) hval)))
+
+(def doc-hierachy
+  (hierachy-fn {:目 1 :项 2 :款 3 :条 4 :节 5 :章 6 :则 7
+                :法 10 :规定 10 :办法 10}))
 
 (def 款-filler {:token :款 :nth 1})
 

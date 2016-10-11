@@ -2,7 +2,6 @@
   (:require [clojure.set :as set]
             [clojure.string :as str]
             [clojure.test :as t]
-            [clojure.zip :as z]
             [generator.line :as l]
             [generator.lisp :as s]
             [generator.test :as tt]

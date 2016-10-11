@@ -18,7 +18,8 @@
                 :条 r
                 :款 (str (gen-str context :条) r)
                 :项 (str (gen-str context :款) r)
-                :目 (str (gen-str context :项) r))))]
+                :目 (str (gen-str context :项) r)
+                :序言 "the-preface")))]
     (encode-id (gen-str context t))))
 
 (def templates
