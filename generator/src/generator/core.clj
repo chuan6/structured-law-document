@@ -3,7 +3,6 @@
             [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :as t]
-            [clojure.zip :as z]
             [generator.id :as id]
             [generator.line :as ln]
             [generator.lisp :as s]
@@ -128,46 +127,24 @@
   (assert (= (:token head) :条))
   (wrap-entry-in-html (条-rise (cons head body))))
 
-(comment "test data for handling of 序言 in table of content"
-  (def ts
-   [{:token :to-be-recognized, :text "序 言"}
-    {:token :章, :nth 1, :text "第一章 总纲", :context {:章 1}}
-    {:token :章, :nth 2, :text "第二章 公民的基本权利和义务", :context {:章 2}}
-    {:token :章, :nth 3, :text "第三章 国家机构", :context {:章 3}}
-    {:token :节, :nth 1, :text "第一节 全国人民代表大会", :context {:章 3, :节 1}}
-    {:token :节, :nth 2, :text "第二节 中华人民共和国主席", :context {:章 3, :节 2}}
-    {:token :节, :nth 3, :text "第三节 国务院", :context {:章 3, :节 3}}
-    {:token :节, :nth 4, :text "第四节 中央军事委员会", :context {:章 3, :节 4}}
-    {:token :节,
-     :nth 5,
-     :text "第五节 地方各级人民代表大会和地方各级人民政府",
-     :context {:章 3, :节 5}}
-    {:token :节, :nth 6, :text "第六节 民族自治地方的自治机关", :context {:章 3, :节 6}}
-    {:token :节, :nth 7, :text "第七节 人民法院和人民检察院", :context {:章 3, :节 7}}
-    {:token :章, :nth 4, :text "第四章 国旗、国歌、国徽、首都", :context {:章 4, :节 7}}]))
-
-(defn- outline-html [ts gen-id]
+(defn- outline-html [ts]
   (letfn [(max-hier [hval ts]
             (apply max (remove nil? (map (pt/hierachy-fn hval) ts))))
           (rise-ts [hval ts]
             (pt/linear-to-tree
              (cons {:token :pseudo-root} ts)
              (pt/hierachy-fn
-              (merge hval {:to-be-recognized (max-hier hval ts)
+              (merge hval {:序言 (max-hier hval ts)
                            :pseudo-root (inc (apply max (vals hval)))}))))
-          (li [t]
+          (li [{ty :token :as t}]
             [:li
-             [:a {:href (str "#" (gen-id (:context t) (:token t)))}
+             [:a {:href (str "#" (id/entry-id (:context t) ty))}
               (:text t)]])
           (to-html [ot]
             (let [t (pt/node-val ot)
-                  r (when (and (z/branch? ot)
-                               (seq (z/children ot)))
-                      [:ul (for [item (->> ot
-                                           z/down
-                                           (iterate z/right)
-                                           (take-while identity))]
-                             (to-html item))])]
+                  r (when (pt/internal-node? ot)
+                      [:ul (for [li (pt/subtrees ot)]
+                             (to-html li))])]
               (cond->> r
                 (seq (:text t)) (conj (li t)))))]
     (to-html
@@ -178,6 +155,7 @@
   (comp ln/inject-contexts ln/draw-skeleton))
 
 (defn- wrap-outline-in-html [outline]
+  (clojure.pprint/pprint outline)
   (assert (= (:token outline) :table-of-contents))
   (let [kv {:则 1 :章 2 :节 3}
         head (:text outline)
@@ -185,7 +163,16 @@
     [:section
      [:h2 {:id (id/encode-id "章0") :class "章"} head]
      [:nav {:id "outline" :class "entry"}
-      (outline-html item-list id/entry-id)]]))
+      (outline-html item-list)]]))
+
+(defn- wrap-序言-in-html [t ts]
+  (assert (= (:token t) :序言))
+  [:section {:id (id/entry-id {} :序言) :class "entry"}
+   [:h2 {:class "章"}
+    (:text t)]
+   (for [{tx :text} ts]
+     [:div {:class "款"}
+      [:p tx]])])
 
 (defn- html-head [title css & scripts]
   [:head {:lang "zh-CN"}
@@ -251,6 +238,12 @@
                      (split-with #(#{:款 :项 :目} (:token %)) (rest tls))]
                  (recur lines-after
                         (conj elmts (wrap-条-in-html tl lines-within))))
+
+               (= t :序言)
+               (let [[lines-within lines-after]
+                     (split-with #(= (:token %) :to-be-recognized) (rest tls))]
+                 (recur lines-after
+                        (conj elmts (wrap-序言-in-html tl lines-within))))
 
                (#{:title :table-of-contents :则 :章 :节 :to-be-recognized} t)
                (let [txt (:text tl)
@@ -382,6 +375,9 @@
 
     ["立法法"
      "http://www.npc.gov.cn/npc/dbdhhy/12_3/2015-03/18/content_1930713.htm"]
+
+    ["宪法"
+     "http://www.npc.gov.cn/npc/xinwen/node_505.htm"]
     ]))
 
 (-main)

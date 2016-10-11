@@ -127,7 +127,7 @@ body {
   box-shadow: 0 0 0.2em grey;
 }
 
-#ref-to-original, #outline, .entry, .款, .项, .目 {
+#ref-to-original, #outline, #the-preface, .entry, .款, .项, .目 {
   /* radius = (line-height + padding-top + padding-bottom) / 2
      so that for blocks that consists of only one line, the
      right border is perfectly round.
@@ -140,7 +140,7 @@ body {
    */
 }
 
-#the-title:target, #ref-to-original:target, #outline:target, .entry:target, .款:target, .项:target, .目:target {
+#the-title:target, #ref-to-original:target, #outline:target, #the-preface:target, .entry:target, .款:target, .项:target, .目:target {
   background-color: #FFFFD8;
   box-shadow: 0 0 0.31em silver;
 }

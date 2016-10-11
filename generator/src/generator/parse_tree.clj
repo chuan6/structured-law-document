@@ -28,6 +28,15 @@
 
 (def node-val (comp first z/node))
 
+(defn subtrees [loc]
+  (->> loc
+       z/down
+       (iterate z/right)
+       (take-while identity)))
+
+(defn internal-node? [loc]
+  (and (z/branch? loc) (seq (z/children loc))))
+
 (defn- climb [loc f & args]
   (loop [loc loc]
     (if-let [r (apply f loc args)]
