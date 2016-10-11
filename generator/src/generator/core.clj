@@ -3,8 +3,9 @@
             [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :as t]
+            [clojure.zip :as z]
             [generator.id :as id]
-            [generator.line :as l]
+            [generator.line :as ln]
             [generator.lisp :as s]
             [generator.test :as tt]
             [generator.tokenizer :as tk]
@@ -127,37 +128,54 @@
   (assert (= (:token head) :条))
   (wrap-entry-in-html (条-rise (cons head body))))
 
+(comment "test data for handling of 序言 in table of content"
+  (def ts
+   [{:token :to-be-recognized, :text "序 言"}
+    {:token :章, :nth 1, :text "第一章 总纲", :context {:章 1}}
+    {:token :章, :nth 2, :text "第二章 公民的基本权利和义务", :context {:章 2}}
+    {:token :章, :nth 3, :text "第三章 国家机构", :context {:章 3}}
+    {:token :节, :nth 1, :text "第一节 全国人民代表大会", :context {:章 3, :节 1}}
+    {:token :节, :nth 2, :text "第二节 中华人民共和国主席", :context {:章 3, :节 2}}
+    {:token :节, :nth 3, :text "第三节 国务院", :context {:章 3, :节 3}}
+    {:token :节, :nth 4, :text "第四节 中央军事委员会", :context {:章 3, :节 4}}
+    {:token :节,
+     :nth 5,
+     :text "第五节 地方各级人民代表大会和地方各级人民政府",
+     :context {:章 3, :节 5}}
+    {:token :节, :nth 6, :text "第六节 民族自治地方的自治机关", :context {:章 3, :节 6}}
+    {:token :节, :nth 7, :text "第七节 人民法院和人民检察院", :context {:章 3, :节 7}}
+    {:token :章, :nth 4, :text "第四章 国旗、国歌、国徽、首都", :context {:章 4, :节 7}}]))
+
 (defn- outline-html [ts gen-id]
-  (let [level (fn [t] ((:token t) {:节 1 :章 2 :则 3}))
-        list-item (fn [t] [:li [:a {:href (str "#" (gen-id (:context t)
-                                                           (:token t)))}
-                                (:text t)]])]
-   (if (empty? ts)
-     ()
-     (let [curr (level (first ts))
-           [xs ys] (split-with #(= (level %) curr) ts)]
-       (loop [elmt (reduce #(conj %1 (list-item %2))
-                           [:ul] xs)
-              ys ys]
-         (if (empty? ys)
-           [elmt ()]
-           (let [next (level (first ys))]
-             (cond (> next curr)
-                   [elmt ys]
-
-                   (= next curr)
-                   (recur (conj elmt (list-item (first ys))) (rest ys))
-
-                   ;;(< next curr)
-                   :else
-                   (let [[sub-elmt ys'] (outline-html ys gen-id)
-                         elmt' (->> sub-elmt
-                                    (conj (peek elmt))
-                                    (conj (pop elmt)))]
-                     (recur elmt' ys'))))))))))
+  (letfn [(max-hier [hval ts]
+            (apply max (remove nil? (map (pt/hierachy-fn hval) ts))))
+          (rise-ts [hval ts]
+            (pt/linear-to-tree
+             (cons {:token :pseudo-root} ts)
+             (pt/hierachy-fn
+              (merge hval {:to-be-recognized (max-hier hval ts)
+                           :pseudo-root (inc (apply max (vals hval)))}))))
+          (li [t]
+            [:li
+             [:a {:href (str "#" (gen-id (:context t) (:token t)))}
+              (:text t)]])
+          (to-html [ot]
+            (let [t (pt/node-val ot)
+                  r (when (and (z/branch? ot)
+                               (seq (z/children ot)))
+                      [:ul (for [item (->> ot
+                                           z/down
+                                           (iterate z/right)
+                                           (take-while identity))]
+                             (to-html item))])]
+              (cond->> r
+                (seq (:text t)) (conj (li t)))))]
+    (to-html
+     (pt/create
+      (rise-ts {:节 1 :章 2 :则 3} ts)))))
 
 (def ^:private draw-skeleton-with-contexts
-  (comp l/inject-contexts l/draw-skeleton))
+  (comp ln/inject-contexts ln/draw-skeleton))
 
 (defn- wrap-outline-in-html [outline]
   (assert (= (:token outline) :table-of-contents))
@@ -167,7 +185,7 @@
     [:section
      [:h2 {:id (id/encode-id "章0") :class "章"} head]
      [:nav {:id "outline" :class "entry"}
-      (first (outline-html item-list id/entry-id))]]))
+      (outline-html item-list id/entry-id)]]))
 
 (defn- html-head [title css & scripts]
   [:head {:lang "zh-CN"}
@@ -268,17 +286,17 @@
         [:button {:id "cancel-overlay"} "取消"]]]]])))
 
 (defn- tokenized-lines [n ls]
-  (let [[before-ts after-ls] (l/recognize-title ls n)]
+  (let [[before-ts after-ls] (ln/recognize-title ls n)]
     (into
      before-ts
      (let [ls' (if (seq before-ts) after-ls ls)
-           [before-ts' after-ls'] (l/recognize-table-of-contents ls')]
+           [before-ts' after-ls'] (ln/recognize-table-of-contents ls')]
        (if (seq before-ts')
          (into before-ts' (draw-skeleton-with-contexts after-ls'))
          ;;otherwise, table of contents is not found
          ;;generate it automatically
          (let [tls (draw-skeleton-with-contexts ls')
-               [prelude toc] (l/generate-table-of-contents tls)]
+               [prelude toc] (ln/generate-table-of-contents tls)]
            (if (nil? toc) tls
                (concat prelude [toc] (s/without-prefix tls prelude)))))))))
 

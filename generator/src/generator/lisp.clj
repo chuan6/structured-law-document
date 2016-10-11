@@ -1,6 +1,5 @@
 (ns generator.lisp
   (:require [clojure.test :as t]
-            [clojure.zip :as z]
             [generator.test :as tt]))
 
 (defn without-prefix [origin prefix]
