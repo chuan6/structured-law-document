@@ -179,6 +179,7 @@
    [:meta {:name "viewport"
            :content "width=device-width, initial-scale=1"}]
    [:title title]
+   [:link {:rel "icon" :href "favicon.png"}]
    [:link {:rel "stylesheet" :href css}]
    (for [s scripts]
      [:script {:src s}])])
