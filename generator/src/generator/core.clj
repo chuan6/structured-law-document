@@ -184,6 +184,7 @@
    [:link {:rel "stylesheet" :href css}]
    (for [s scripts]
      [:script {:src s}])
+   [:script {:async true :src "ganalytics.js"}]
    [:script {:type "application/ld+json"}
     (json/generate-string
      {"@context" "http://schema.org"
@@ -219,8 +220,7 @@
    (html5
     (html-head page-name
                "index.css"
-               "main.js"
-               "ganalytics.js")
+               "main.js")
     [:body
      [:article {:class "entries-container"
                 :onclick "void(0)" ; for iOS compatibility
@@ -304,8 +304,7 @@
   (html
    (html5
     (html-head "法律文本富网页化"
-               "index.css"
-               "ganalytics.js")
+               "index.css")
     [:body
      [:div {:class "entries-container"}
       [:nav {:id "outline"}
