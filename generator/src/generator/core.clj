@@ -1,5 +1,6 @@
 (ns generator.core
-  (:require [clj-http.util :as http]
+  (:require [cheshire.core :as json]
+            [clj-http.util :as http]
             [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :as t]
@@ -183,7 +184,13 @@
    [:link {:rel "stylesheet" :href css}]
    (for [s scripts]
      [:script {:src s}])
-   [:script {:src "structured_data.js" :type "application/ld+json"}]])
+   [:script {:type "application/ld+json"}
+    (json/generate-string
+     {"@context" "http://schema.org"
+      "@type"    "WebSite"
+      "name"     "读法.com"
+      "url"      "https://读法.com"
+      "logo"     "https://读法.com/favicon.png"})]])
 
 (defn- add-html-class
   {:test
