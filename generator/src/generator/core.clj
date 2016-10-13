@@ -182,7 +182,8 @@
    [:link {:rel "icon" :href "favicon.png"}]
    [:link {:rel "stylesheet" :href css}]
    (for [s scripts]
-     [:script {:src s}])])
+     [:script {:src s}])
+   [:script {:src "structured_data.js" :type "application/ld+json"}]])
 
 (defn- add-html-class
   {:test
