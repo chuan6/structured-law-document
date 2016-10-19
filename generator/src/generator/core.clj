@@ -322,13 +322,15 @@
      ;; create all the document pages
      (for [[n l] names
            :let [[in out] (f n)]]
-       (with-open [r (io/reader (io/file (io/resource in)))]
-         (->> (line-seq r)
-              (remove str/blank?)
-              (map (comp use-chinese-paren space-clapsed str/trim))
-              (tokenized-lines n)
-              (wrap-in-html n l)
-              (spit (str "../" out))))))
+       (do
+         (println n)
+         (with-open [r (io/reader (io/file (io/resource in)))]
+           (->> (line-seq r)
+                (remove str/blank?)
+                (map (comp use-chinese-paren space-clapsed str/trim))
+                (tokenized-lines n)
+                (wrap-in-html n l)
+                (spit (str "../" out)))))))
     ;; create the index page
     (spit "../index.html"
           (index-page (for [[n _] names
@@ -384,7 +386,48 @@
 
     ["宪法"
      "http://www.npc.gov.cn/npc/xinwen/node_505.htm"]
-    ]))
+
+    ["劳动法"
+     "http://www.npc.gov.cn/wxzl/gongbao/2000-12/05/content_5004622.htm"]
+
+    ["公司法"
+     "http://www.saic.gov.cn/zcfg/fl/xxb/201402/t20140227_142232.html"]
+
+    ["婚姻登记条例"
+     "http://www.gov.cn/zwgk/2005-05/23/content_167.htm"]
+
+    ["道路交通安全法"
+     "http://www.npc.gov.cn/npc/xinwen/2011-04/23/content_1653570.htm"]
+
+    ["工伤保险条例"
+     "http://www.gov.cn/zwgk/2005-05/20/content_144.htm"]
+
+    ["继承法"
+     "http://www.npc.gov.cn/wxzl/wxzl/2000-12/06/content_4457.htm"]
+
+    ["国有土地上房屋征收与补偿条例"
+     "http://www.gov.cn/flfg/2011-01/21/content_1791480.htm"]
+
+    ["消费者权益保护法"
+     "http://www.npc.gov.cn/wxzl/gongbao/2014-01/02/content_1823351.htm"]
+
+    ["农村土地承包法"
+     "http://www.npc.gov.cn/wxzl/gongbao/2002-08/30/content_5299419.htm"]
+
+    ["房产税暂行条例"
+     "http://www.gov.cn/banshi/2005-08/19/content_24823.htm"]
+
+    ["合伙企业法"
+     "http://www.npc.gov.cn/wxzl/wxzl/2006-09/26/content_354975.htm"]
+
+    ["收养法"
+     "http://www.npc.gov.cn/wxzl/gongbao/2000-12/17/content_5004717.htm"]
+
+    ["物业管理条例"
+     "http://www.npc.gov.cn/npc/xinwen/fztd/fggz/2007-09/03/content_371389.htm"]
+
+    ["教育法"
+     "http://www.moe.edu.cn/s78/A02/zfs__left/s5911/moe_619/201512/t20151228_226193.html"]]))
 
 (-main)
 
