@@ -151,18 +151,17 @@
                 (seq (:text t)) (conj (li t)))))]
     (to-html
      (pt/create
-      (rise-ts {:节 1 :章 2 :则 3} ts)))))
+      (rise-ts {:节 1 :章 2 :则 3 :编 3} ts)))))
 
 (def ^:private draw-skeleton-with-contexts
   (comp ln/inject-contexts ln/draw-skeleton))
 
 (defn- wrap-outline-in-html [outline]
   (assert (= (:token outline) :table-of-contents))
-  (let [kv {:则 1 :章 2 :节 3}
-        head (:text outline)
+  (let [head (:text outline)
         item-list (draw-skeleton-with-contexts (:list outline))]
     [:section
-     [:h2 {:id (id/encode-id "章0") :class "章"} head]
+     [:h2 {:id (id/encode-id "编0") :class "编"} head]
      [:nav {:id "outline" :class "entry"}
       (outline-html item-list)]]))
 
@@ -253,7 +252,7 @@
                  (recur lines-after
                         (conj elmts (wrap-序言-in-html tl lines-within))))
 
-               (#{:title :table-of-contents :则 :章 :节 :to-be-recognized} t)
+               (#{:title :table-of-contents :编 :则 :章 :节 :to-be-recognized} t)
                (let [txt (:text tl)
                      elmt (case t
                             :title
@@ -262,14 +261,17 @@
                             :table-of-contents
                             (wrap-outline-in-html tl)
 
+                            :编
+                            [:h2 {:id (id/entry-id ct :编) :class "编"} txt]
+
                             :则
-                            [:h2 {:id (id/entry-id ct :则) :class "章"} txt]
+                            [:h2 {:id (id/entry-id ct :则) :class "编"} txt]
 
                             :章
-                            [:h2 {:id (id/entry-id ct :章) :class "章"} txt]
+                            [:h3 {:id (id/entry-id ct :章) :class "章"} txt]
 
                             :节
-                            [:h3 {:id (id/entry-id ct :节) :class "节"} txt]
+                            [:h4 {:id (id/entry-id ct :节) :class "节"} txt]
 
                             :to-be-recognized
                             (default-fn txt))

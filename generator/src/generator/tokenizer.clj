@@ -44,8 +44,9 @@
   (when (#{\space \、 \和} c)
     {:token :separator :text (str c)}))
 
-(def item-types-1 #{:章 :节 :条 :款 :项})
-(def item-types (set/union item-types-1 #{:法 :规定 :办法}))
+(def item-types-1 #{:编 :章 :节 :条 :款 :项})
+(def item-types-2 #{:法 :规定 :办法 :条例})
+(def item-types (set/union item-types-1 item-types-2))
 
 (def ^:private cs-kw (comp keyword str/join))
 (def item-type-str name)

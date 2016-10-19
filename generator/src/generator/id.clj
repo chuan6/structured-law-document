@@ -12,6 +12,7 @@
   (letfn [(gen-str [context t]
             (let [r (str (name t) (t context))]
               (case t
+                :编 r
                 :则 r
                 :章 r
                 :节 (str (gen-str context :章) r)
@@ -27,8 +28,9 @@
    :项 [:条 :款]
    :款 [:条]
    :条 []
-   :节 [:章]
-   :章 []})
+   :节 [:编 :章]
+   :章 [:编]
+   :编 []})
 
 (defn- interpret-nth-with [context {ty :token nx :nth}]
   (if (number? nx)
@@ -54,11 +56,18 @@
                        {:token :项 :nth 3}])))
        (t/is (= "条1款1项5"
                 (f {:条 1 :款 2} [{:token :款 :nth :prev}
-                                  {:token :项 :nth 5}])))))}
+                                  {:token :项 :nth 5}])))
+       (t/is (= "章2" (f {} [{:token :章 :nth 2}])))
+       (t/is (= "章2节1"
+                (f {} [{:token :法 :nth :this}
+                       {:token :章 :nth 2}
+                       {:token :节 :nth 1}])))))}
   ([context tv]
    (let [t (:token (peek tv))]
      (when (contains? templates t)
-       (generate context tv t))))
+       (generate context
+                 (filterv (comp not tk/item-types-2 :token) tv)
+                 t))))
 
   ([context tv expect]
    (let [interpret-nth (partial interpret-nth-with context)]
@@ -66,9 +75,11 @@
       ""
       (let [{ty :token :as t} (peek tv)
             next-expect (peek (expect templates))]
-        (cond (nil? t)                ; extend
-              (str (generate context [] next-expect)
-                   (name expect) (expect context))
+        (cond (nil? t)
+              ;; extend if the entry is available in the context
+              ;; otherwise, skip
+              (cond-> (generate context [] next-expect)
+                (expect context) (str (name expect) (expect context)))
 
               (= ty expect)
               (str (generate context (pop tv) next-expect)

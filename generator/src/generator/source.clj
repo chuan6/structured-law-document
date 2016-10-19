@@ -92,4 +92,10 @@
     "http://www.npc.gov.cn/npc/xinwen/fztd/fggz/2007-09/03/content_371389.htm"]
 
    ["教育法"
-    "http://www.moe.edu.cn/s78/A02/zfs__left/s5911/moe_619/201512/t20151228_226193.html"]])
+    "http://www.moe.edu.cn/s78/A02/zfs__left/s5911/moe_619/201512/t20151228_226193.html"]
+
+   ["物权法"
+    "http://www.npc.gov.cn/wxzl/gongbao/2007-03/16/content_5366956.htm"]
+
+   ["刑法"
+    "http://www.lawtime.cn/faguizt/23.html"]])

@@ -176,6 +176,8 @@
    #(let [f prefixed-line-token]
       (tt/comprehend-tests
        (t/is (= {:token :序言 :text "序 言"}      (f "序 言")))
+       (t/is (= {:token :编 :nth 1
+                 :text "第一编 总 则"}            (f "第一编 总 则")))
        (t/is (= {:token :则 :nth :general
                  :text "总则"}                    (f "总则")))
        (t/is (= {:token :章 :nth 1
@@ -201,7 +203,7 @@
     (or
      (let [[i unit processed] (nth-item line)]
        (cond
-         (#{:章 :节} unit)
+         (#{:编 :章 :节} unit)
          {:token unit :nth i :text line}
 
          (= unit :条)
@@ -269,7 +271,8 @@
                  "结尾款"
                  "第二条 rst"
                  "分 则"
-                 "第二章 ……"]
+                 "第二章 ……"
+                 "第二编 uvw"]
           r (f lines)]
       (tt/comprehend-tests
        (t/is (= {:token :则 :nth :general :text "总则"}  (nth r 0)))
@@ -286,7 +289,8 @@
        (t/is (= {:token :条 :nth 2 :text "第二条"}       (nth r 11)))
        (t/is (= {:token :款 :nth 1 :text "rst"}          (nth r 12)))
        (t/is (= {:token :则 :nth :special :text "分 则"} (nth r 13)))
-       (t/is (= {:token :章 :nth 2 :text "第二章 ……"}    (nth r 14)))))}
+       (t/is (= {:token :章 :nth 2 :text "第二章 ……"}    (nth r 14)))
+       (t/is (= {:token :编 :nth 2 :text "第二编 uvw"}   (nth r 15)))))}
   [lines]
   (let [tlines (flatten (map prefixed-line-token lines))]
     (:processed
@@ -314,7 +318,7 @@
   (let [[prelude tls'] (split-with #(= (:token %)
                                        :to-be-recognized) tls)
         titles (->> tls'
-                    (filter #(#{:章 :节} (:token %)))
+                    (filter #(#{:编 :则 :章 :节} (:token %)))
                     (map :text))]
     [prelude (when (seq titles)
                {:token :table-of-contents
