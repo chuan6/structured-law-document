@@ -314,7 +314,7 @@
          (with-open [r (io/reader (io/file (io/resource in)))]
            (->> (line-seq r)
                 (remove str/blank?)
-                (map (comp use-chinese-paren space-clapsed str/trim))
+                (map (comp punct/use-chinese space-clapsed str/trim))
                 (tokenized-lines n)
                 (wrap-in-html n l)
                 (spit (str "../" out)))))))
