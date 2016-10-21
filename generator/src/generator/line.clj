@@ -229,37 +229,36 @@
      {:token :to-be-recognized :text line})))
 
 (defn- 款-reducer [{ret :processed i :nth-款} [x & xs]]
-  (letfn [(result [prevs x]
+  (letfn [(result [prevs {ty :token :as x}]
             {:processed (conj prevs x)
-             :nth-款 (if (= (:token x) :款) (:nth x) i)})
+             :nth-款 (if (= ty :款) (:nth x) i)})
+
+          (nth-款 [x i] (assoc x :token :款 :nth i))
 
           (some-higher-item? [xs target]
             (let [h (pt/doc-hierachy target)]
               (seq (filter #(let [hx (pt/doc-hierachy %)]
                               (and hx (> hx h)))
                            xs))))]
-    (if (not= (:token x) :to-be-recognized)
-      (result ret x)
-      (let [prev (peek ret)]
-        (cond
-          (= (:token prev) :条)
-          (result ret (assoc x :token :款 :nth 1))
+    (let [append-款 (comp (partial result ret) nth-款)
+          to-be-recognized? (= (:token x) :to-be-recognized)
+          {prev-ty :token prev-i :nth :as prev} (peek ret)]
+      (cond
+        (and to-be-recognized? (= prev-ty :条))
+        (append-款 x 1)
 
-          (= (:token prev) :款)
-          (result ret (assoc x :token :款 :nth (inc (:nth prev))))
+        (and to-be-recognized? (= prev-ty :款))
+        (append-款 x (inc prev-i))
 
-          (= (:token prev) :项)
-          (let [np (:nth prev)]
-            (assert (>= np 1))
-            (let [[xsa [next-项 _]] (->> xs
-                                         (split-with #(not= (:token %) :项)))]
-              (if (or (some-higher-item? xsa prev)
-                      (not= (:nth next-项) (inc np)))
-                (result ret (assoc x :token :款 :nth (inc i)))
-                (result (pop ret) (update prev :text str "\n" (:text x))))))
+        (and to-be-recognized? (= prev-ty :项))
+        (let [[xsa [next-项 _]]
+              (split-with #(not= (:token %) :项) xs)]
+          (if (or (some-higher-item? xsa prev)
+                  (not= (:nth next-项) (inc prev-i)))
+            (append-款 x (inc i))
+            (result (pop ret) (update prev :text str "\n" (:text x)))))
 
-          :else
-          (result ret x))))))
+        :else (result ret x)))))
 
 (defn draw-skeleton
   {:test
