@@ -3,6 +3,7 @@
             [clojure.test :as t]
             [generator.lisp :as s]
             [generator.parse-tree :as pt]
+            [generator.punct :as punct]
             [generator.test :as tt]
             [generator.zh-digits :refer [数字 numchar-zh-set]]))
 
@@ -260,6 +261,66 @@
 
         :else (result ret x)))))
 
+(defn- merge-款-across-lines
+  {:test
+   #(let [f merge-款-across-lines
+          no-merge [[{:token :款 :nth 1 :text "结束。"}
+                     {:token :款 :nth 2 :text "结束2。"}]
+                    [{:token :款 :nth 1 :text "下列："}
+                     {:token :款 :nth 2 :text "一段。"}
+                     {:token :款 :nth 3 :text "二段。"}]
+                    [{:token :款 :nth 1 :text "下列项："}]]]
+      (tt/comprehend-tests
+       (for [x no-merge]
+         (t/is (= x (f x))))
+       (t/is
+        (= [{:token :款 :nth 1 :text "下列：\n一，\n二，\n三。"}
+            {:token :款 :nth 2 :text "另起一款。"}
+            {:token :款 :nth 3 :text "组成：\n你；\n我；\n它。"}
+            {:token :款 :nth 4 :text "含义："}
+            {:token :款 :nth 5 :text "某含义的解释。"}]
+           (f [{:token :款 :nth 1 :text "下列："}
+               {:token :款 :nth 2 :text "一，"}
+               {:token :款 :nth 3 :text "二，"}
+               {:token :款 :nth 4 :text "三。"}
+               {:token :款 :nth 5 :text "另起一款。"}
+               {:token :款 :nth 6 :text "组成："}
+               {:token :款 :nth 7 :text "你；"}
+               {:token :款 :nth 8 :text "我；"}
+               {:token :款 :nth 9 :text "它。"}
+               {:token :款 :nth 10 :text "含义："}
+               {:token :款 :nth 11 :text "某含义的解释。"}])))))}
+  [ks]
+  (letfn [(ending-punct [k]
+            (punct/symbol->label (last (:text k))))
+
+          (listing? [k]
+            (= (ending-punct k) :colon))
+
+          (list-items [ks]
+            (let [[ks ks'] (split-with #(punct/listing-seperators
+                                         (ending-punct %))
+                                       ks)]
+              (if (empty? ks')
+                [ks ()]
+                [(concat ks (list (first ks'))) (rest ks')])))
+
+          (merge-text [k k']
+            (update k :text str "\n" (:text k')))]
+    (if (empty? ks)
+      ()
+      (if (listing? (first ks))
+        (let [i (:nth (first ks))
+              [lis rest-ks] (list-items (rest ks))]
+          (if (<= (count lis) 1)
+            (concat
+             (into [(first ks)] lis)
+             (merge-款-across-lines rest-ks))
+            (cons (reduce merge-text (first ks) lis)
+                  (merge-款-across-lines
+                   (map #(update % :nth - (count lis)) rest-ks)))))
+        (cons (first ks) (merge-款-across-lines (rest ks)))))))
+
 (defn draw-skeleton
   {:test
    #(let [f draw-skeleton
@@ -297,11 +358,17 @@
        (t/is (= {:token :章 :nth 2 :text "第二章 ……"}    (nth r 14)))
        (t/is (= {:token :编 :nth 2 :text "第二编 uvw"}   (nth r 15)))))}
   [lines]
-  (let [tlines (flatten (map prefixed-line-token lines))]
-    (:processed
-     (reduce 款-reducer
-             {:processed [] :nth-款 0}
-             (take (count tlines) (iterate rest tlines))))))
+  (let [first-pass-ret (->> lines
+                            (map prefixed-line-token)
+                            flatten
+                            (iterate rest)
+                            (take-while seq)
+                            (reduce 款-reducer {:processed [] :nth-款 0})
+                            :processed)]
+    (s/flatten-and-vector
+     (s/map-on-binary-partitions
+      #(= (:token %) :款) first-pass-ret
+      merge-款-across-lines identity))))
 
 (defn generate-table-of-contents
   {:test

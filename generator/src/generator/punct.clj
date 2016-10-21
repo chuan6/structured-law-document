@@ -9,8 +9,12 @@
                     \； :semi-colon
                     \, :comma
                     \， :comma
+                    \、 :enum-comma
                     \. :period
                     \。 :period})
+
+(def listing-seperators
+  #{:comma :semi-colon :enum-comma})
 
 (defn use-chinese
   {:test
