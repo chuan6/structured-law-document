@@ -1,4 +1,5 @@
-(ns generator.test)
+(ns generator.test
+  (:require [clojure.pprint :refer [pprint]]))
 
 (defmacro comprehend-tests
   ([] nil)
@@ -6,3 +7,7 @@
    `(when-not (empty? (concat (remove boolean (flatten ~tests))
                               (comprehend-tests ~@more-tests)))
       (throw (Exception.)))))
+
+(defn print-and-ret [x]
+  (pprint x)
+  x)

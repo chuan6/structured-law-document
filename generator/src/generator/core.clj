@@ -7,6 +7,7 @@
             [generator.id :as id]
             [generator.line :as ln]
             [generator.lisp :as s]
+            [generator.punct :as punct]
             [generator.source :as src]
             [generator.test :as tt]
             [generator.tokenizer :as tk]
@@ -17,19 +18,6 @@
   (:gen-class))
 
 (defn default-fn [l] [:p l])
-
-(defn use-chinese-paren
-  {:test
-   #(let [f use-chinese-paren]
-      (tt/comprehend-tests
-       [(t/is (= "（）"     (f "()")))
-        (t/is (= "（六）"   (f "(六)")))
-        (t/is (= "六）"     (f "六)")))
-        (t/is (= "六）（七" (f "六)（七")))]))}
-  [s]
-  (str/replace s #"[\(\)]" #(case %1
-                              "(" "（"
-                              ")" "）")))
 
 (defn space-clapsed
   {:test
@@ -326,7 +314,7 @@
          (with-open [r (io/reader (io/file (io/resource in)))]
            (->> (line-seq r)
                 (remove str/blank?)
-                (map (comp use-chinese-paren space-clapsed str/trim))
+                (map (comp punct/use-chinese space-clapsed str/trim))
                 (tokenized-lines n)
                 (wrap-in-html n l)
                 (spit (str "../" out)))))))

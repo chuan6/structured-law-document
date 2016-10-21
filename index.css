@@ -15,12 +15,12 @@ h1, h2, h3, h4 {
   padding: 0;
 }
 
-.title>p:first-child, .款>p:first-child, .项>p, .目>p {
+.title>p:first-child, .款>p, .项>p, .目>p {
   margin: 0;
   padding: 0.5em 1em;
 }
 
-.项>p:not(:first-child) {
+.款>p:not(:first-child), .项>p:not(:first-child) {
   text-indent: 1em;
 }
 
