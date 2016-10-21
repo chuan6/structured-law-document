@@ -8,6 +8,7 @@
             [generator.line :as ln]
             [generator.lisp :as s]
             [generator.punct :as punct]
+            [generator.source :as src]
             [generator.test :as tt]
             [generator.tokenizer :as tk]
             [generator.parse-tree :as pt]
@@ -138,18 +139,17 @@
                 (seq (:text t)) (conj (li t)))))]
     (to-html
      (pt/create
-      (rise-ts {:节 1 :章 2 :则 3} ts)))))
+      (rise-ts {:节 1 :章 2 :则 3 :编 3} ts)))))
 
 (def ^:private draw-skeleton-with-contexts
   (comp ln/inject-contexts ln/draw-skeleton))
 
 (defn- wrap-outline-in-html [outline]
   (assert (= (:token outline) :table-of-contents))
-  (let [kv {:则 1 :章 2 :节 3}
-        head (:text outline)
+  (let [head (:text outline)
         item-list (draw-skeleton-with-contexts (:list outline))]
     [:section
-     [:h2 {:id (id/encode-id "章0") :class "章"} head]
+     [:h2 {:id (id/encode-id "编0") :class "编"} head]
      [:nav {:id "outline" :class "entry"}
       (outline-html item-list)]]))
 
@@ -240,7 +240,7 @@
                  (recur lines-after
                         (conj elmts (wrap-序言-in-html tl lines-within))))
 
-               (#{:title :table-of-contents :则 :章 :节 :to-be-recognized} t)
+               (#{:title :table-of-contents :编 :则 :章 :节 :to-be-recognized} t)
                (let [txt (:text tl)
                      elmt (case t
                             :title
@@ -249,14 +249,17 @@
                             :table-of-contents
                             (wrap-outline-in-html tl)
 
+                            :编
+                            [:h2 {:id (id/entry-id ct :编) :class "编"} txt]
+
                             :则
-                            [:h2 {:id (id/entry-id ct :则) :class "章"} txt]
+                            [:h2 {:id (id/entry-id ct :则) :class "编"} txt]
 
                             :章
-                            [:h2 {:id (id/entry-id ct :章) :class "章"} txt]
+                            [:h3 {:id (id/entry-id ct :章) :class "章"} txt]
 
                             :节
-                            [:h3 {:id (id/entry-id ct :节) :class "节"} txt]
+                            [:h4 {:id (id/entry-id ct :节) :class "节"} txt]
 
                             :to-be-recognized
                             (default-fn txt))
@@ -300,23 +303,21 @@
         (for [[n p] entry-paths]
           [:li [:a {:href p} n]])]]]])))
 
-(defn- txt->page [n]
-  [(str n ".txt")
-   (str n ".html")])
-
 (defn- mainfn [names]
-  (let [f (memoize txt->page)]
+  (let [f (memoize src/txt-page-pair)]
     (dorun
      ;; create all the document pages
      (for [[n l] names
            :let [[in out] (f n)]]
-       (with-open [r (io/reader (io/file (io/resource in)))]
-         (->> (line-seq r)
-              (remove str/blank?)
-              (map (comp punct/use-chinese space-clapsed str/trim))
-              (tokenized-lines n)
-              (wrap-in-html n l)
-              (spit (str "../" out))))))
+       (do
+         (println n)
+         (with-open [r (io/reader (io/file (io/resource in)))]
+           (->> (line-seq r)
+                (remove str/blank?)
+                (map (comp use-chinese-paren space-clapsed str/trim))
+                (tokenized-lines n)
+                (wrap-in-html n l)
+                (spit (str "../" out)))))))
     ;; create the index page
     (spit "../index.html"
           (index-page (for [[n _] names
@@ -326,53 +327,7 @@
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
-  (mainfn
-   [
-    ["劳动合同法"
-     "http://www.npc.gov.cn/wxzl/gongbao/2013-04/15/content_1811058.htm"]
-
-    ["网络预约出租汽车经营服务管理暂行办法"
-     "http://zizhan.mot.gov.cn/zfxxgk/bnssj/zcfgs/201607/t20160728_2068633.html"]
-
-    ["高等教育法"
-     "http://www.moe.edu.cn/publicfiles/business/htmlfiles/moe/moe_619/200407/1311.html"]
-
-    ["种子法"
-     "http://www.forestry.gov.cn/Zhuanti/content_lqgg/817306.html"]
-
-    ["体育法"
-     "http://www.sport.gov.cn/n16/n1092/n16819/312031.html"]
-
-    ["婚姻法"
-     "http://www.npc.gov.cn/wxzl/gongbao/2001-05/30/content_5136774.htm"]
-
-    ["合同法"
-     "http://www.npc.gov.cn/wxzl/wxzl/2000-12/06/content_4732.htm"]
-
-    ["民法通则"
-     "http://www.npc.gov.cn/wxzl/wxzl/2000-12/06/content_4470.htm"]
-
-    ["网络借贷信息中介机构业务活动管理暂行办法"
-     "http://www.cbrc.gov.cn/chinese/home/docDOC_ReadView/D934AAE7E05849D185CD497936D767CF.html"]
-
-    ["互联网广告管理暂行办法"
-     "http://www.saic.gov.cn/zwgk/zyfb/zjl/xxzx/201607/t20160708_169638.html"]
-
-    ["个体工商户条例"
-     "http://www.gov.cn/zwgk/2011-04/28/content_1853972.htm"]
-
-    ["出口退（免）税企业分类管理办法"
-     "http://www.chinatax.gov.cn/n810341/n810755/c2217201/content.html"]
-
-    ["食品安全法"
-     "http://www.gov.cn/zhengce/2015-04/25/content_2853643.htm"]
-
-    ["立法法"
-     "http://www.npc.gov.cn/npc/dbdhhy/12_3/2015-03/18/content_1930713.htm"]
-
-    ["宪法"
-     "http://www.npc.gov.cn/npc/xinwen/node_505.htm"]
-    ]))
+  (mainfn src/name-link-pairs))
 
 (-main)
 

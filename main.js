@@ -296,7 +296,7 @@ function textContent(x) {
   }
 
   if (x.tagName === "P") {
-    return "|" + x.textContent;
+    return x.textContent + "|";
   }
 
   if (x instanceof HTMLElement) {

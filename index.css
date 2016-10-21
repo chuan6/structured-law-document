@@ -1,8 +1,13 @@
 body {
-  font-family: "Noto Sans CJK SC", "AR PL UMing CN", sans-serif;
+  font-family: "Noto Sans CJK SC", sans-serif;
   font-size: 16px;
+  letter-spacing: 0.1em;
   margin: 0 auto;
   background-color: white;
+}
+
+h1, h2, h3, h4 {
+  margin: 0;
 }
 
 .title, .款, .项 {
@@ -28,8 +33,17 @@ body {
   text-indent: 0.5em;
 }
 
-#the-title, h2, h3 {
-  font-family: "AR PL UKai CN", "仿宋", FangSong, serif;
+#the-title, .编 {
+  font-family: "AR PL UMing CN", "SimSun", "宋体", serif;
+  font-weight: bold;
+}
+#the-title { font-size: 24px; }
+.编        { font-size: 22px; }
+
+.章 { font-size: 20px; }
+.节 {
+  font-family: "AR PL UKai CN", "KaiTi", "楷体", serif;
+  font-size: 18px;
 }
 
 #the-title {
@@ -39,7 +53,7 @@ body {
 
 #the-title+hr {
   border-top: 1px solid red;
-  margin: 0;
+  margin: 0.33em 0;
 }
 
 .entries-container {
@@ -145,18 +159,17 @@ body {
   box-shadow: 0 0 0.31em silver;
 }
 
-#the-title, nav h2, .章, .节 {
-  margin-left: 8px;
-  margin-right: 8px;
-  line-height: 1.62em;
+#the-title, nav h2, .编, .章, .节 {
+  line-height: 2;
+  padding: 0.5em 1em;
   text-align: center;
 }
 
-#the-title, .章, .节 {
-  border-radius: 0.41em; /* 1.62 / 4 */
+#the-title, .编, .章, .节 {
+  border-radius: 0.75em; /* (2 + 0.5*2) / 4 */
 }
 
-#the-title:target, .章:target, .节:target {
+#the-title:target, .编:target, .章:target, .节:target {
   background-color: #FFFFD8;
   box-shadow: 0 0 0.31em silver;
 }

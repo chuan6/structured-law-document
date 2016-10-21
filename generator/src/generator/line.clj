@@ -11,16 +11,22 @@
    #(let [f nth-item]
       (tt/comprehend-tests
        (t/is (= [1 :章 (seq "第一章")] (f "第一章 总则")))
-       (t/is (= [12 :条 (seq "第十二条")] (f "第十二条 ……")))))}
+       (t/is (= [12 :条 (seq "第十二条")] (f "第十二条 ……")))
+       (t/is (= [1.1 :条 (seq "第一条之一")] (f "第一条之一……")))))}
   [line]
   (let [[c & cs] line]
     (when (= c \第)
       (let [[i processed] (数字 cs)
-            tailc (first ;expect unit to be single-character
-                   (s/without-prefix cs processed))]
-        [i
-         (keyword (str tailc))
-         (-> [c] (into processed) (conj tailc))]))))
+            ;;expect unit to be single-character
+            [c1 c2 c3 _] (s/without-prefix cs processed)
+            ty (keyword (str c1))]
+        (if (and (= ty :条) (= [c2 c3] [\之 \一]))
+          [(+ i 0.1) ty (-> [c]
+                            (into processed)
+                            (into [c1 c2 c3]))]
+          [i ty (-> [c]
+                    (into processed)
+                    (conj c1))])))))
 
 (defn 括号数字
   {:test
@@ -176,6 +182,8 @@
    #(let [f prefixed-line-token]
       (tt/comprehend-tests
        (t/is (= {:token :序言 :text "序 言"}      (f "序 言")))
+       (t/is (= {:token :编 :nth 1
+                 :text "第一编 总 则"}            (f "第一编 总 则")))
        (t/is (= {:token :则 :nth :general
                  :text "总则"}                    (f "总则")))
        (t/is (= {:token :章 :nth 1
@@ -201,7 +209,7 @@
     (or
      (let [[i unit processed] (nth-item line)]
        (cond
-         (#{:章 :节} unit)
+         (#{:编 :章 :节} unit)
          {:token unit :nth i :text line}
 
          (= unit :条)
@@ -221,37 +229,36 @@
      {:token :to-be-recognized :text line})))
 
 (defn- 款-reducer [{ret :processed i :nth-款} [x & xs]]
-  (letfn [(result [prevs x]
+  (letfn [(result [prevs {ty :token :as x}]
             {:processed (conj prevs x)
-             :nth-款 (if (= (:token x) :款) (:nth x) i)})
+             :nth-款 (if (= ty :款) (:nth x) i)})
+
+          (nth-款 [x i] (assoc x :token :款 :nth i))
 
           (some-higher-item? [xs target]
             (let [h (pt/doc-hierachy target)]
               (seq (filter #(let [hx (pt/doc-hierachy %)]
                               (and hx (> hx h)))
                            xs))))]
-    (if (not= (:token x) :to-be-recognized)
-      (result ret x)
-      (let [prev (peek ret)]
-        (cond
-          (= (:token prev) :条)
-          (result ret (assoc x :token :款 :nth 1))
+    (let [append-款 (comp (partial result ret) nth-款)
+          to-be-recognized? (= (:token x) :to-be-recognized)
+          {prev-ty :token prev-i :nth :as prev} (peek ret)]
+      (cond
+        (and to-be-recognized? (= prev-ty :条))
+        (append-款 x 1)
 
-          (= (:token prev) :款)
-          (result ret (assoc x :token :款 :nth (inc (:nth prev))))
+        (and to-be-recognized? (= prev-ty :款))
+        (append-款 x (inc prev-i))
 
-          (= (:token prev) :项)
-          (let [np (:nth prev)]
-            (assert (>= np 1))
-            (let [[xsa [next-项 _]] (->> xs
-                                         (split-with #(not= (:token %) :项)))]
-              (if (or (some-higher-item? xsa prev)
-                      (not= (:nth next-项) (inc np)))
-                (result ret (assoc x :token :款 :nth (inc i)))
-                (result (pop ret) (update prev :text str "\n" (:text x))))))
+        (and to-be-recognized? (= prev-ty :项))
+        (let [[xsa [next-项 _]]
+              (split-with #(not= (:token %) :项) xs)]
+          (if (or (some-higher-item? xsa prev)
+                  (not= (:nth next-项) (inc prev-i)))
+            (append-款 x (inc i))
+            (result (pop ret) (update prev :text str "\n" (:text x)))))
 
-          :else
-          (result ret x))))))
+        :else (result ret x)))))
 
 (defn draw-skeleton
   {:test
@@ -269,7 +276,8 @@
                  "结尾款"
                  "第二条 rst"
                  "分 则"
-                 "第二章 ……"]
+                 "第二章 ……"
+                 "第二编 uvw"]
           r (f lines)]
       (tt/comprehend-tests
        (t/is (= {:token :则 :nth :general :text "总则"}  (nth r 0)))
@@ -286,7 +294,8 @@
        (t/is (= {:token :条 :nth 2 :text "第二条"}       (nth r 11)))
        (t/is (= {:token :款 :nth 1 :text "rst"}          (nth r 12)))
        (t/is (= {:token :则 :nth :special :text "分 则"} (nth r 13)))
-       (t/is (= {:token :章 :nth 2 :text "第二章 ……"}    (nth r 14)))))}
+       (t/is (= {:token :章 :nth 2 :text "第二章 ……"}    (nth r 14)))
+       (t/is (= {:token :编 :nth 2 :text "第二编 uvw"}   (nth r 15)))))}
   [lines]
   (let [tlines (flatten (map prefixed-line-token lines))]
     (:processed
@@ -314,7 +323,7 @@
   (let [[prelude tls'] (split-with #(= (:token %)
                                        :to-be-recognized) tls)
         titles (->> tls'
-                    (filter #(#{:章 :节} (:token %)))
+                    (filter #(#{:编 :则 :章 :节} (:token %)))
                     (map :text))]
     [prelude (when (seq titles)
                {:token :table-of-contents
