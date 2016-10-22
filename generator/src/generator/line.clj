@@ -294,32 +294,36 @@
   (letfn [(ending-punct [k]
             (punct/symbol->label (last (:text k))))
 
-          (listing? [k]
+          (list-head? [k]
             (= (ending-punct k) :colon))
 
+          (list-item? [k]
+            (punct/listing-seperators (ending-punct k)))
+
           (list-items [ks]
-            (let [[ks ks'] (split-with #(punct/listing-seperators
-                                         (ending-punct %))
-                                       ks)]
-              (if (empty? ks')
-                [ks ()]
-                [(concat ks (list (first ks'))) (rest ks')])))
+            (let [[ks ks'] (split-with list-item? ks)]
+              (assert (seq ks') "undecided point reached; research!")
+              [(concat ks (take 1 ks')) (rest ks')]))
 
           (merge-text [k k']
-            (update k :text str "\n" (:text k')))]
-    (if (empty? ks)
-      ()
-      (if (listing? (first ks))
-        (let [i (:nth (first ks))
-              [lis rest-ks] (list-items (rest ks))]
-          (if (<= (count lis) 1)
-            (concat
-             (into [(first ks)] lis)
-             (merge-款-across-lines rest-ks))
-            (cons (reduce merge-text (first ks) lis)
-                  (merge-款-across-lines
-                   (map #(update % :nth - (count lis)) rest-ks)))))
-        (cons (first ks) (merge-款-across-lines (rest ks)))))))
+            (update k :text str "\n" (:text k')))
+
+          (idx-dec-by [n ks]
+            (map #(update % :nth - n) ks))]
+    (if (<= (count ks) 1)
+      ks ;no valid 款 listing
+      (let [[k & ks'] ks]
+        (assert (not (or (nil? k) (empty? ks'))))
+        (if (list-head? k)
+          (let [[lis rest-ks] (list-items ks')]
+            (if (<= (count lis) 1)
+              (concat (into [k] lis)
+                      (merge-款-across-lines rest-ks))
+              (cons (reduce merge-text k lis)
+                    (->> rest-ks
+                         (idx-dec-by (count lis))
+                         merge-款-across-lines))))
+          (cons k (merge-款-across-lines ks')))))))
 
 (defn draw-skeleton
   {:test
