@@ -1,4 +1,4 @@
-(ns generator.tokenizer
+(ns generator.item-string
   (:require [clojure.set :as set]
             [clojure.string :as str]
             [clojure.test :as t]
