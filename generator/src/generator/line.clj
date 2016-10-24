@@ -311,19 +311,21 @@
           (idx-dec-by [n ks]
             (map #(update % :nth - n) ks))]
     (if (<= (count ks) 1)
-      ks ;no valid 款 listing
+      ks ; no valid 款 listing
       (let [[k & ks'] ks]
         (assert (not (or (nil? k) (empty? ks'))))
-        (if (list-head? k)
+        (if (not (list-head? k))
+          (cons k (merge-款-across-lines ks')) ; pass k
           (let [[lis rest-ks] (list-items ks')]
             (if (<= (count lis) 1)
+              ;; pass (into [k] lis)
               (concat (into [k] lis)
                       (merge-款-across-lines rest-ks))
+              ;; read 款 listing and continue
               (cons (reduce merge-text k lis)
                     (->> rest-ks
                          (idx-dec-by (count lis))
-                         merge-款-across-lines))))
-          (cons k (merge-款-across-lines ks')))))))
+                         merge-款-across-lines)))))))))
 
 (defn draw-skeleton
   {:test
