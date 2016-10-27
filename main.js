@@ -345,7 +345,8 @@ var elmtOnTarget = (function () {
 function tapHandler(e) {
   var src = e.target, id = getEnclosingID(src), elmt, hash;
   var isInPageAnchor = function (s) {
-    return s.split("://", 2).length === 1;
+    var a = s.split("://", 2);
+    return a.length === 1 && a[0][0] === "#";
   };
 
   console.log("tapped on ", id);

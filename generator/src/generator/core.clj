@@ -1,5 +1,6 @@
 (ns generator.core
-  (:require [cheshire.core :as json]
+  (:require [aho-corasick.core :as acc]
+            [cheshire.core :as json]
             [clj-http.util :as http]
             [clojure.java.io :as io]
             [clojure.string :as str]
@@ -61,7 +62,9 @@
   (let [genid (partial id/generate context)
         flags [#{[\本] [\前]}
                #{[\办 \法] [\规 \定] [\法] [\条] [\款]}
-               #{[\第]}]]
+               #{[\第]}]
+        patterns ["宪法"]
+        g (acc/construct patterns)]
     (loop [cs cs ts []]
       (if (empty? cs)
         ts
@@ -72,21 +75,33 @@
                                       (pt/update-leaves :id genid)
                                       flatten
                                       its/second-pass))))
-          (recur (rest cs) (conj ts {:token :to-be-recognized
-                                     :text (str (first cs))})))))))
+          (let [{i :position
+                 ms :outputs} (first
+                               (acc/matching
+                                g
+                                (take (apply max (map count patterns)) cs)))]
+            (if-let [p (first (filter #(= (count %) (inc i)) ms))]
+              (recur (nthrest cs (inc i)) (conj ts {:token :external-ref
+                                                    :text p
+                                                    :href (str p ".html")}))
+              (recur (rest cs) (conj ts {:token :to-be-recognized
+                                         :text (str (first cs))})))))))))
 
-(defn wrap-item-string-in-html [ts]
-  (let [a-x-z (fn [t])]
-    [:span (let [ts' (flatten
-                      (s/map-on-binary-partitions
-                       :id ts
-                       identity #(str/join (map :text %))))]
-             (for [t ts'
-                   :let [id (:id t)]]
-               (if-not id
-                 t
-                 [:a {:href (str \# (id/encode-id id))}
-                  (:text t)])))]))
+(defn wrap-item-string-in-html [[t :as ts]]
+  (if (and (= (count ts) 1)
+           (= (:token t) :external-ref))
+    [:a {:href (:href t) :target "_blank"} (:text t)]
+    (let [a-x-z (fn [t])]
+      [:span (let [ts' (flatten
+                        (s/map-on-binary-partitions
+                         :id ts
+                         identity #(str/join (map :text %))))]
+               (for [t ts'
+                     :let [id (:id t)]]
+                 (if-not id
+                   t
+                   [:a {:href (str \# (id/encode-id id))}
+                    (:text t)])))])))
 
 (defn- wrap-entry-in-html [[x & xs]]
   (case (:token x)
