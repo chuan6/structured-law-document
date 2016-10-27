@@ -333,7 +333,7 @@
 
 (let [items (comp first its/read-items)]
   (tt/comprehend-tests
-   (for [src its/item-string-examples
+   (for [src its/examples
          :let [r (its/parse (items src))]]
      (do
        ;; (clojure.pprint/pprint r)
