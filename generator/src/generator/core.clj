@@ -10,7 +10,7 @@
             [generator.punct :as punct]
             [generator.source :as src]
             [generator.test :as tt]
-            [generator.tokenizer :as tk]
+            [generator.item-string :as its]
             [generator.parse-tree :as pt]
             [generator.zh-digits :refer [numchar-zh-set]]
             [hiccup.core :refer :all]
@@ -66,12 +66,12 @@
       (if (empty? cs)
         ts
         (if (s/seq-match flags cs)
-          (let [[items rests] (tk/read-items cs)]
+          (let [[items rests] (its/read-items cs)]
             (recur rests (into ts (-> items
-                                      tk/parse
+                                      its/parse
                                       (pt/update-leaves :id genid)
                                       flatten
-                                      tk/second-pass))))
+                                      its/second-pass))))
           (recur (rest cs) (conj ts {:token :to-be-recognized
                                      :text (str (first cs))})))))))
 
@@ -331,15 +331,15 @@
 
 (-main)
 
-(let [items (comp first tk/read-items)]
+(let [items (comp first its/read-items)]
   (tt/comprehend-tests
-   (for [src tk/item-string-examples
-         :let [r (tk/parse (items src))]]
+   (for [src its/examples
+         :let [r (its/parse (items src))]]
      (do
        ;; (clojure.pprint/pprint r)
        ;; (println "------------------------")
-       (t/is (= src (str/join (map tk/str-token (flatten r)))))))
-   (let [r (tk/parse (items (seq "本法第三十九条和第四十条第一项、第二项")))]
+       (t/is (= src (str/join (map its/str-token (flatten r)))))))
+   (let [r (its/parse (items (seq "本法第三十九条和第四十条第一项、第二项")))]
      (t/is
       (= '({:token :法 :nth :this :text "本法"}
            ({:token :条 :nth 39 :text "三十九" :第? true :unit? true :id "条39"}
@@ -350,7 +350,7 @@
               {:token :separator :text "、"})
              ({:token :项 :nth 2 :text "二" :第? true :unit? true :id "条40款1项2"}))))
          (pt/update-leaves r :id (partial id/generate {})))))
-   (let [r (tk/parse (items (seq "本规定第十、十八、二十六、二十七条")))]
+   (let [r (its/parse (items (seq "本规定第十、十八、二十六、二十七条")))]
      (t/is
       (= '({:token :规定 :nth :this :text "本规定"}
            ({:token :条 :nth 10 :text "十" :第? true :unit? false :id "条10"}

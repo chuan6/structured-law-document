@@ -1,4 +1,4 @@
-(ns generator.tokenizer
+(ns generator.item-string
   (:require [clojure.set :as set]
             [clojure.string :as str]
             [clojure.test :as t]
@@ -11,7 +11,7 @@
 (def from-第 (partial s/from-x \第))
 (def to-条 (partial s/to-x \条))
 
-(def item-string-examples
+(def examples
   ["本法第三十九条和第四十条第一项、第二项"
    "本法第三十九条和第四十条第一项、第二项"
    "本法第二十二条和第二十三条"

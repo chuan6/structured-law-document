@@ -3,7 +3,7 @@
             [clojure.string :as str]
             [clojure.test :as t]
             [generator.test :as tt]
-            [generator.tokenizer :as tk]))
+            [generator.item-string :as its]))
 
 (defn encode-id [s]
   (str/replace (http/url-encode s) #"%" "."))
@@ -66,7 +66,7 @@
    (let [t (:token (peek tv))]
      (when (contains? templates t)
        (generate context
-                 (filterv (comp not tk/item-types-2 :token) tv)
+                 (filterv (comp not its/item-types-2 :token) tv)
                  t))))
 
   ([context tv expect]
@@ -83,7 +83,7 @@
 
               (= ty expect)
               (str (generate context (pop tv) next-expect)
-                   (tk/item-type-str ty) (interpret-nth t))
+                   (its/item-type-str ty) (interpret-nth t))
 
               :mismatch
               (throw (Exception. (str "Expect " expect ", instead "
