@@ -3,7 +3,8 @@
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[cheshire "5.6.3"]
+  :dependencies [[aho-corasick "1.0.0"]
+                 [cheshire "5.6.3"]
                  [clj-http "2.2.0"]
                  [org.clojure/clojure "1.8.0"]
                  [hiccup "1.0.5"]]
