@@ -64,28 +64,32 @@
                #{[\办 \法] [\规 \定] [\法] [\条] [\款]}
                #{[\第]}]
         patterns ["宪法"]
-        g (acc/construct patterns)]
+        g (acc/construct patterns)
+
+        prefix
+        (fn [cs]
+          (take (apply max (map count patterns)) cs))
+
+        choose-matched
+        (fn [{i :position ms :outputs}]
+          (first (filter #(= (count %) (inc i)) ms)))]
     (loop [cs cs ts []]
       (if (empty? cs)
         ts
-        (if (s/seq-match flags cs)
-          (let [[items rests] (its/read-items cs)]
-            (recur rests (into ts (-> items
-                                      its/parse
-                                      (pt/update-leaves :id genid)
-                                      flatten
-                                      its/second-pass))))
-          (let [{i :position
-                 ms :outputs} (first
-                               (acc/matching
-                                g
-                                (take (apply max (map count patterns)) cs)))]
-            (if-let [p (first (filter #(= (count %) (inc i)) ms))]
-              (recur (nthrest cs (inc i)) (conj ts {:token :external-ref
-                                                    :text p
-                                                    :href (str p ".html")}))
-              (recur (rest cs) (conj ts {:token :to-be-recognized
-                                         :text (str (first cs))})))))))))
+        (if-let [p (choose-matched
+                    (first (acc/matching g (prefix cs))))]
+          (recur (nthrest cs (count p)) (conj ts {:token :external-ref
+                                                  :text p
+                                                  :href (str p ".html")}))
+          (if (s/seq-match flags cs)
+            (let [[items rests] (its/read-items cs)]
+              (recur rests (into ts (-> items
+                                        its/parse
+                                        (pt/update-leaves :id genid)
+                                        flatten
+                                        its/second-pass))))
+            (recur (rest cs) (conj ts {:token :to-be-recognized
+                                       :text (str (first cs))}))))))))
 
 (defn wrap-item-string-in-html [[t :as ts]]
   (if (and (= (count ts) 1)
