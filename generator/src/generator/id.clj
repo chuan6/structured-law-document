@@ -5,12 +5,14 @@
             [generator.test :as tt]
             [generator.item-string :as its]))
 
+(declare nth-str)
+
 (defn encode-id [s]
   (str/replace (http/url-encode s) #"%" "."))
 
 (defn entry-id [context t]
   (letfn [(gen-str [context t]
-            (let [r (str (name t) (t context))]
+            (let [r (str (name t) (nth-str (t context)))]
               (case t
                 :编 r
                 :则 r
@@ -22,6 +24,19 @@
                 :目 (str (gen-str context :项) r)
                 :序言 "the-preface")))]
     (encode-id (gen-str context t))))
+
+(defn nth-str
+  {:test
+   #(let [f nth-str]
+      (tt/comprehend-tests
+       (t/is (= "1" (f 1)))
+       (t/is (= "1.001" (f 1001/1000)))))}
+  [x]
+  (cond (ratio? x)
+        (format "%.3f" (float x))
+
+        :else
+        (str x)))
 
 (def templates
   {:目 [:条 :款 :项]

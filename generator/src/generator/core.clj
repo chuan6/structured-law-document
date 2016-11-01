@@ -109,7 +109,8 @@
 
 (defn- wrap-entry-in-html [[x & xs]]
   (case (:token x)
-    :条 [:section {:class "entry" :id (id/encode-id (str \条 (:nth x)))}
+    :条 [:section {:class "entry"
+                   :id (id/encode-id (str \条 (id/nth-str (:nth x))))}
          [:div {:class "title"}
           [:p (:text x)]]
          (for [x xs] (wrap-entry-in-html x))]
@@ -310,6 +311,28 @@
            (if (nil? toc) tls
                (concat prelude [toc] (s/without-prefix tls prelude)))))))))
 
+(defn- structure-validated [tls]
+  (let [to-be-checked (filter #(#{:条} (:token %)) tls)
+        first-条 (first to-be-checked)]
+    (when (not= (:nth first-条) 1)
+      (println "ERROR expect the first 条 to be 第一条 instead of"
+               first-条))
+    (reduce
+     (fn [{i :nth :as prev} {j :nth :as curr}]
+       (cond (and (integer? j) (not= (- j (int i)) 1))
+             (println "ERROR expect" (id/nth-str (inc i))
+                      "th 条 instead of" j "th 条")
+
+             (and (ratio? j) (not= j (ln/sub-inc i)))
+             (println "ERROR expect" (id/nth-str (ln/sub-inc i))
+                      "th 条 instead of" j "th 条")
+
+             (not (number? j))
+             (println "ERROR :nth of" curr "is not a number"))
+       curr)
+     to-be-checked)
+    tls))
+
 (defn- index-page [entry-paths]
   (html
    (html5
@@ -335,6 +358,7 @@
                 (remove str/blank?)
                 (map (comp punct/use-chinese space-clapsed str/trim))
                 (tokenized-lines n)
+                (structure-validated)
                 (wrap-in-html n l)
                 (spit (str "../" out)))))))
     ;; create the index page

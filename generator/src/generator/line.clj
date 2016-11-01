@@ -7,13 +7,15 @@
             [generator.test :as tt]
             [generator.zh-digits :refer [数字 numchar-zh-set]]))
 
+(def sub-inc (partial + 1/1000))
+
 (defn nth-item
   {:test
    #(let [f nth-item]
       (tt/comprehend-tests
        (t/is (= [1 :章 (seq "第一章")] (f "第一章 总则")))
        (t/is (= [12 :条 (seq "第十二条")] (f "第十二条 ……")))
-       (t/is (= [1.1 :条 (seq "第一条之一")] (f "第一条之一……")))))}
+       (t/is (= [1001/1000 :条 (seq "第一条之一")] (f "第一条之一……")))))}
   [line]
   (let [[c & cs] line]
     (when (= c \第)
@@ -22,9 +24,9 @@
             [c1 c2 c3 _] (s/without-prefix cs processed)
             ty (keyword (str c1))]
         (if (and (= ty :条) (= [c2 c3] [\之 \一]))
-          [(+ i 0.1) ty (-> [c]
-                            (into processed)
-                            (into [c1 c2 c3]))]
+          [(sub-inc i) ty (-> [c]
+                              (into processed)
+                              (into [c1 c2 c3]))]
           [i ty (-> [c]
                     (into processed)
                     (conj c1))])))))
