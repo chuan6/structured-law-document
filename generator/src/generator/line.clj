@@ -15,21 +15,26 @@
       (tt/comprehend-tests
        (t/is (= [1 :章 (seq "第一章")] (f "第一章 总则")))
        (t/is (= [12 :条 (seq "第十二条")] (f "第十二条 ……")))
-       (t/is (= [1001/1000 :条 (seq "第一条之一")] (f "第一条之一……")))))}
+       (t/is (= [1001/1000 :条 (seq "第一条之一")] (f "第一条之一……")))
+       (t/is (= [1005/1000 :条 (seq "第一条之五")] (f "第一条之五……")))
+       (t/is (= [1015/1000 :条 (seq "第一条之十五")] (f "第一条之十五……")))))}
   [line]
-  (let [[c & cs] line]
-    (when (= c \第)
-      (let [[i processed] (数字 cs)
-            ;;expect unit to be single-character
-            [c1 c2 c3 _] (s/without-prefix cs processed)
-            ty (keyword (str c1))]
-        (if (and (= ty :条) (= [c2 c3] [\之 \一]))
-          [(sub-inc i) ty (-> [c]
-                              (into processed)
-                              (into [c1 c2 c3]))]
-          [i ty (-> [c]
-                    (into processed)
-                    (conj c1))])))))
+  (letfn [(add-sub [base times]
+            (nth (iterate sub-inc base) times))]
+    (let [[c & cs] line]
+      (when (= c \第)
+        (let [[i processed] (数字 cs)
+              ;;expect unit to be single-character
+              [c1 c2 & cmore] (s/without-prefix cs processed)
+              ty (keyword (str c1))]
+          (if (and (= ty :条) (= c2 \之))
+            (let [[i' processed'] (数字 cmore)]
+              (if (empty? processed')
+                [i ty (s/flatten-and-vector [c] processed [c1])]
+                [(add-sub i i')
+                 ty
+                 (s/flatten-and-vector [c] processed [c1 c2] processed')]))
+            [i ty (s/flatten-and-vector [c] processed [c1])]))))))
 
 (defn 括号数字
   {:test
