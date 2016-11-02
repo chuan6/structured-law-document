@@ -403,7 +403,8 @@
   (let [[prelude tls'] (split-with #(= (:token %)
                                        :to-be-recognized) tls)
         titles (->> tls'
-                    (filter #(#{:编 :则 :章 :节} (:token %)))
+                    (filter #(#{:序言
+                                :编 :则 :章 :节} (:token %)))
                     (map :text))]
     [prelude (when (seq titles)
                {:token :table-of-contents

@@ -297,15 +297,17 @@
         [:button {:id "cancel-overlay"} "取消"]]]]])))
 
 (defn- tokenized-lines [n ls]
-  (let [[before-ts after-ls] (ln/recognize-title ls n)]
+  (let [[title-and-above below-title] (ln/recognize-title ls n)]
     (into
-     before-ts
-     (let [ls' (if (seq before-ts) after-ls ls)
-           [before-ts' after-ls'] (ln/recognize-table-of-contents ls')]
-       (if (seq before-ts')
-         (into before-ts' (draw-skeleton-with-contexts after-ls'))
-         ;;otherwise, table of contents is not found
-         ;;generate it automatically
+     title-and-above
+     (let [ls' (if (seq title-and-above) below-title ls)
+           [toc-and-above below-toc] (ln/recognize-table-of-contents ls')]
+       (if (seq toc-and-above)
+         ;; ignore existing toc, and use the generated one
+         (let [tls (draw-skeleton-with-contexts below-toc)
+               [_ toc'] (ln/generate-table-of-contents tls)]
+           (into (conj (pop toc-and-above) toc') tls))
+         ;; use the generated one
          (let [tls (draw-skeleton-with-contexts ls')
                [prelude toc] (ln/generate-table-of-contents tls)]
            (if (nil? toc) tls
