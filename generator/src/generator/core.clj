@@ -312,26 +312,52 @@
                (concat prelude [toc] (s/without-prefix tls prelude)))))))))
 
 (defn- structure-validated [tls]
-  (let [to-be-checked (filter #(#{:条} (:token %)) tls)
-        first-条 (first to-be-checked)]
-    (when (not= (:nth first-条) 1)
-      (println "ERROR expect the first 条 to be 第一条 instead of"
-               first-条))
-    (reduce
-     (fn [{i :nth :as prev} {j :nth :as curr}]
-       (cond (and (integer? j) (not= (- j (int i)) 1))
-             (println "ERROR expect" (id/nth-str (inc i))
-                      "th 条 instead of" j "th 条")
+  (letfn [(step [ty {i :nth :as prev} {j :nth :as curr}]
+            (cond
+              (and (integer? j) (not= (- j (int i)) 1))
+              (println "ERROR expect" (id/nth-str (inc i)) "th"
+                       ty "instead of" j "th" ty)
 
-             (and (ratio? j) (not= j (ln/sub-inc i)))
-             (println "ERROR expect" (id/nth-str (ln/sub-inc i))
-                      "th 条 instead of" j "th 条")
+              (and (ratio? j) (not= j (ln/sub-inc i)))
+              (println "ERROR expect" (id/nth-str (ln/sub-inc i)) "th"
+                       ty "instead of" j "th" ty)
 
-             (not (number? j))
-             (println "ERROR :nth of" curr "is not a number"))
-       curr)
-     to-be-checked)
-    tls))
+              (not (number? j))
+              (println "ERROR :nth of" curr "is not a number"))
+            curr)
+
+          (counting [from-1? xs]
+            (let [xs (remove nil? xs)]
+              (when (seq xs)
+                (let [x (first xs)
+                      ty (:token x)]
+                  (when (and from-1? (not= (:nth x) 1))
+                    (println "ERROR expect the first" ty "to have"
+                             ":nth value of 1 instead of" (:nth x)))
+                  (reduce (partial step ty) xs)))))
+
+          (partition-at-every-other [xs ty]
+            (lazy-seq
+             (when (seq xs)
+               (let [[head tail] (if (= (:token (first xs)) ty)
+                                   [(first xs) (rest xs)]
+                                   [nil xs])
+                     [tail-a tail-b] (split-with #(not= (:token %) ty) tail)]
+                 (cons [head tail-a]
+                       (partition-at-every-other tail-b ty))))))]
+    (let [条s (filter #(= (:token %) :条) tls)
+          编章节s (filter #(#{:编 :章 :节} (:token %)) tls)
+          counting-from-1 (partial counting true)]
+      (counting-from-1 条s)
+      (counting-from-1
+       (for [[b zs] (partition-at-every-other 编章节s :编)]
+         (do (counting
+              false
+              (for [[z js] (partition-at-every-other zs :章)]
+                (do (counting-from-1 js)
+                    z)))
+             b)))
+      tls)))
 
 (defn- index-page [entry-paths]
   (html
