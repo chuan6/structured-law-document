@@ -12,11 +12,13 @@
 
 (defn entry-id [context t]
   (letfn [(gen-str [context t]
-            (let [r (str (name t) (nth-str (t context)))]
+            (let [r (when-let [i (t context)]
+                      ;; produce string "lazily"
+                      (str (name t) (nth-str i)))]
               (case t
                 :编 r
                 :则 r
-                :章 r
+                :章 (str (gen-str context :编) r)
                 :节 (str (gen-str context :章) r)
                 :条 r
                 :款 (str (gen-str context :条) r)
