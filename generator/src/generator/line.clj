@@ -388,7 +388,10 @@
    #(let [f generate-table-of-contents
           tls (draw-skeleton ["前言" "第一章" "a"
                               "第二章" "b"
-                              "第三章" "第一节" "……"])]
+                              "第三章" "第一节" "……"])
+          titles (draw-skeleton ["第一章"
+                                 "第二章"
+                                 "第三章" "第一节"])]
       (tt/comprehend-tests
        (t/is (= [() nil] (f ())))
        (t/is (= [["前言"] nil]
@@ -396,16 +399,14 @@
                      (let [[prelude r] (f (take 1 tls))]))))
        (t/is (= {:token :table-of-contents
                  :text "目录"
-                 :list ["第一章" "第二章" "第三章" "第一节"]
+                 :list titles
                  :not-in-original-text true}
                 (second (f tls))))))}
   [tls]
   (let [[prelude tls'] (split-with #(= (:token %)
                                        :to-be-recognized) tls)
-        titles (->> tls'
-                    (filter #(#{:序言
-                                :编 :则 :章 :节} (:token %)))
-                    (map :text))]
+        tys #{:序言 :编 :则 :章 :节}
+        titles (filter #(tys (:token %)) tls')]
     [prelude (when (seq titles)
                {:token :table-of-contents
                 :text "目录"
