@@ -116,7 +116,8 @@
           [:p (:text x)]]
          (for [x xs] (wrap-entry-in-html x))]
 
-    :目 [:div {:class "目" :id (id/entry-id (:context x) :目)}
+    :目 [:div {:class "目"
+               :id (id/entry-id (:context x) :目)}
          [:p
           [:span (str (:nth x) \uFF0E)] ;use fullwith full stop
           (s/map-on-binary-partitions
@@ -125,7 +126,8 @@
            #(str/join (map :text %))
            wrap-item-string-in-html)]]
 
-    [:div {:class (name (:token x)) :id (id/entry-id (:context x) (:token x))}
+    [:div {:class (name (:token x))
+           :id (id/entry-id (:context x) (:token x))}
      (for [line (str/split-lines (:text x))]
        [:p (s/map-on-binary-partitions
             #(= (:token %) :to-be-recognized)
@@ -138,30 +140,6 @@
   (assert (= (:token head) :条))
   (wrap-entry-in-html (条-rise (cons head body))))
 
-(defn- outline-html [ts]
-  (letfn [(max-hier [hval ts]
-            (apply max (remove nil? (map (pt/hierachy-fn hval) ts))))
-          (rise-ts [hval ts]
-            (pt/linear-to-tree
-             (cons {:token :pseudo-root} ts)
-             (pt/hierachy-fn
-              (merge hval {:序言 (max-hier hval ts)
-                           :pseudo-root (inc (apply max (vals hval)))}))))
-          (li [{ty :token :as t}]
-            [:li
-             [:a {:href (str "#" (id/entry-id (:context t) ty))}
-              (:text t)]])
-          (to-html [ot]
-            (let [t (pt/node-val ot)
-                  r (when (pt/internal-node? ot)
-                      [:ul (for [li (pt/subtrees ot)]
-                             (to-html li))])]
-              (cond->> r
-                (seq (:text t)) (conj (li t)))))]
-    (to-html
-     (pt/create
-      (rise-ts {:节 1 :章 2 :则 3 :编 3} ts)))))
-
 (def ^:private draw-skeleton-with-contexts
   (comp ln/inject-contexts ln/draw-skeleton))
 
@@ -171,7 +149,7 @@
     [:section {:id "toc"}
      [:h2 {:id (id/encode-id "编0") :class "编"} head]
      [:nav {:id "outline" :class "entry"}
-      (outline-html (:list outline))]]))
+      (toc/outline-html (:list outline))]]))
 
 (defn- wrap-序言-in-html [t ts]
   (assert (= (:token t) :序言))

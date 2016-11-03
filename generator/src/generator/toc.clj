@@ -1,9 +1,41 @@
 (ns generator.toc
   (:require [clojure.string :as str]
             [clojure.test :as t]
+            [generator.id :as id]
             [generator.line :as ln]
             [generator.lisp :as s]
+            [generator.parse-tree :as pt]
             [generator.test :as tt]))
+
+(defn outline-html [ts]
+  (letfn [(max-hier [hval ts]
+            (apply max (remove nil? (map (pt/hierachy-fn hval) ts))))
+          (rise-ts [hval ts]
+            (pt/linear-to-tree
+             (cons {:token :pseudo-root} ts)
+             (pt/hierachy-fn
+              (merge hval {:序言 (max-hier hval ts)
+                           :pseudo-root (inc (apply max (vals hval)))}))))
+          (li [{ty :token :as t}]
+            (cond-> [:li
+                     [:a {:href (str "#" (id/entry-id (:context t) ty))}
+                      (:text t)]]
+              (:from (:entrys-range t)) (conj [:span {:class "suggestion"}
+                                               (str "条" (:from (:entrys-range t)))])))
+          (to-html [ot]
+            (let [t (pt/node-val ot)
+                  r (when (pt/internal-node? ot)
+                      [:ul (for [li (pt/subtrees ot)]
+                             (to-html li))])]
+              (cond->> r
+                (seq (:text t)) (conj (li t)))))]
+    (to-html
+     (pt/create
+      (pt/update-leaves
+       (rise-ts {:节 1 :章 2 :则 3 :编 3} ts)
+       :entrys-range (fn [path] (let [x (peek path)]
+                                  {:from ((comp int (fnil inc 0))
+                                          (:条 (:context x)))})))))))
 
 (defn generate-table-of-contents
   {:test
