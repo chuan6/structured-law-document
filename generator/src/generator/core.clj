@@ -11,6 +11,7 @@
             [generator.punct :as punct]
             [generator.source :as src]
             [generator.test :as tt]
+            [generator.toc :as toc]
             [generator.item-string :as its]
             [generator.parse-tree :as pt]
             [generator.zh-digits :refer [numchar-zh-set]]
@@ -300,15 +301,15 @@
     (into
      title-and-above
      (let [ls' (if (seq title-and-above) below-title ls)
-           [toc-and-above below-toc] (ln/recognize-table-of-contents ls')]
+           [toc-and-above below-toc] (toc/recognize-table-of-contents ls')]
        (if (seq toc-and-above)
          ;; ignore existing toc, and use the generated one
          (let [tls (draw-skeleton-with-contexts below-toc)
-               [_ toc'] (ln/generate-table-of-contents tls)]
+               [_ toc'] (toc/generate-table-of-contents tls)]
            (into (conj (pop toc-and-above) toc') tls))
          ;; use the generated one
          (let [tls (draw-skeleton-with-contexts ls')
-               [prelude toc] (ln/generate-table-of-contents tls)]
+               [prelude toc] (toc/generate-table-of-contents tls)]
            (if (nil? toc) tls
                (concat prelude [toc] (s/without-prefix tls prelude)))))))))
 
