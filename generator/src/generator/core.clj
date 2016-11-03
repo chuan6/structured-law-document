@@ -168,7 +168,7 @@
   (assert (= (:token outline) :table-of-contents))
   (let [head (:text outline)
         item-list (draw-skeleton-with-contexts (:list outline))]
-    [:section
+    [:section {:id "toc"}
      [:h2 {:id (id/encode-id "编0") :class "编"} head]
      [:nav {:id "outline" :class "entry"}
       (outline-html item-list)]]))
