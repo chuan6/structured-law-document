@@ -11,6 +11,7 @@
             [generator.punct :as punct]
             [generator.source :as src]
             [generator.test :as tt]
+            [generator.toc :as toc]
             [generator.item-string :as its]
             [generator.parse-tree :as pt]
             [generator.zh-digits :refer [numchar-zh-set]]
@@ -115,7 +116,8 @@
           [:p (:text x)]]
          (for [x xs] (wrap-entry-in-html x))]
 
-    :目 [:div {:class "目" :id (id/entry-id (:context x) :目)}
+    :目 [:div {:class "目"
+               :id (id/entry-id (:context x) :目)}
          [:p
           [:span (str (:nth x) \uFF0E)] ;use fullwith full stop
           (s/map-on-binary-partitions
@@ -124,7 +126,8 @@
            #(str/join (map :text %))
            wrap-item-string-in-html)]]
 
-    [:div {:class (name (:token x)) :id (id/entry-id (:context x) (:token x))}
+    [:div {:class (name (:token x))
+           :id (id/entry-id (:context x) (:token x))}
      (for [line (str/split-lines (:text x))]
        [:p (s/map-on-binary-partitions
             #(= (:token %) :to-be-recognized)
@@ -137,41 +140,16 @@
   (assert (= (:token head) :条))
   (wrap-entry-in-html (条-rise (cons head body))))
 
-(defn- outline-html [ts]
-  (letfn [(max-hier [hval ts]
-            (apply max (remove nil? (map (pt/hierachy-fn hval) ts))))
-          (rise-ts [hval ts]
-            (pt/linear-to-tree
-             (cons {:token :pseudo-root} ts)
-             (pt/hierachy-fn
-              (merge hval {:序言 (max-hier hval ts)
-                           :pseudo-root (inc (apply max (vals hval)))}))))
-          (li [{ty :token :as t}]
-            [:li
-             [:a {:href (str "#" (id/entry-id (:context t) ty))}
-              (:text t)]])
-          (to-html [ot]
-            (let [t (pt/node-val ot)
-                  r (when (pt/internal-node? ot)
-                      [:ul (for [li (pt/subtrees ot)]
-                             (to-html li))])]
-              (cond->> r
-                (seq (:text t)) (conj (li t)))))]
-    (to-html
-     (pt/create
-      (rise-ts {:节 1 :章 2 :则 3 :编 3} ts)))))
-
 (def ^:private draw-skeleton-with-contexts
   (comp ln/inject-contexts ln/draw-skeleton))
 
 (defn- wrap-outline-in-html [outline]
   (assert (= (:token outline) :table-of-contents))
-  (let [head (:text outline)
-        item-list (draw-skeleton-with-contexts (:list outline))]
-    [:section
+  (let [head (:text outline)]
+    [:section {:id "toc"}
      [:h2 {:id (id/encode-id "编0") :class "编"} head]
      [:nav {:id "outline" :class "entry"}
-      (outline-html item-list)]]))
+      (toc/outline-html (:list outline))]]))
 
 (defn- wrap-序言-in-html [t ts]
   (assert (= (:token t) :序言))
@@ -297,17 +275,19 @@
         [:button {:id "cancel-overlay"} "取消"]]]]])))
 
 (defn- tokenized-lines [n ls]
-  (let [[before-ts after-ls] (ln/recognize-title ls n)]
+  (let [[title-and-above below-title] (ln/recognize-title ls n)]
     (into
-     before-ts
-     (let [ls' (if (seq before-ts) after-ls ls)
-           [before-ts' after-ls'] (ln/recognize-table-of-contents ls')]
-       (if (seq before-ts')
-         (into before-ts' (draw-skeleton-with-contexts after-ls'))
-         ;;otherwise, table of contents is not found
-         ;;generate it automatically
+     title-and-above
+     (let [ls' (if (seq title-and-above) below-title ls)
+           [toc-and-above below-toc] (toc/recognize-table-of-contents ls')]
+       (if (seq toc-and-above)
+         ;; ignore existing toc, and use the generated one
+         (let [tls (draw-skeleton-with-contexts below-toc)
+               [_ toc'] (toc/generate-table-of-contents tls)]
+           (into (conj (pop toc-and-above) toc') tls))
+         ;; use the generated one
          (let [tls (draw-skeleton-with-contexts ls')
-               [prelude toc] (ln/generate-table-of-contents tls)]
+               [prelude toc] (toc/generate-table-of-contents tls)]
            (if (nil? toc) tls
                (concat prelude [toc] (s/without-prefix tls prelude)))))))))
 

@@ -13,6 +13,8 @@
                     \. :period
                     \。 :period})
 
+(def wave-dash "\u301c")
+
 (def listing-seperators
   #{:comma :semi-colon :enum-comma})
 

@@ -159,10 +159,20 @@ h1, h2, h3, h4 {
   box-shadow: 0 0 0.31em silver;
 }
 
-#the-title, nav h2, .编, .章, .节 {
+#the-title, .编, .章, .节 {
   line-height: 2;
   padding: 0.5em 1em;
   text-align: center;
+}
+
+#toc>h2 {
+  padding-left: 3em;
+  letter-spacing: 2em;
+}
+
+.suggestion {
+  margin-left: 0.25em;
+  color: #AAA;
 }
 
 #the-title, .编, .章, .节 {
@@ -176,6 +186,11 @@ h1, h2, h3, h4 {
 
 nav>ul {
   padding-left: 0;
+  list-style-type: none;
+}
+
+nav>ul ul {
+  padding-left: 1em;
   list-style-type: none;
 }
 
