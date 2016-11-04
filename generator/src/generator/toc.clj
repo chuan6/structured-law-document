@@ -19,14 +19,11 @@
           (li [t]
             (let [hash   (str "#" (id/entry-id (:context t) (:token t)))
                   elmt-a [:a {:href hash} (:text t)]]
-              (if-let [ith (:from (:entrys-range t))]
-                [:li
-                 [:div {:class "li-head"}
-                  elmt-a
-                  [:span (str "条" ith)]]]
-                [:li
-                 [:div {:class "li-head"}
-                  elmt-a]])))
+              [:li
+               [:div {:class "li-head"}
+                elmt-a
+                (when-let [ith (:from (:entrys-range t))]
+                  [:span (str "条" ith)])]]))
           (to-html [ot]
             (let [t (pt/node-val ot)
                   r (when (pt/internal-node? ot)
