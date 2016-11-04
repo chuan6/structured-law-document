@@ -176,6 +176,7 @@ h1, h2, h3, h4 {
 .li-head a {
   flex-shrink: 1;
   overflow: hidden;
+  margin-left: 0;
 }
 
 .li-head span {
