@@ -15,7 +15,7 @@ h1, h2, h3, h4 {
   padding: 0;
 }
 
-.title>p:first-child, .款>p, .项>p, .目>p {
+#ref-to-original, .title>p:first-child, .款>p, .项>p, .目>p {
   margin: 0;
   padding: 0.5em 1em;
 }
@@ -120,11 +120,6 @@ h1, h2, h3, h4 {
   font-weight: bold;
 }
 
-#ref-to-original, nav>ul>li {
-  padding: 0.5em 1em;
-  margin: 0;
-}
-
 .entry {
   margin: 1em 0;
   border-left: 1px solid red;
@@ -170,9 +165,24 @@ h1, h2, h3, h4 {
   letter-spacing: 2em;
 }
 
-.suggestion {
+.li-head {
+  display: flex;
+  height: 1.7em;
+  justify-content: space-between;
+  margin: 0.3em 0;
+  line-height: 1.5;
+}
+
+.li-head a {
+  flex-shrink: 1;
+  overflow: hidden;
+}
+
+.li-head span {
   margin-left: 0.25em;
   color: #AAA;
+  flex-shrink: 0;
+  align-self: center;
 }
 
 #the-title, .编, .章, .节 {
@@ -184,15 +194,11 @@ h1, h2, h3, h4 {
   box-shadow: 0 0 0.31em silver;
 }
 
-nav>ul {
-  padding-left: 0;
-  list-style-type: none;
-}
-
-nav>ul ul {
+nav ul {
   padding-left: 1em;
   list-style-type: none;
 }
+nav>ul { padding: 0.5em 1em }
 
 #overlay {
   position: fixed;
