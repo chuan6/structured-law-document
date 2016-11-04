@@ -7,6 +7,8 @@
 
 (def name-link-pairs
   [
+   ["党内监督条例"
+    "http://www.spp.gov.cn/zdgz/201611/t20161103_171442.shtml"]
    ["劳动合同法"
     "http://www.npc.gov.cn/wxzl/gongbao/2013-04/15/content_1811058.htm"]
 
