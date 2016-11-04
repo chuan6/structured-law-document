@@ -16,12 +16,17 @@
              (pt/hierachy-fn
               (merge hval {:序言 (max-hier hval ts)
                            :pseudo-root (inc (apply max (vals hval)))}))))
-          (li [{ty :token :as t}]
-            (cond-> [:li
-                     [:a {:href (str "#" (id/entry-id (:context t) ty))}
-                      (:text t)]]
-              (:from (:entrys-range t)) (conj [:span {:class "suggestion"}
-                                               (str "条" (:from (:entrys-range t)))])))
+          (li [t]
+            (let [hash   (str "#" (id/entry-id (:context t) (:token t)))
+                  elmt-a [:a {:href hash} (:text t)]]
+              (if-let [ith (:from (:entrys-range t))]
+                [:li
+                 [:div {:class "li-head"}
+                  elmt-a
+                  [:span (str "条" ith)]]]
+                [:li
+                 [:div {:class "li-head"}
+                  elmt-a]])))
           (to-html [ot]
             (let [t (pt/node-val ot)
                   r (when (pt/internal-node? ot)
