@@ -34,8 +34,8 @@
     (to-html
      (pt/create
       (pt/update-leaves
-       (rise-ts {:节 1 :章 2 :则 3 :编 3} ts)
-       :entrys-range (fn [path] (let [x (peek path)]
+       (pt/create (rise-ts {:节 1 :章 2 :则 3 :编 3} ts))
+       :entrys-range (fn [path] (let [x (last path)]
                                   {:from ((comp int (fnil inc 0))
                                           (:条 (:context x)))})))))))
 
