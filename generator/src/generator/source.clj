@@ -7,6 +7,8 @@
 
 (def name-link-pairs
   [
+   ["香港特别行政区基本法"
+    "http://www.npc.gov.cn/wxzl/gongbao/1990-04/04/content_1479210.htm"]
    ["党内监督条例"
     "http://www.spp.gov.cn/zdgz/201611/t20161103_171442.shtml"]
    ["劳动合同法"
