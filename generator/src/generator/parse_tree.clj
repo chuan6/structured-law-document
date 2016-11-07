@@ -136,48 +136,29 @@
 (defn update-leaves
   {:test
    #(let [f update-leaves
-          t1 (create (linear-to-tree () doc-hierachy))
-          t2 (create (nth examples 1))
+          t1 (linear-to-tree () doc-hierachy)
+          t2 (nth examples 1)
           pf count
           k  :depth]
       (tt/comprehend-tests
-       (t/is (= '({:depth 1}) (f t1 k pf)))
+       (t/is (= {:depth 1} (f t1 k pf)))
        (t/is (= '({:token :法}
                   ({:token :条}
                    {:token :separator}
                    ({:token :款 :nth 1}
-                    ({:token :项 :depth 4}))))
+                    {:token :项 :depth 4})))
                 (f t2 k pf)))))}
-  [loc k f]
-  (letfn [(sep-token? [t]
-            (and (map? t) (= (:token t) :separator)))
-          (leaf? [loc]
-            (or (not (z/branch? loc))
-                (or (empty? (z/children loc))
-                    (and (every? map? (z/children loc))
-                         (every? sep-token? (z/children loc))))))
-          (ret-v [f loc]
-            (f (conj (vec (map first (z/path loc)))
-                     (node-val loc))))]
-    (if (z/end? loc)
-      (z/root loc)
-      (cond
-        (sep-token? (z/node loc))
-        (recur (z/next loc) k f)
+  ([tree k f] (update-leaves tree [] k f))
+  ([[v & children] path k f]
+   (let [sep-token? #(= (:token %) :separator)
+         path' (conj path v)]
+     (cond (empty? children)
+           (assoc v k (f path'))
 
-        (nil? (z/node loc))
-        (recur (z/next loc) k f)
+           (every? sep-token? children)
+           (cons (assoc v k (f path')) children)
 
-        (not (z/branch? loc))
-        (recur (z/next
-                (z/edit loc #(assoc % k (ret-v f loc)))) k f)
-
-        (or (empty? (z/children loc))
-            (every? sep-token? (z/children loc)))
-        (recur (z/next
-                (z/edit loc #(cons (assoc (first %) k (ret-v f loc))
-                                   (z/children loc))))
-               k f)
-
-        :else
-        (recur (z/next loc) k f)))))
+           :else
+           (cons v (map #(if (sep-token? %) %
+                             (update-leaves % path' k f))
+                        children))))))
