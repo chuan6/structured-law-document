@@ -26,7 +26,10 @@
 
 (def ^:private branch list)
 
-(def node-val (comp first z/node))
+(defn node-val [loc]
+  (let [x (z/node loc)]
+    (cond-> x
+      (seq? x) first)))
 
 (defn subtrees [loc]
   (->> loc
