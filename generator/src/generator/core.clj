@@ -350,7 +350,8 @@
       [:nav {:id "outline"}
        [:ul {:class "entry"}
         (for [[n p] entry-paths]
-          [:li [:a {:href p} n]])]]]])))
+          [:li {:class "li-head"}
+           [:a {:href p} n]])]]]])))
 
 (defn- mainfn [names]
   (let [f (memoize src/txt-page-pair)]
