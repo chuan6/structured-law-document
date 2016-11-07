@@ -7,23 +7,18 @@
             [generator.parse-tree :as pt]
             [generator.test :as tt]))
 
-(defn outline-html [ts]
-  (letfn [(max-hier [hval ts]
-            (apply max (remove nil? (map (pt/hierachy-fn hval) ts))))
-          (rise-ts [hval ts]
-            (pt/linear-to-tree
-             (cons {:token :pseudo-root} ts)
-             (pt/hierachy-fn
-              (merge hval {:序言 (max-hier hval ts)
-                           :pseudo-root (inc (apply max (vals hval)))}))))
-          (li [t]
+(defn outline-html [h]
+  (letfn [(li [t]
             (let [hash   (str "#" (id/entry-id (:context t) (:token t)))
                   elmt-a [:a {:href hash} (:text t)]]
               [:li
                [:div {:class "li-head"}
                 elmt-a
-                (when-let [ith (:from (:entrys-range t))]
-                  [:span (str "条" ith)])]]))
+                (when-let [r (:entries-range t)]
+                  (let [a (int (:from r))
+                        b (int (:to r))]
+                    [:span (str "条" a
+                                (when (not= a b) (str "-" b)))]))]]))
           (to-html [ot]
             (let [t (pt/node-val ot)
                   r (when (pt/internal-node? ot)
@@ -31,23 +26,14 @@
                              (to-html li))])]
               (cond->> r
                 (seq (:text t)) (conj (li t)))))]
-    (to-html
-     (pt/create
-      (pt/update-leaves
-       (rise-ts {:节 1 :章 2 :则 3 :编 3} ts)
-       :entrys-range (fn [path] (let [x (peek path)]
-                                  {:from ((comp int (fnil inc 0))
-                                          (:条 (:context x)))})))))))
+    (to-html (pt/create h))))
 
 (defn generate-table-of-contents
   {:test
    #(let [f generate-table-of-contents
           tls (ln/draw-skeleton ["前言" "第一章" "a"
-                              "第二章" "b"
-                              "第三章" "第一节" "……"])
-          titles (ln/draw-skeleton ["第一章"
-                                 "第二章"
-                                 "第三章" "第一节"])]
+                                 "第二章" "b"
+                                 "第三章" "第一节" "第二条……"])]
       (tt/comprehend-tests
        (t/is (= [() nil] (f ())))
        (t/is (= [["前言"] nil]
@@ -55,19 +41,49 @@
                      (let [[prelude r] (f (take 1 tls))]))))
        (t/is (= {:token :table-of-contents
                  :text "目录"
-                 :list titles
+                 :list '({:token :pseudo-root}
+                         ({:token :章, :nth 1, :text "第一章"})
+                         ({:token :章, :nth 2, :text "第二章"})
+                         ({:token :章, :nth 3, :text "第三章"}
+                          {:token :节, :nth 1, :text "第一节"
+                           :entries-range {:from 2 :to 2}}))
                  :not-in-original-text true}
                 (second (f tls))))))}
   [tls]
-  (let [[prelude tls'] (split-with #(= (:token %)
-                                       :to-be-recognized) tls)
-        tys #{:序言 :编 :则 :章 :节}
-        titles (filter #(tys (:token %)) tls')]
-    [prelude (when (seq titles)
-               {:token :table-of-contents
-                :text "目录"
-                :list titles
-                :not-in-original-text true})]))
+  (letfn [(max-hier [hval ts]
+            (apply max (remove nil? (map (pt/hierachy-fn hval) ts))))
+          (rise-ts [hval ts]
+            (pt/linear-to-tree
+             (cons {:token :pseudo-root} ts)
+             (pt/hierachy-fn
+              ;;hier val of :序言 is determined dynamically
+              (merge hval {:序言 (max-hier hval ts)
+                           :pseudo-root (inc (apply max (vals hval)))}))))
+          (digest-条s-in-hier [h]
+            (let [node first
+                  v (node h)
+                  children (rest h)
+                  flag #(= (:token %) :条)
+                  digest (fn [es] {:from (:nth (first es))
+                                   :to (:nth (last es))})]
+              (if (empty? children)
+                h
+                (let [cvs (map node children)]
+                  (if (every? flag cvs)
+                    (assoc v :entries-range (digest cvs))
+                    (cons v (map digest-条s-in-hier children)))))))]
+   (let [[prelude tls-initial]
+         (split-with #(= (:token %) :to-be-recognized) tls)
+
+         tls-prepare
+         (filter #(#{:序言 :编 :则 :章 :节 :条} (:token %)) tls-initial)]
+     [prelude (when (seq (remove #(= (:token %) :条) tls-prepare))
+                {:token :table-of-contents
+                 :text "目录"
+                 :list (digest-条s-in-hier
+                        (rise-ts {:条 0 :节 1 :章 2 :则 3 :编 3}
+                                 tls-prepare))
+                 :not-in-original-text true})])))
 
 (def table-of-contents-sentinel #"目\s*录")
 (defn table-of-contents

@@ -79,12 +79,14 @@
                 (f {} [{:token :法 :nth :this}
                        {:token :章 :nth 2}
                        {:token :节 :nth 1}])))))}
-  ([context tv]
-   (let [t (:token (peek tv))]
-     (when (contains? templates t)
-       (generate context
-                 (filterv (comp not its/item-types-2 :token) tv)
-                 t))))
+  ([context ts]
+   (let [ty (:token (last ts))]
+     (when (contains? templates ty)
+       (let [selected-ts (filter (comp not
+                                       its/item-types-2
+                                       :token)
+                                 ts)]
+         (generate context (vec selected-ts) ty)))))
 
   ([context tv expect]
    (let [interpret-nth (partial interpret-nth-with context)]
