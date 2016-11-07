@@ -17,8 +17,9 @@
                 (when-let [r (:entries-range t)]
                   (let [a (int (:from r))
                         b (int (:to r))]
+                    (t/is (<= a b))
                     [:span (str "条" a
-                                (when (not= a b) (str "-" b)))]))]]))
+                                (when (< a b) (str "-" b)))]))]]))
           (to-html [ot]
             (let [t (pt/node-val ot)
                   r (when (pt/internal-node? ot)
@@ -65,7 +66,7 @@
                   children (rest h)
                   flag #(= (:token %) :条)
                   digest (fn [es] {:from (:nth (first es))
-                                   :to (:nth (last es))})]
+                                   :to (apply max (map :nth es))})]
               (if (empty? children)
                 h
                 (let [cvs (map node children)]
