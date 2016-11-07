@@ -7,6 +7,8 @@
 
 (def name-link-pairs
   [
+   ["网络安全法"
+    "http://www.npc.gov.cn/npc/xinwen/2016-11/07/content_2001605.htm"]
    ["香港特别行政区基本法"
     "http://www.npc.gov.cn/wxzl/gongbao/1990-04/04/content_1479210.htm"]
    ["党内监督条例"
