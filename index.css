@@ -60,7 +60,7 @@ h1, h2, h3, h4 {
   margin: 0 auto;
   padding: 0 0.5em;
   background-color: inherit;
-  max-width: 32em;
+  max-width: 33em;
 }
 
 #back-button, #share-button, #cancel-overlay, #do-copy {
