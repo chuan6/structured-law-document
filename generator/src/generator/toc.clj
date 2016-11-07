@@ -15,7 +15,10 @@
                [:div {:class "li-head"}
                 elmt-a
                 (when-let [r (:entries-range t)]
-                  [:span (str "条" (int (:from r)))])]]))
+                  (let [a (int (:from r))
+                        b (int (:to r))]
+                    [:span (str "条" a
+                                (when (not= a b) (str "-" b)))]))]]))
           (to-html [ot]
             (let [t (pt/node-val ot)
                   r (when (pt/internal-node? ot)
