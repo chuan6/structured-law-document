@@ -168,9 +168,8 @@
    [:title title]
    [:link {:rel "icon" :href "favicon.png"}]
    [:link {:rel "stylesheet" :href css}]
-   (for [s scripts]
-     [:script {:src s}])
-   [:script {:async true :src "ganalytics.js"}]
+   (for [s (conj scripts "ganalytics.js")]
+     [:script {:async true :src s}])
    [:script {:type "application/ld+json"}
     (json/generate-string
      {"@context" "http://schema.org"
@@ -266,7 +265,7 @@
                                     (add-html-class "not-in-original-text"))]
                  (recur (rest tls) (conj elmts wrapped-elmt))))))))]
      [:a {:id "back-button"} "返回"]
-     [:button {:id "share-button"} "分享"]
+     [:button {:id "share-button" :style "display: none;"} "分享"]
      [:div {:id "overlay"}
       [:div {:class "entries-container"}
        [:textarea {:id "share-text" :maxlength "1024"}]

@@ -78,8 +78,6 @@ function backButtonClosure(elmt) {
 function shareButtonClosure(elmt) {
   var text, link;
 
-  elmt.style.display = "none";
-
   return {
     "element": elmt,
     "showAt": function (y) {
