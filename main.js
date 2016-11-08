@@ -1,15 +1,41 @@
+// See:
+// https://mathiasbynens.be/notes/javascript-unicode#iterating-over-symbols
+// prefer for...of iterator; but it is currently not supported by Weixin's
+// X5 kernel by Tencent.
+function getSymbols(string) {
+  var index = 0;
+  var length = string.length;
+  var output = [];
+  for (; index < length - 1; ++index) {
+    var charCode = string.charCodeAt(index);
+    if (charCode >= 0xD800 && charCode <= 0xDBFF) {
+      charCode = string.charCodeAt(index + 1);
+      if (charCode >= 0xDC00 && charCode <= 0xDFFF) {
+	output.push(string.slice(index, index + 2));
+	++index;
+	continue;
+      }
+    }
+    output.push(string.charAt(index));
+  }
+  output.push(string.charAt(index));
+  return output;
+}
+
 function strSlice(s, end) {
   var s1 = '', s2 = '';
   var c, i = 0;
 
-  for (c of s) {
+  s = getSymbols(s);
+  for(i = 0; i < s.length; i++) {
+    c = s[i];
     if (i < end) {
       s1 += c;
     } else {
       s2 += c;
     }
-    i++;
   }
+
   return [s1, s2];
 }
 
