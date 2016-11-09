@@ -241,7 +241,11 @@
                (let [txt (:text tl)
                      elmt (case t
                             :title
-                            [:div [:h1 {:id "the-title"} txt] [:hr]]
+                            [:div
+                             (cond-> [:h1 {:id "the-title"}]
+                               (seq (:head tl)) (into [(:head tl) [:br]])
+                               true             (conj txt))
+                             [:hr]]
 
                             :table-of-contents
                             (wrap-outline-in-html tl)

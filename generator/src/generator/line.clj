@@ -114,23 +114,28 @@
           txt ["前言" "这是标题" "目录" "……"]]
       (tt/comprehend-tests
        (t/is (= [[] []] (f (take 1 txt) "标题")))
-       (t/is (= {:token :title :text (second txt)}
+       (t/is (= {:token :title :head "这是" :text "标题"}
                 (first (first (f (rest txt) "标题")))))
        (t/is (= [[{:token :to-be-recognized :text (first txt)}
-                  {:token :title :text (second txt)}]
+                  {:token :title :head "这是" :text "标题"}]
                  (rest (rest txt))]
                 (let [[ts ls] (f txt "标题")]
                   [(take 2 ts) ls])))))}
   ([ls s] (recognize-title ls [] s))
   ([ls ts s]
-   (if (empty? ls)
-     [[] []]
-     (let [l (first ls)]
-       (if (.endsWith l s)
-         [(conj ts {:token :title :text l}) (rest ls)]
-         (recur (rest ls)
-                (conj ts {:token :to-be-recognized :text l})
-                s))))))
+   (letfn [(cut-suffix [line sf]
+             (str/join (take (- (count line) (count sf)) line)))]
+     (if (empty? ls)
+       [[] []]
+       (let [l (first ls)]
+         (if (and (seq s) (.endsWith l s))
+           [(conj ts {:token :title
+                      :head (cut-suffix l s)
+                      :text s})
+            (rest ls)]
+           (recur (rest ls)
+                  (conj ts {:token :to-be-recognized :text l})
+                  s)))))))
 
 (defn- prefixed-line-token
   {:test
