@@ -1,7 +1,7 @@
 body {
   font-family: "Noto Sans CJK SC", sans-serif;
   font-size: 16px;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.05em;
   margin: 0 auto;
   background-color: white;
 }
@@ -60,7 +60,7 @@ h1, h2, h3, h4 {
   margin: 0 auto;
   padding: 0 0.5em;
   background-color: inherit;
-  max-width: 33em;
+  max-width: 32em;
 }
 
 #back-button, #share-button, #cancel-overlay, #do-copy {
