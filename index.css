@@ -148,7 +148,7 @@ h1, h2, h3, h4 {
    */
 }
 
-#the-title:target, #ref-to-original:target, #outline:target, #the-preface:target, .entry:target, .款:target, .项:target, .目:target {
+#ref-to-original:target, #outline:target, #the-preface:target, .entry:target, .款:target, .项:target, .目:target {
   background-color: #FFFFD8;
   box-shadow: 0 0 0.31em silver;
 }
@@ -240,7 +240,7 @@ nav>ul { padding: 0.5em 1em }
     page-break-inside: avoid;
   }
 
-  #outline {
+  #outline, #the-preface {
     page-break-after: always;
   }
 
@@ -249,12 +249,24 @@ nav>ul { padding: 0.5em 1em }
   }
 
   #back-button { display: none; }
+  #share-button { display: none; }
   #ref-to-original { display: none; }
 
   body {
     font-size: 10pt;
     font-family: "AR PL UMing CN", SimSun, "宋体", serif;
     letter-spacing: 1pt;
+  }
+
+  p { text-indent: 2.2em; }
+  .title>p { text-indent: 0; }
+  .款>p:not(:first-child), .项>p:not(:first-child){
+    text-indent: 3.3em;
+  }
+
+  .title>p:first-child, .款>p, .项>p, .目>p {
+    margin: 0;
+    padding: 0 1em;
   }
 
   #the-title {
@@ -295,5 +307,12 @@ nav>ul { padding: 0.5em 1em }
 
   .li-head {
     border-bottom: 1px solid #BBB;
+  }
+
+  #ref-to-original:target, #outline:target, #the-preface:target,
+  .entry:target, .款:target, .项:target, .目:target,
+  #the-title:target, .编:target, .章:target, .节:target {
+    background-color: transparent;
+    box-shadow: none;
   }
 }
