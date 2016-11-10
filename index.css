@@ -234,3 +234,43 @@ nav>ul { padding: 0.5em 1em }
 #overlay-button-panel>button {
   margin: 0 1em;
 }
+
+@media print {
+  .li-head {
+    page-break-inside: avoid;
+  }
+
+  #outline {
+    page-break-after: always;
+  }
+
+  .编 {
+    page-break-before: always;
+  }
+
+  #back-button { display: none; }
+  #ref-to-original { display: none; }
+
+  .title {
+    font-family: "Noto Sans CJK SC", sans-serif;
+  }
+
+  body {
+    font-size: 10pt;
+    font-family: "AR PL UMing CN", SimSun, "宋体", serif;
+    letter-spacing: 1pt;
+  }
+
+  .entry {
+    border-left: 1pt solid red;
+  }
+
+  .entry a {
+    background-color: transparent;
+    box-shadow: none;
+    margin: 0;
+    padding: 0;
+    border-radius: 0;
+    border-bottom: 1px solid blue;
+  }
+}
