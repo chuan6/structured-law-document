@@ -34,7 +34,7 @@ h1, h2, h3, h4 {
 }
 
 #the-title, .编 {
-  font-family: "AR PL UMing CN", "SimSun", "宋体", serif;
+  font-family: "AR PL UMing CN", "华文中宋", "SimSun", "宋体", serif;
   font-weight: bold;
 }
 #the-title { font-size: 24px; }
@@ -251,15 +251,26 @@ nav>ul { padding: 0.5em 1em }
   #back-button { display: none; }
   #ref-to-original { display: none; }
 
-  .title {
-    font-family: "Noto Sans CJK SC", sans-serif;
-  }
-
   body {
     font-size: 10pt;
     font-family: "AR PL UMing CN", SimSun, "宋体", serif;
     letter-spacing: 1pt;
   }
+
+  #the-title {
+    font-family: "华文中宋";
+    font-size: 22pt;
+  }
+
+  .title, .章 {
+    font-family: "黑体", "Noto Sans CJK SC", sans-serif;
+  }
+
+  .编 { font-size: 18pt; }
+
+  .章 { font-size: 14pt; }
+
+  .节 { font-size: 14pt; }
 
   .entry {
     border-left: 1pt solid red;
@@ -269,8 +280,20 @@ nav>ul { padding: 0.5em 1em }
     background-color: transparent;
     box-shadow: none;
     margin: 0;
-    padding: 0;
+    padding: 0.125em 0;
     border-radius: 0;
     border-bottom: 1px solid blue;
+  }
+
+  .li-head>a {
+    border-bottom: none;
+  }
+
+  .li-head>span {
+    color: black;
+  }
+
+  .li-head {
+    border-bottom: 1px solid #BBB;
   }
 }
