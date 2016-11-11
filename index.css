@@ -236,17 +236,15 @@ nav>ul { padding: 0.5em 1em }
 }
 
 @media print {
-  .li-head {
-    page-break-inside: avoid;
-  }
+  .entries-container { max-width: 33em; }
 
-  #outline, #the-preface {
-    page-break-after: always;
-  }
+  .li-head { page-break-inside: avoid;}
 
-  .编 {
-    page-break-before: always;
-  }
+  #outline, #the-preface { page-break-after: always; }
+
+  .编 { page-break-before: always; }
+
+  .章, .节 { page-break-after: avoid; }
 
   #back-button { display: none; }
   #share-button { display: none; }
@@ -314,5 +312,14 @@ nav>ul { padding: 0.5em 1em }
   #the-title:target, .编:target, .章:target, .节:target {
     background-color: transparent;
     box-shadow: none;
+  }
+
+  .title {
+    float: left;
+    min-height: 0;
+    min-width: 0;
+  }
+  .款:nth-child(2)>p {
+    text-indent: 0;
   }
 }
