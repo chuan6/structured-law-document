@@ -319,7 +319,7 @@ nav>ul { padding: 0.5em 1em }
     min-height: 0;
     min-width: 0;
   }
-  .款:nth-child(2)>p {
+  .款:nth-child(2)>p:first-child {
     text-indent: 0;
   }
 }
