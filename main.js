@@ -411,3 +411,25 @@ function tapHandler(e) {
 }
 
 tapOn(window, tapHandler, true);
+
+var printEvent = window.matchMedia("print");
+printEvent.addListener(function (pe) {
+  var entries, i, x;
+
+  entries = document.getElementsByClassName("entry");
+
+  if (pe.matches) {
+    // add a copy of for each entry-num element so that
+    // the entry-num can be print on both hands of a page
+    for (i = 0; i < entries.length; i++) {
+      x = entries[i].querySelector(".entry-num");
+      if (x) entries[i].insertBefore(x.cloneNode(true), x);
+    }
+  } else {
+    // remove the inserted entry-num elements
+    for (i = 0; i < entries.length; i++) {
+      x = entries[i].querySelector(".entry-num");
+      if (x) entries[i].removeChild(x);
+    }
+  }
+});
