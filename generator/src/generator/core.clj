@@ -112,6 +112,8 @@
   (case (:token x)
     :条 [:section {:class "entry"
                    :id (id/encode-id (str \条 (id/nth-str (:nth x))))}
+         [:div {:class "entry-num"}
+          [:span (int (:nth x))]]
          [:div {:class "title"}
           [:p (:text x)]]
          (for [x xs] (wrap-entry-in-html x))]
