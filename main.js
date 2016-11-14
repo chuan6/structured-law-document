@@ -1,3 +1,10 @@
+function iter(coll, g, f) {
+  var i;
+  for (i = 0; i < coll.length; i++) {
+    g(coll[i], f(coll[i]));
+  }
+};
+
 // See:
 // https://mathiasbynens.be/notes/javascript-unicode#iterating-over-symbols
 // prefer for...of iterator; but it is currently not supported by Weixin's
@@ -313,7 +320,19 @@ function editHashAndScroll(hash, dontAutoScroll) {
 }
 
 function textContent(x) {
-  var s = "", cs, i;
+  var acc = (function () {
+    var s = "";
+    return {
+      fn: function(neglect, t) { s += t; },
+      ret: function() { return s; }
+    };
+  })();
+
+  var cs;
+
+  if (window.getComputedStyle(x).display === "none") {
+    return "";
+  }
 
   if (x.nodeType === 3) {
     return x.textContent;
@@ -326,13 +345,11 @@ function textContent(x) {
   if (x instanceof HTMLElement) {
     cs = x.childNodes;
 
-    if (cs.length === 0) return s;
+    if (cs.length === 0) return "";
     // cs.length > 0
 
-    for (i = 0; i < cs.length; i++) {
-      s += textContent(cs[i]);
-    }
-    return s;
+    iter(cs, acc.fn, textContent);
+    return acc.ret();
   }
 
   return null;
@@ -411,3 +428,30 @@ function tapHandler(e) {
 }
 
 tapOn(window, tapHandler, true);
+
+/*
+ The following code transforms page for print media.
+ Require browsers' support for window.matchMedia("print").
+*/
+window.matchMedia("print").addListener(function (pe) {
+  var firstENum = function (entry) {
+    return entry.querySelector(".entry-num");
+  };
+  var addAnother = function (p, x) {
+    if (x) p.insertBefore(x.cloneNode(true), x);
+  };
+  var remove = function (p, x) {
+    if (x) p.removeChild(x);
+  };
+
+  var es = document.getElementsByClassName("entry");
+
+  if (pe.matches) {
+    // add a copy for each entry-num element so that
+    // the entry-num can be print on both hands of a page
+    iter(es, addAnother, firstENum);
+  } else {
+    // remove the inserted entry-num elements
+    iter(es, remove, firstENum);
+  }
+});
