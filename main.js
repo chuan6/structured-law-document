@@ -412,24 +412,35 @@ function tapHandler(e) {
 
 tapOn(window, tapHandler, true);
 
-var printEvent = window.matchMedia("print");
-printEvent.addListener(function (pe) {
-  var entries, i, x;
+/*
+ The following code transforms page for print media.
+ Require browsers' support for window.matchMedia("print").
+*/
+window.matchMedia("print").addListener(function (pe) {
+  var firstENum = function (entry) {
+    return entry.querySelector(".entry-num");
+  };
+  var addAnother = function (p, x) {
+    if (x) p.insertBefore(x.cloneNode(true), x);
+  };
+  var remove = function (p, x) {
+    if (x) p.removeChild(x);
+  };
+  var iter = function (coll, g, f) {
+    var i;
+    for (i = 0; i < coll.length; i++) {
+      g(coll[i], f(coll[i]));
+    }
+  };
 
-  entries = document.getElementsByClassName("entry");
+  var es = document.getElementsByClassName("entry");
 
   if (pe.matches) {
-    // add a copy of for each entry-num element so that
+    // add a copy for each entry-num element so that
     // the entry-num can be print on both hands of a page
-    for (i = 0; i < entries.length; i++) {
-      x = entries[i].querySelector(".entry-num");
-      if (x) entries[i].insertBefore(x.cloneNode(true), x);
-    }
+    iter(es, addAnother, firstENum);
   } else {
     // remove the inserted entry-num elements
-    for (i = 0; i < entries.length; i++) {
-      x = entries[i].querySelector(".entry-num");
-      if (x) entries[i].removeChild(x);
-    }
+    iter(es, remove, firstENum);
   }
 });
