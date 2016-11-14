@@ -330,10 +330,6 @@ function textContent(x) {
 
   var cs;
 
-  if (window.getComputedStyle(x).display === "none") {
-    return "";
-  }
-
   if (x.nodeType === 3) {
     return x.textContent;
   }
@@ -343,6 +339,10 @@ function textContent(x) {
   }
 
   if (x instanceof HTMLElement) {
+    if (window.getComputedStyle(x).display === "none") {
+      return "";
+    }
+
     cs = x.childNodes;
 
     if (cs.length === 0) return "";
