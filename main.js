@@ -433,7 +433,7 @@ tapOn(window, tapHandler, true);
  The following code transforms page for print media.
  Require browsers' support for window.matchMedia("print").
 */
-window.matchMedia("print").addListener(function (pe) {
+var printNum = (function () {
   var firstENum = function (entry) {
     return entry.querySelector(".entry-num");
   };
@@ -444,14 +444,36 @@ window.matchMedia("print").addListener(function (pe) {
     if (x) p.removeChild(x);
   };
 
-  var es = document.getElementsByClassName("entry");
+  return {
+    addTo: function (es) {
+      // add a copy for each entry-num element so that
+      // the entry-num can be print on both hands of a page
+      iter(es, addAnother, firstENum);
+    },
+    rmFrom: function (es) {
+      // remove the inserted entry-num elements
+      iter(es, remove, firstENum);
+    }
+  };
+})();
 
-  if (pe.matches) {
-    // add a copy for each entry-num element so that
-    // the entry-num can be print on both hands of a page
-    iter(es, addAnother, firstENum);
-  } else {
-    // remove the inserted entry-num elements
-    iter(es, remove, firstENum);
-  }
-});
+if ("onbeforeprint" in window && "onafterprint" in window) {
+  window.onbeforeprint = function () {
+    var es = document.getElementsByClassName("entry");
+    printNum.addTo(es);
+  };
+  window.onafterprint = function () {
+    var es = document.getElementsByClassName("entry");
+    printNum.rmFrom(es);
+  };
+} else if ("matchMedia" in window) {
+  window.matchMedia("print").addListener(function (pe) {
+    var es = document.getElementsByClassName("entry");
+
+    if (pe.matches) { printNum.addTo(es); }
+    else { printNum.rmFrom(es); }
+  });
+}
+
+
+
