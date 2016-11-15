@@ -7,6 +7,8 @@
 
 (def name-link-pairs
   [
+   ["著作权法（2010年修正）"
+    "http://www.sipo.gov.cn/zcfg/flfg/bq/fl/201509/t20150911_1174554.html"]
    ["反家庭暴力法"
     "http://www.npc.gov.cn/npc/xinwen/2015-12/28/content_1957457.htm"]
    ["网络安全法"
@@ -105,5 +107,5 @@
    ["物权法"
     "http://www.npc.gov.cn/wxzl/gongbao/2007-03/16/content_5366956.htm"]
 
-   ["刑法"
+   ["刑法（2015修正）"
     "http://www.lawtime.cn/faguizt/23.html"]])
