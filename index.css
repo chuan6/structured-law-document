@@ -255,7 +255,7 @@ nav>ul { padding: 0.5em 1em }
   body {
     font-size: 10pt;
     font-family: "AR PL UMing CN", SimSun, "宋体", serif;
-    letter-spacing: 1pt;
+    letter-spacing: 0.5pt;
   }
 
   p { text-indent: 2.2em; }
@@ -282,10 +282,14 @@ nav>ul { padding: 0.5em 1em }
 
   .章 { font-size: 14pt; }
 
-  .节 { font-size: 14pt; }
+  .节 {
+    font-size: 14pt;
+    font-weight: normal;
+  }
 
   .entry {
-    border-left: 1pt solid red;
+    border-right: 0.5pt solid red;
+    border-left: 0.5pt solid red;
   }
 
   .entry a {
@@ -294,19 +298,20 @@ nav>ul { padding: 0.5em 1em }
     margin: 0;
     padding: 0.125em 0;
     border-radius: 0;
-    border-bottom: 1pt solid blue;
+    border-bottom: 0.5pt solid blue;
   }
 
   .entry-num {
     display: block;
     position: absolute;
-    right: 2em;
+    right: 0;
     width: 18pt; /* 3*(5+1) = 18 */
     text-align: right;
+    letter-spacing: 0;
   }
 
   .entry-num:first-child {
-    left: 2em;
+    left: 0;
     text-align: left;
   }
 
@@ -319,7 +324,7 @@ nav>ul { padding: 0.5em 1em }
   }
 
   .li-head {
-    border-bottom: 1pt solid #BBB;
+    border-bottom: 0.5pt solid #BBB;
   }
 
   #ref-to-original:target, #outline:target, #the-preface:target,
