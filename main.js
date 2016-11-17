@@ -98,9 +98,7 @@ function backButtonClosure(elmt) {
     pop: function () {
       var curr;
 
-      if (stack.length > 1) {
-        stack.pop();
-      }
+      if (stack.length > 1) stack.pop();
 
       curr = top();
       updateHref(curr? curr.id : "");
@@ -151,17 +149,13 @@ var tapOn = (function () {
             y = e.layerY;
           }
           return true;
-        } else {
-          return false;
-        }
+        } else return false;
       },
       "move": function(e) {
         if (status === 1) {
           status = 2;
           return true;
-        } else {
-          return false;
-        }
+        } else return false;
       },
       "end": function(e, isTouch) {
         if (status === 1) {
@@ -305,7 +299,6 @@ function editHashAndScroll(hash, dontAutoScroll) {
   window.location.hash = hash;
 
   console.log(x);
-
   switch (x) {
   case 0:
     backToPrevY();
@@ -315,7 +308,6 @@ function editHashAndScroll(hash, dontAutoScroll) {
     break;
   case 1:
     break;
-    //elmt.scrollIntoView(false);
   }
 }
 
@@ -330,28 +322,18 @@ function textContent(x) {
 
   var cs;
 
-  if (x.nodeType === 3) {
-    return x.textContent;
-  }
-
-  if (x.tagName === "P") {
-    return x.textContent + "|";
-  }
-
+  if (x.nodeType === 3) return x.textContent;
+  if (x.tagName === "P") return x.textContent + "|";
   if (x instanceof HTMLElement) {
-    if (window.getComputedStyle(x).display === "none") {
-      return "";
-    }
+    if (window.getComputedStyle(x).display === "none") return "";
 
     cs = x.childNodes;
-
     if (cs.length === 0) return "";
     // cs.length > 0
 
     iter(cs, acc.fn, textContent);
     return acc.ret();
   }
-
   return null;
 }
 
