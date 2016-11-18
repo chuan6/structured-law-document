@@ -351,6 +351,10 @@ nav>ul { padding: 0.5em 1em }
   #qrcode {
     display: block;
     text-align: center;
+    position: absolute;
+    right: 0;
+    bottom: 1em;
+    left: 0;
   }
   #qrcode svg { border: 0.5pt solid blue; }
 }
