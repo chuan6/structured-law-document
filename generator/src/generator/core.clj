@@ -207,7 +207,7 @@
    (html5
     (html-head page-name
                "index.css"
-               "main.js")
+               "main.js" "qrcode_kazuhikoarase.js")
     [:body
      [:article {:class "entries-container"
                 :onclick "void(0)" ; for iOS compatibility

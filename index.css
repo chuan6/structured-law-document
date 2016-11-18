@@ -237,6 +237,8 @@ nav>ul { padding: 0.5em 1em }
   margin: 0 1em;
 }
 
+#qrcode { display: none; }
+
 @media print {
   .entries-container { max-width: 33em; }
 
@@ -345,4 +347,14 @@ nav>ul { padding: 0.5em 1em }
   .款:nth-child(4)>p:first-child {
     text-indent: 0;
   }
+
+  #qrcode {
+    display: block;
+    text-align: center;
+    position: absolute;
+    right: 0;
+    bottom: 1em;
+    left: 0;
+  }
+  #qrcode svg { border: 0.5pt solid blue; }
 }

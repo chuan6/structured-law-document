@@ -439,21 +439,79 @@ var printNum = (function () {
   };
 })();
 
+var qrcodeGenerator = (function () {
+  var id = "qrcode", code;
+
+  var insertElmt = function (elmtId) {
+    var e = document.createElement("DIV");
+    var f = document.getElementById("toc");
+    var p = document.getElementsByClassName("entries-container")[0];
+
+    e.id = elmtId;
+    p.insertBefore(e, f);
+    return e;
+  };
+
+  var removeElmt = function (elmtId) {
+    var e, p;
+
+    e = document.getElementById(elmtId);
+    if (!e) return;
+
+    p = document.querySelector(".entries-container");
+    p.removeChild(e);
+  };
+
+  var decodedURL = function (loc) {
+    var origin = "https://读法.com";
+    var uPathname = loc.pathname;
+    var isDecoded = function (s) {// ad-hoc
+      return s.indexOf("%") === -1;
+    };
+    var pathname = isDecoded(uPathname)?
+          uPathname : decodeURIComponent(uPathname);
+    return origin + pathname;
+  };
+
+  return {
+    show: function () {
+      var e;
+      code = qrcode(10, "L");
+      code.addData(decodedURL(window.location));
+      code.make();
+      e = insertElmt(id);
+      e.innerHTML = code.createSvgTag();
+    },
+    clear: function () {
+      removeElmt(id);
+      code = undefined;
+    }
+  };
+})();
+
 if ("onbeforeprint" in window && "onafterprint" in window) {
   window.onbeforeprint = function () {
     var es = document.getElementsByClassName("entry");
     printNum.addTo(es);
+    qrcodeGenerator.show();
   };
   window.onafterprint = function () {
     var es = document.getElementsByClassName("entry");
     printNum.rmFrom(es);
+    qrcodeGenerator.clear();
   };
 } else if ("matchMedia" in window) {
   window.matchMedia("print").addListener(function (pe) {
     var es = document.getElementsByClassName("entry");
 
-    if (pe.matches) { printNum.addTo(es); }
-    else { printNum.rmFrom(es); }
+    if (pe.matches) {
+      printNum.addTo(es);
+      qrcodeGenerator.show();
+    }
+    else {
+      printNum.rmFrom(es);
+      qrcodeGenerator.clear();
+    }
   });
 }
 
