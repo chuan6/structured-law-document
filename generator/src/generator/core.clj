@@ -172,6 +172,7 @@
    [:link {:rel "stylesheet" :href css}]
    (for [s (conj scripts "ganalytics.js")]
      [:script {:async true :src s}])
+   [:script {:async true :src "qrcode_kazuhikoarase.js"}]
    [:script {:type "application/ld+json"}
     (json/generate-string
      {"@context" "http://schema.org"
