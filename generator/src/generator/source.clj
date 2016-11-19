@@ -7,6 +7,8 @@
 
 (def name-link-pairs
   [
+   ["侵权责任法"
+    "http://www.npc.gov.cn/wxzl/gongbao/2010-03/01/content_1580399.htm"]
    ["民法总则（草案）（二次审议稿）"
     "http://www.npc.gov.cn/COBRS_LFYJNEW/user/UserIndex.jsp?ID=8145189"]
    ["著作权法（2010年修正）"
