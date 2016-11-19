@@ -7,6 +7,8 @@
 
 (def name-link-pairs
   [
+   ["民法总则（草案）（二次审议稿）"
+    "http://www.npc.gov.cn/COBRS_LFYJNEW/user/UserIndex.jsp?ID=8145189"]
    ["著作权法（2010年修正）"
     "http://www.sipo.gov.cn/zcfg/flfg/bq/fl/201509/t20150911_1174554.html"]
    ["反家庭暴力法"
