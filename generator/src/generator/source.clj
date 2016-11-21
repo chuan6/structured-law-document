@@ -7,20 +7,30 @@
 
 (def name-link-pairs
   [
+   ["刑事诉讼法"
+    "http://www.gov.cn/flfg/2012-03/17/content_2094354.htm"]
+
    ["侵权责任法"
     "http://www.npc.gov.cn/wxzl/gongbao/2010-03/01/content_1580399.htm"]
+
    ["民法总则（草案）（二次审议稿）"
     "http://www.npc.gov.cn/COBRS_LFYJNEW/user/UserIndex.jsp?ID=8145189"]
+
    ["著作权法（2010年修正）"
     "http://www.sipo.gov.cn/zcfg/flfg/bq/fl/201509/t20150911_1174554.html"]
+
    ["反家庭暴力法"
     "http://www.npc.gov.cn/npc/xinwen/2015-12/28/content_1957457.htm"]
+
    ["网络安全法"
     "http://www.npc.gov.cn/npc/xinwen/2016-11/07/content_2001605.htm"]
+
    ["香港特别行政区基本法"
     "http://www.npc.gov.cn/wxzl/gongbao/1990-04/04/content_1479210.htm"]
+
    ["党内监督条例"
     "http://www.spp.gov.cn/zdgz/201611/t20161103_171442.shtml"]
+
    ["劳动合同法"
     "http://www.npc.gov.cn/wxzl/gongbao/2013-04/15/content_1811058.htm"]
 
