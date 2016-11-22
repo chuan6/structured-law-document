@@ -7,6 +7,9 @@
 
 (def name-link-pairs
   [
+   ["上海市网络预约出租汽车经营服务管理若干规定（草案）"
+    "http://jtj.sh.gov.cn/jtw/gsgg/n39/u1ai51894.html"]
+
    ["刑事诉讼法"
     "http://www.gov.cn/flfg/2012-03/17/content_2094354.htm"]
 
