@@ -147,11 +147,11 @@
 
 (defn- wrap-outline-in-html [outline]
   (assert (= (:token outline) :table-of-contents))
-  (let [head (:text outline)]
-    [:section {:id "toc"}
-     [:h2 {:id (id/encode-id "编0") :class "编"} head]
-     [:nav {:id "outline" :class "entry"}
-      (toc/outline-html (:list outline))]]))
+  (cond-> [:section {:id "toc"}]
+    (:text outline) (conj [:h2 {:id (id/encode-id "编0") :class "编"}
+                           (:text outline)])
+    true            (conj [:nav {:id "outline" :class "entry"}
+                           (toc/outline-html (:list outline))])))
 
 (defn- wrap-序言-in-html [t ts]
   (assert (= (:token t) :序言))
@@ -293,8 +293,8 @@
          ;; use the generated one
          (let [tls (draw-skeleton-with-contexts ls')
                [prelude toc] (toc/generate-table-of-contents tls)]
-           (if (nil? toc) tls
-               (concat prelude [toc] (s/without-prefix tls prelude)))))))))
+           (assert (or (:text toc) (= toc toc/empty-toc)))
+           (concat prelude [toc] (s/without-prefix tls prelude))))))))
 
 (defn- structure-validated [tls]
   (letfn [(step [ty {i :nth :as prev} {j :nth :as curr}]

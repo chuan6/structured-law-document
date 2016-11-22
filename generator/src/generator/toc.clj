@@ -29,6 +29,8 @@
                 (seq (:text t)) (conj (li t)))))]
     (to-html (pt/create h))))
 
+(def empty-toc {:token :table-of-contents :not-in-original-text true})
+
 (defn generate-table-of-contents
   {:test
    #(let [f generate-table-of-contents
@@ -36,8 +38,8 @@
                                  "第二章" "b"
                                  "第三章" "第一节" "第二条……"])]
       (tt/comprehend-tests
-       (t/is (= [() nil] (f ())))
-       (t/is (= [["前言"] nil]
+       (t/is (= [() empty-toc] (f ())))
+       (t/is (= [["前言"] empty-toc]
                 (->> [(map :text prelude) r]
                      (let [[prelude r] (f (take 1 tls))]))))
        (t/is (= {:token :table-of-contents
@@ -78,7 +80,8 @@
 
          tls-prepare
          (filter #(#{:序言 :编 :则 :章 :节 :条} (:token %)) tls-initial)]
-     [prelude (when (seq (remove #(= (:token %) :条) tls-prepare))
+     [prelude (if (empty? (remove #(= (:token %) :条) tls-prepare))
+                empty-toc
                 {:token :table-of-contents
                  :text "目录"
                  :list (digest-条s-in-hier
