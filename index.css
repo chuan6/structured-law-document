@@ -51,7 +51,7 @@ h1, h2, h3, h4 {
 }
 
 #the-title+hr {
-  border-top: 1px solid red;
+  border: 0.5px solid red;
   margin: 0.33em 0;
 }
 
@@ -275,6 +275,9 @@ nav>ul { padding: 0.5em 1em }
     font-family: "华文中宋";
     font-size: 22pt;
   }
+  #the-title+hr {
+    border: 0.1pt solid red;
+  }
 
   .title, .章 {
     font-family: "黑体", "Noto Sans CJK SC", sans-serif;
@@ -290,8 +293,8 @@ nav>ul { padding: 0.5em 1em }
   }
 
   .entry {
-    border-right: 0.5pt solid red;
-    border-left: 0.5pt solid red;
+    border-right: 0.2pt solid red;
+    border-left: none;
   }
 
   .entry a {
@@ -300,7 +303,7 @@ nav>ul { padding: 0.5em 1em }
     margin: 0;
     padding: 0.125em 0;
     border-radius: 0;
-    border-bottom: 0.5pt solid blue;
+    border-bottom: 0.2pt solid dodgerblue;
   }
 
   .entry-num {
@@ -326,7 +329,7 @@ nav>ul { padding: 0.5em 1em }
   }
 
   .li-head {
-    border-bottom: 0.5pt solid #BBB;
+    border-bottom: 0.2pt solid #BBB;
   }
 
   #ref-to-original:target, #outline:target, #the-preface:target,
@@ -356,5 +359,5 @@ nav>ul { padding: 0.5em 1em }
     bottom: 1em;
     left: 0;
   }
-  #qrcode svg { border: 0.5pt solid blue; }
+  #qrcode svg { border: 0.2pt solid dodgerblue; }
 }
