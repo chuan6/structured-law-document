@@ -128,7 +128,7 @@ function shareButtonClosure(elmt) {
     "getContent": function () {
       var nchars = 52;
       var sliced = strSlice(text, nchars);
-      return sliced[0] + (sliced[1]? "……":"") + " " + link;
+      return sliced[0] + (sliced[1]? "……":"") + "\n" + link;
     }
   };
 }
