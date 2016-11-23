@@ -84,7 +84,9 @@ function textContent(x) {
   var cs;
 
   if (x.nodeType === 3) return x.textContent;
-  if (x.tagName === "P") return x.textContent + "▶";
+  if (x.tagName === "H2" || x.tagName === "P") {
+    return x.textContent + "▶";
+  }
   if (x instanceof HTMLElement) {
     if (window.getComputedStyle(x).display === "none") return "";
 
