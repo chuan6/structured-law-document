@@ -126,7 +126,7 @@ function shareButtonClosure(elmt) {
       link = ref;
     },
     "getContent": function () {
-      var nchars = 64;
+      var nchars = 52;
       var sliced = strSlice(text, nchars);
       return sliced[0] + (sliced[1]? "……":"") + " " + link;
     }
@@ -252,7 +252,7 @@ function overlayClosure(elmt, content, docancel, docopy) {
         parseFloat(window.getComputedStyle(content.parentNode).width)
         - horizontalExtra(computed, false);
       content.style.width = px(textareaWidth);
-      content.style.height = px(46000 / textareaWidth);
+      content.style.height = px(34000 / textareaWidth);
     }
   };
 }

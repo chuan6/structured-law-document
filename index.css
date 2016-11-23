@@ -234,7 +234,7 @@ nav>ul { padding: 0.5em 1em }
   word-wrap: break-word;
   word-break: break-all;
   overflow-y: scroll;
-  line-height: 2em;
+  line-height: 1.5em; /* as summary, shrink from 2em */
   letter-spacing: 0.05em;
 }
 
