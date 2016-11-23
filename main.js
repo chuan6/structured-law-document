@@ -118,13 +118,15 @@ function shareButtonClosure(elmt) {
 
   var loc2name = function (loc) {
     var dp = decodedPathname(loc.pathname);
-    var t = ".html";
-    var dpt = dp.endsWith(t)? dp.slice(0, dp.length - t.length) : dp;
+    var s = "/", t = ".html";
+
+    dp = dp.startsWith(s)? dp.slice(s.length) : dp;
+    dp = dp.endsWith(t)? dp.slice(0, dp.length - t.length) : dp;
 
     var uh = loc.hash.slice(1).replace(/\./gi, "%");
     var dh = decodeURIComponent(uh);
 
-    return dpt + dh;
+    return dp + dh;
   };
 
   return {
