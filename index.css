@@ -243,6 +243,14 @@ nav>ul { padding: 0.5em 1em }
 }
 
 #qrcode { display: none; }
+#wxdyh_qrcode {
+  text-align: center;
+  padding: 1em;
+}
+#wxdyh_qrcode>img {
+  width: 130px;
+  border: 1px solid #44b549; /* 微信公众号网站主色 */
+}
 
 @media print {
   .entries-container { max-width: 33em; }
@@ -357,11 +365,21 @@ nav>ul { padding: 0.5em 1em }
 
   #qrcode {
     display: block;
-    text-align: center;
+    text-align: right;
     position: absolute;
-    right: 0;
-    bottom: 1em;
     left: 0;
+    bottom: 1em;
+    width: 45%;
   }
   #qrcode svg { border: 0.2pt solid blue; }
+
+  #wxdyh_qrcode {
+    position: absolute;
+    text-align: left;
+    right: 0;
+    bottom: 1em;
+    width: 45%;
+    padding: 0;
+  }
+  #wxdyh_qrcode>img { border: 0.2pt solid #44b549; }
 }

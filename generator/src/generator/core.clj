@@ -269,7 +269,10 @@
                      wrapped-elmt (cond-> elmt
                                     (:not-in-original-text tl)
                                     (add-html-class "not-in-original-text"))]
-                 (recur (rest tls) (conj elmts wrapped-elmt))))))))]
+                 (recur (rest tls) (conj elmts wrapped-elmt))))))))
+      [:div {:id "wxdyh_qrcode"}
+       [:img {:src "images/wxdyh_qrcode.jpg"
+              :alt "读法网微信订阅号"}]]]
      [:a {:id "back-button"} "返回"]
      [:button {:id "share-button" :style "display: none;"} "分享"]
      [:div {:id "overlay"}
