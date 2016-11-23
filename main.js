@@ -147,6 +147,7 @@ function shareButtonClosure(elmt) {
     var bar = "//", n = bar.length;
     return txt.endsWith("//")? txt.slice(0, txt.length-n) : txt;
   };
+
   var loc2name = function (loc) {
     var dp = decodedPathname(loc.pathname);
     var s = "/", t = ".html";
@@ -157,7 +158,16 @@ function shareButtonClosure(elmt) {
     var uh = loc.hash.slice(1).replace(/\./gi, "%");
     var dh = decodeURIComponent(uh);
 
-    return dp + "『" + dh + "』";
+    switch (dh) {
+    case "the-title":
+      // top level item, no need for either pathname or hash
+      return "";
+    case "the-preface": case "编0":
+      // second level item, no need for hash
+      return dp;
+    default:
+      return dp + "『" + dh + "』";
+    }
   };
 
   return {
@@ -180,9 +190,8 @@ function shareButtonClosure(elmt) {
     "getContent": function () {
       var nchars = 52;
       var sliced = strSlice(text, nchars);
-      return "“" + trimEndingBar(sliced[0])
-        + (sliced[1]? "……":"") + "”"
-        + "——" + name + " " + link;
+      return trimEndingBar(sliced[0]) + (sliced[1]? "……":"")
+        + (name? "《"+name+"》" : "") + " " + link;
     }
   };
 }
