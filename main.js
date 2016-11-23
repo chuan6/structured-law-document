@@ -84,7 +84,7 @@ function textContent(x) {
   var cs;
 
   if (x.nodeType === 3) return x.textContent;
-  if (x.tagName === "P") return x.textContent + "|";
+  if (x.tagName === "P") return x.textContent + "//";
   if (x instanceof HTMLElement) {
     if (window.getComputedStyle(x).display === "none") return "";
 
@@ -142,6 +142,11 @@ function backButtonClosure(elmt) {
 function shareButtonClosure(elmt) {
   var name, text, link;
 
+  var trimEndingBar = function (txt) {
+    // assume that the "//" would never be in original text
+    var bar = "//", n = bar.length;
+    return txt.endsWith("//")? txt.slice(0, txt.length-n) : txt;
+  };
   var loc2name = function (loc) {
     var dp = decodedPathname(loc.pathname);
     var s = "/", t = ".html";
@@ -175,7 +180,8 @@ function shareButtonClosure(elmt) {
     "getContent": function () {
       var nchars = 52;
       var sliced = strSlice(text, nchars);
-      return "“" + sliced[0] + (sliced[1]? "……":"") + "”"
+      return "“" + trimEndingBar(sliced[0])
+        + (sliced[1]? "……":"") + "”"
         + "——" + name + " " + link;
     }
   };
