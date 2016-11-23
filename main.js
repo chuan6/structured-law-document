@@ -252,7 +252,7 @@ function overlayClosure(elmt, content, docancel, docopy) {
         parseFloat(window.getComputedStyle(content.parentNode).width)
         - horizontalExtra(computed, false);
       content.style.width = px(textareaWidth);
-      content.style.height = px(60000 / textareaWidth);
+      content.style.height = px(46000 / textareaWidth);
     }
   };
 }
