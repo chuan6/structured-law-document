@@ -46,6 +46,13 @@ function strSlice(s, end) {
   return [s1, s2];
 }
 
+function decodedPathname(u) {
+  var isDecoded = function (s) {// ad-hoc
+    return s.indexOf("%") === -1;
+  };
+  return isDecoded(u)? u : decodeURIComponent(u);
+}
+
 function px(x) {
   return "" + x + "px";
 }
@@ -107,7 +114,18 @@ function backButtonClosure(elmt) {
 }
 
 function shareButtonClosure(elmt) {
-  var text, link;
+  var name, text, link;
+
+  var loc2name = function (loc) {
+    var dp = decodedPathname(loc.pathname);
+    var t = ".html";
+    var dpt = dp.endsWith(t)? dp.slice(0, dp.length - t.length) : dp;
+
+    var uh = loc.hash.slice(1).replace(/\./gi, "%");
+    var dh = decodeURIComponent(uh);
+
+    return dpt + dh;
+  };
 
   return {
     "element": elmt,
@@ -121,14 +139,15 @@ function shareButtonClosure(elmt) {
       text = link = null;
       elmt.style.display = "none";
     },
-    "setContent": function (s, ref) {
+    "setContent": function (s, loc) {
       text = s;
-      link = ref;
+      link = loc.href;
+      name = loc2name(loc);
     },
     "getContent": function () {
       var nchars = 52;
       var sliced = strSlice(text, nchars);
-      return sliced[0] + (sliced[1]? "……":"") + "\n" + link;
+      return name + "|" + sliced[0] + (sliced[1]? "……":"") + "\n" + link;
     }
   };
 }
@@ -252,7 +271,7 @@ function overlayClosure(elmt, content, docancel, docopy) {
         parseFloat(window.getComputedStyle(content.parentNode).width)
         - horizontalExtra(computed, false);
       content.style.width = px(textareaWidth);
-      content.style.height = px(34000 / textareaWidth);
+      content.style.height = px(43000 / textareaWidth);
     }
   };
 }
@@ -356,7 +375,7 @@ var elmtOnTarget = (function () {
         shareButton.showAt(elmt.getBoundingClientRect().top);
         shareButton.setContent(
           textContent(elmt),
-          window.location.href);
+          window.location);
         targetID = id;
         console.log("elmtOnTarget: finished", Date.now());
       }
@@ -464,13 +483,7 @@ var qrcodeGenerator = (function () {
 
   var decodedURL = function (loc) {
     var origin = "https://读法.com";
-    var uPathname = loc.pathname;
-    var isDecoded = function (s) {// ad-hoc
-      return s.indexOf("%") === -1;
-    };
-    var pathname = isDecoded(uPathname)?
-          uPathname : decodeURIComponent(uPathname);
-    return origin + pathname;
+    return origin + decodedPathname(loc.pathname);
   };
 
   return {
