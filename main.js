@@ -126,7 +126,7 @@ function shareButtonClosure(elmt) {
     var uh = loc.hash.slice(1).replace(/\./gi, "%");
     var dh = decodeURIComponent(uh);
 
-    return dp + dh;
+    return dp + "『" + dh + "』";
   };
 
   return {
@@ -149,7 +149,7 @@ function shareButtonClosure(elmt) {
     "getContent": function () {
       var nchars = 52;
       var sliced = strSlice(text, nchars);
-      return name + "|" + sliced[0] + (sliced[1]? "……":"") + "\n" + link;
+      return name + sliced[0] + (sliced[1]? "……":"") + "\n" + link;
     }
   };
 }
