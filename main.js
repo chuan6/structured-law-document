@@ -87,6 +87,9 @@ function textContent(x) {
   if (x.tagName === "H2" || x.tagName === "P") {
     return x.textContent + "▶";
   }
+  if (x.tagName === "IMG") {
+    return x.alt;
+  }
   if (x instanceof HTMLElement) {
     if (window.getComputedStyle(x).display === "none") return "";
 
@@ -161,7 +164,7 @@ function shareButtonClosure(elmt) {
     var dh = decodeURIComponent(uh);
 
     switch (dh) {
-    case "the-title":
+    case "the-title": case "wxdyh_qrcode":
       // top level item, no need for either pathname or hash
       return "";
     case "the-preface": case "编0":
