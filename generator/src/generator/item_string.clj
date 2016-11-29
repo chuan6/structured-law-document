@@ -41,7 +41,7 @@
    ])
 
 (defn- separators [c]
-  (when (#{\space \、 \和} c)
+  (when (#{\space \、 \和 \至} c)
     {:token :separator :text (str c)}))
 
 (def item-types-1 #{:编 :章 :节 :条 :款 :项})
