@@ -62,7 +62,7 @@
   [context cs]
   (let [genid (partial id/generate context)
         flags [#{[\本] [\前]}
-               #{[\办 \法] [\规 \定] [\法] [\条] [\款]}
+               #{[\办 \法] [\规 \定] [\法] [\章] [\节] [\条] [\款]}
                #{[\第]}]
         patterns ["宪法"]
         g (acc/construct patterns)
