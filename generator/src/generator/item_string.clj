@@ -40,9 +40,32 @@
    "本办法第五条第一款"
    ])
 
-(defn- separators [c]
-  (when (#{\space \、 \和} c)
-    {:token :separator :text (str c)}))
+(defn- separators
+  {:test
+   #(let [f separators]
+      (tt/comprehend-tests
+       (t/is (nil? (f "第一条")))
+       (t/is (= [{:token :separator :text "或者"}
+                 (seq "第三款")]
+                (f "或者第三款")))))}
+  [cs]
+  (let [choices #{" " "、" "和" "或" "或者" "至"}
+
+        longest-match
+        (fn [ss]
+          (when (seq ss)
+            (apply max-key count ss)))
+
+        result
+        (longest-match
+         (remove nil?
+                 (for [cc choices
+                       :let [csn (take (count cc) cs)]]
+                   (when (= cc (str/join csn))
+                     cc))))]
+    (when result
+      [{:token :separator :text result}
+       (s/without-prefix cs (seq result))])))
 
 (def item-types-1 #{:编 :章 :节 :条 :款 :项})
 (def item-types-2 #{:法 :规定 :办法 :条例})
@@ -100,9 +123,11 @@
           (when-let [c' (first cs')]
             (if (item-types-1 (cs-kw [c']))
               (recur (rest cs')
-                     (conj ts (assoc nx :unit? true :token (cs-kw [c']))))
-              (when-let [s-t (separators c')]
-                (recur (rest cs')
+                     (conj ts (assoc nx
+                                     :unit? true
+                                     :token (cs-kw [c']))))
+              (when-let [[s-t rest-cs'] (separators cs')]
+                (recur rest-cs'
                        (into ts [(assoc nx :unit? false) s-t]))))))))))
 
 (defn- match-item-types [cs]
@@ -136,8 +161,8 @@
   [char-seq]
   (loop [[c & more-cs :as cs] char-seq
          ts []]
-    (if-let [s-t (separators c)]
-      (recur more-cs (conj ts s-t))
+    (if-let [[s-t cs'] (separators cs)]
+      (recur cs' (conj ts s-t))
       (if-let [adj (adj->nth c)]
         (when-let [processed (match-item-types more-cs)]
           (recur (s/without-prefix more-cs processed)
