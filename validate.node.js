@@ -53,6 +53,8 @@ function norm(s) {
       d = '，'; break;
     case ';':
       d = '；'; break;
+    case '.':
+      d = '．'; break;
     default:
       d = doSkip(c)? '' : c;
       break;
@@ -72,10 +74,9 @@ function samePrefix(va, vb) {
   var i, n = Math.min(va.length, vb.length);
 
   for (i = 0; i < n; i++) {
-    if (va[i] === vb[i]) continue;
-    return i;
+    if (va[i] !== vb[i]) break;
   }
-  return n;
+  return i;
 }
 
 function sameSuffix(va, vb) {
@@ -86,12 +87,10 @@ function sameSuffix(va, vb) {
        c < n;
        c++, i--, j--) {
 
-    if (va[i] === vb[j]) continue;
-    console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-    console.log("fail to match:", va[i], "and", vb[j]);
-    return c;
+    if (va[i] !== vb[j]) break;
+
   }
-  return n;
+  return c;
 }
 
 function normCmp(a, b, name) {
@@ -101,12 +100,21 @@ function normCmp(a, b, name) {
       suflen = sameSuffix(va, vb),
       na = va.length,
       nb = vb.length;
+  var da = na - prelen - suflen;
 
   if (na === nb && nb === prelen && prelen === suflen) {
     console.log('pass', name);
   } else {
-    console.error('fail', name, na-prelen-suflen, "/", na);
-    console.log('----------------------------------------');
+    console.log('fail',
+                // mismatched range
+                '[' + prelen + ', ' + (na-suflen) + ')\t',
+                // length of the mismatched range
+                da + '\t',
+                // 1st mismatch from front
+                va[prelen], '<>', vb[prelen] + '\t',
+                // 1st mismatch from behind
+                va[na-suflen-1], '<>', vb[nb-suflen-1] + '\t',
+                name);
   }
 };
 
