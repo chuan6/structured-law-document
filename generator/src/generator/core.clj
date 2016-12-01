@@ -112,7 +112,7 @@
   (case (:token x)
     :条 [:section {:class "entry"
                    :id (id/encode-id (str \条 (id/nth-str (:nth x))))}
-         [:div {:class "entry-num"}
+         [:div {:class "entry-num n-i-o-t"}
           [:span (int (:nth x))]]
          [:div {:class "title"}
           [:p (:text x)]]
@@ -213,7 +213,7 @@
                 :onclick "void(0)" ; for iOS compatibility
                 }
       [:div {:class "entry"}
-       [:p {:id "ref-to-original" :class "not-in-original-text"}
+       [:p {:id "ref-to-original" :class "n-i-o-t"}
         "原文请见："
         [:a {:href link-to-original :target "_blank"}
          (str (-> link-to-original
@@ -268,7 +268,7 @@
                             (default-fn txt))
                      wrapped-elmt (cond-> elmt
                                     (:not-in-original-text tl)
-                                    (add-html-class "not-in-original-text"))]
+                                    (add-html-class "n-i-o-t"))]
                  (recur (rest tls) (conj elmts wrapped-elmt))))))))
       [:div {:id "wxdyh_qrcode"}
        [:img {:src "images/wxdyh_qrcode.jpg"

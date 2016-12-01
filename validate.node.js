@@ -52,7 +52,7 @@ function norm(s) {
     case ',':
       d = '，'; break;
     case ';':
-      d = '；'; break
+      d = '；'; break;
     default:
       d = doSkip(c)? '' : c;
       break;
@@ -62,50 +62,88 @@ function norm(s) {
   return cv.join('');
 }
 
-function getReady(href, name) {
-  var mainNode = function (w) {
-    return w.document.querySelector('.entries-container');
-  };
-  var inOriginal = withClassPred('not-in-original-text');
-
-  dom.env({
-    file: href,
-    done: function (err, window) {
-      var fromHTML;
-
-      if (err) throw err;
-
-      fromHTML = norm(domText(mainNode(window), inOriginal));
-
-      fs.readFile(
-        'generator/resources/' + name + '.txt',
-        'utf8',
-        function (err, data) {
-          var fromTXT, isEqual;
-
-          if (err) console.log(err);
-
-          fromTXT = norm(data);
-          isEqual = (fromTXT === fromHTML);
-          if (isEqual) {
-            console.log('pass', name);
-          } else {
-            console.error('fail', name);
-          }
-        }
-      );
-    }
-  });
+function getTextFromHTML(w) {
+  var mainNode = w.document.querySelector('.entries-container'),
+      ignore = withClassPred('n-i-o-t');
+  return domText(mainNode, ignore);
 }
 
-dom.env('index.html', function (err, window) {
-  var entries, e, i;
+function samePrefix(va, vb) {
+  var i, n = Math.min(va.length, vb.length);
 
-  if (err) throw err;
-
-  entries = window.document.querySelectorAll('.entry a');
-  for (i = 0; i < entries.length; i++) {
-    e = entries[i];
-    getReady(e.getAttribute('href'), e.textContent);
+  for (i = 0; i < n; i++) {
+    if (va[i] !== vb[i]) break;
   }
-});
+  return i;
+}
+
+function sameSuffix(va, vb) {
+  var c, i, j;
+  var na = va.length, nb = vb.length, n = Math.min(na, nb);
+
+  for (c = 0, i = na-1, j = nb-1;
+       c < n;
+       c++, i--, j--) {
+
+    if (va[i] !== vb[j]) break;
+
+  }
+  return c;
+}
+
+function normCmp(a, b, name) {
+  var va = Array.from(norm(a)),
+      vb = Array.from(norm(b));
+  var prelen = samePrefix(va, vb),
+      suflen = sameSuffix(va, vb),
+      na = va.length,
+      nb = vb.length;
+  var da = na - prelen - suflen;
+
+  if (na === nb && nb === prelen && prelen === suflen) {
+    console.log('pass', name);
+  } else {
+    console.log('fail',
+                // mismatched range
+                '[' + prelen + ', ' + (na-suflen) + ')\t',
+                // length of the mismatched range
+                da + '\t',
+                // 1st mismatch from front
+                va[prelen], '<>', vb[prelen] + '\t',
+                // 1st mismatch from behind
+                va[na-suflen-1], '<>', vb[nb-suflen-1] + '\t',
+                name);
+  }
+};
+
+function makeCallback(f, y, z) {
+  return function (err, x) {
+    if (err) throw err;
+    f(x, y, z);
+  };
+}
+
+function readTXTAndCompare(w, name) {
+  var fromHTML = getTextFromHTML(w);
+
+  fs.readFile(
+    'generator/resources/' + name + '.txt',
+    'utf8',
+    makeCallback(normCmp, fromHTML, name)
+  );
+}
+
+function goThroughRefs(w) {
+  var entries, ref, i;
+
+  entries = w.document.querySelectorAll('.entry a');
+  for (i = 0; i < entries.length; i++) {
+    ref = entries[i];
+    dom.env({
+      file: ref.getAttribute('href'),
+      done: makeCallback(readTXTAndCompare, ref.textContent)
+    });
+  }
+}
+
+dom.env('index.html', makeCallback(goThroughRefs));
