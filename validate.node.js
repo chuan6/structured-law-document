@@ -52,7 +52,7 @@ function norm(s) {
     case ',':
       d = '，'; break;
     case ';':
-      d = '；'; break
+      d = '；'; break;
     default:
       d = doSkip(c)? '' : c;
       break;
@@ -64,15 +64,49 @@ function norm(s) {
 
 function getTextFromHTML(w) {
   var mainNode = w.document.querySelector('.entries-container'),
-      ignore = withClassPred('not-in-original-text');
+      ignore = withClassPred('n-i-o-t');
   return domText(mainNode, ignore);
 }
 
+function samePrefix(va, vb) {
+  var i, n = Math.min(va.length, vb.length);
+
+  for (i = 0; i < n; i++) {
+    if (va[i] === vb[i]) continue;
+    return i;
+  }
+  return n;
+}
+
+function sameSuffix(va, vb) {
+  var c, i, j;
+  var na = va.length, nb = vb.length, n = Math.min(na, nb);
+
+  for (c = 0, i = na-1, j = nb-1;
+       c < n;
+       c++, i--, j--) {
+
+    if (va[i] === vb[j]) continue;
+    console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+    console.log("fail to match:", va[i], "and", vb[j]);
+    return c;
+  }
+  return n;
+}
+
 function normCmp(a, b, name) {
-  if (norm(a) === norm(b)) {
+  var va = Array.from(norm(a)),
+      vb = Array.from(norm(b));
+  var prelen = samePrefix(va, vb),
+      suflen = sameSuffix(va, vb),
+      na = va.length,
+      nb = vb.length;
+
+  if (na === nb && nb === prelen && prelen === suflen) {
     console.log('pass', name);
   } else {
-    console.error('fail', name);
+    console.error('fail', name, na-prelen-suflen, "/", na);
+    console.log('----------------------------------------');
   }
 };
 
