@@ -53,8 +53,6 @@ function norm(s) {
       d = '，'; break;
     case ';':
       d = '；'; break;
-    case '.':
-      d = '．'; break;
     default:
       d = doSkip(c)? '' : c;
       break;
