@@ -319,16 +319,17 @@ nav>ul { padding: 0.5em 1em }
   }
 
   .entry-num {
-    display: block;
-    position: absolute;
-    right: 0;
+    display: block; /* none -> block */
+    float: right;
+    margin-right: -5em;
     width: 18pt; /* 3*(5+1) = 18 */
     text-align: right;
     letter-spacing: 0;
   }
 
   .entry-num:first-child {
-    left: 0;
+    float: left;
+    margin-left: -5em;
     text-align: left;
   }
 
