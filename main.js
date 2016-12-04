@@ -524,29 +524,30 @@ var qrcodeGenerator = (function () {
   };
 })();
 
-if ("onbeforeprint" in window && "onafterprint" in window) {
-  window.onbeforeprint = function () {
-    var es = document.getElementsByClassName("entry");
-    printNum.addTo(es);
-    qrcodeGenerator.show();
-  };
-  window.onafterprint = function () {
-    var es = document.getElementsByClassName("entry");
-    printNum.rmFrom(es);
-    qrcodeGenerator.clear();
-  };
-} else if ("matchMedia" in window) {
-  window.matchMedia("print").addListener(function (pe) {
-    var es = document.getElementsByClassName("entry");
-
-    if (pe.matches) {
+var printHandler = (function () {
+  var es;
+  return {
+    before: function () {
+      es = document.getElementsByClassName("entry");
+      if (es.length === 0) return;
       printNum.addTo(es);
       qrcodeGenerator.show();
-    }
-    else {
+    },
+    after: function () {
+      if (!es) return;
       printNum.rmFrom(es);
       qrcodeGenerator.clear();
     }
+  };
+})();
+
+if ("onbeforeprint" in window && "onafterprint" in window) {
+  window.onbeforeprint = printHandler.before;
+  window.onafterprint = printHandler.after;
+} else if ("matchMedia" in window) {
+  window.matchMedia("print").addListener(function (pe) {
+    if (pe.matches) printHandler.before();
+    else printHandler.after();
   });
 }
 

@@ -319,16 +319,17 @@ nav>ul { padding: 0.5em 1em }
   }
 
   .entry-num {
-    display: block;
-    position: absolute;
-    right: 0;
+    display: block; /* none -> block */
+    float: right;
+    margin-right: -11em;
     width: 18pt; /* 3*(5+1) = 18 */
     text-align: right;
     letter-spacing: 0;
   }
 
   .entry-num:first-child {
-    left: 0;
+    float: left;
+    margin-left: -11em;
     text-align: left;
   }
 
@@ -382,4 +383,32 @@ nav>ul { padding: 0.5em 1em }
     padding: 0;
   }
   #wxdyh_qrcode>img { border: 0.2pt solid #44b549; }
+}
+
+/*
+when the paper width is less than or equal to the
+width of an A5 paper, use the following style
+to accommodate the shrink in available space.
+
+Note: Unlike Firefox and Edge, Chrome doesn't respect the
+set pico point size. Instead, it seems to have 483px for
+A5's width, and 717px for A4's width.
+*/
+@media print and (max-width: 420pt) {
+  .entries-container {
+    max-width: 29.7em; /* 33 - 1.1*4 = 29.7 */
+  }
+  #the-title { font-size: 20pt; }
+  .编 { font-size: 16pt; }
+  .章 { font-size: 12pt; }
+  .节 {
+    font-size: 12pt;
+    font-weight: normal;
+  }
+  .entry-num {
+    margin-right: -3em;
+  }
+  .entry-num:first-child {
+    margin-left: -3em;
+  }
 }
