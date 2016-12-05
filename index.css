@@ -319,12 +319,19 @@ nav>ul { padding: 0.5em 1em }
 
   .entry-wrapper { width: 100%; }
   .entry-wrapper td { vertical-align: top; }
-  .entry-wrapper td:first-child { text-align: left; }
-  .entry-wrapper td:nth-child(3) { text-align: right; }
+  .entry-wrapper td:first-child {
+    text-align: left;
+    width: 18pt;
+  }
+  .entry-wrapper td:nth-child(3) {
+    text-align: right;
+    width: 18pt;
+  }
 
   .entry-num {
     display: block; /* none -> block */
-    min-width: 18pt; /* 3*(5+1) = 18 */
+    width: 100%;
+    line-height: 2em;
     letter-spacing: 0;
   }
 
