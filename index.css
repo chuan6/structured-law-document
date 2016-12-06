@@ -290,6 +290,7 @@ nav>ul { padding: 0.5em 1em }
   #the-title {
     font-family: "华文中宋";
     font-size: 22pt;
+    font-weight: normal;
   }
   #the-title+hr {
     border: 0.1pt solid red;
@@ -299,14 +300,9 @@ nav>ul { padding: 0.5em 1em }
     font-family: "黑体", "Noto Sans CJK SC", sans-serif;
   }
 
-  .编 { font-size: 18pt; }
-
-  .章 { font-size: 14pt; }
-
-  .节 {
-    font-size: 14pt;
-    font-weight: normal;
-  }
+  .编 { font-size: 18pt; font-weight: normal; }
+  .章 { font-size: 14pt; font-weight: normal; }
+  .节 { font-size: 14pt; font-weight: normal; }
 
   .entry {
     margin-top: 0;
