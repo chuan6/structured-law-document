@@ -455,27 +455,54 @@ tapOn(window, tapHandler, true);
 /*
  The following code transforms page for print media.
  Require browsers' support for window.matchMedia("print").
-*/
+ */
+
+function tabulateATriple(a, b, c) {
+  var table = document.createElement("TABLE"),
+      tr = document.createElement("TR"),
+      appendCell = function (row, x) {
+        var td = document.createElement("TD");
+        td.appendChild(x);
+        row.appendChild(td);
+      };
+
+  appendCell(tr, a);
+  appendCell(tr, b);
+  appendCell(tr, c);
+  table.appendChild(tr);
+  return table;
+}
+
 var printNum = (function () {
-  var firstENum = function (entry) {
-    return entry.querySelector(".entry-num");
+  var parent = function (e) {
+    return e.parentNode;
   };
-  var addAnother = function (p, x) {
-    if (x) p.insertBefore(x.cloneNode(true), x);
+  var wrap = function (e, p) {
+    var wrapper,
+        ec = e.cloneNode(true),
+        en = e.querySelector(".entry-num"),
+        enl = en.cloneNode(true),
+        enr = en.cloneNode(true);
+
+    wrapper = tabulateATriple(enl, ec, enr);
+    wrapper.className = "entry-wrapper";
+    p.replaceChild(wrapper, e);
   };
-  var remove = function (p, x) {
-    if (x) p.removeChild(x);
+  var unwrap = function (wrapper, p) {
+    var e = wrapper.querySelector(".entry");
+
+    p.replaceChild(e, wrapper);
   };
 
   return {
     addTo: function (es) {
       // add a copy for each entry-num element so that
       // the entry-num can be print on both hands of a page
-      iter(es, addAnother, firstENum);
+      iter(es, wrap, parent);
     },
     rmFrom: function (es) {
       // remove the inserted entry-num elements
-      iter(es, remove, firstENum);
+      iter(es, unwrap, parent);
     }
   };
 })();
@@ -525,17 +552,16 @@ var qrcodeGenerator = (function () {
 })();
 
 var printHandler = (function () {
-  var es;
   return {
     before: function () {
-      es = document.getElementsByClassName("entry");
+      var es = document.querySelectorAll("section[class=entry]");
       if (es.length === 0) return;
       printNum.addTo(es);
       qrcodeGenerator.show();
     },
     after: function () {
-      if (!es) return;
-      printNum.rmFrom(es);
+      var ews = document.querySelectorAll(".entry-wrapper");
+      printNum.rmFrom(ews);
       qrcodeGenerator.clear();
     }
   };

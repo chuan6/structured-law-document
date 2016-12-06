@@ -59,7 +59,7 @@ h1, h2, h3, h4 {
   margin: 0 auto;
   padding: 0 0.5em;
   background-color: inherit;
-  max-width: 32em;
+  max-width: 503.4px; /* 16*(1.05*28 + 2) + 1(border-left) */
 }
 
 #back-button, #share-button, #cancel-overlay, #do-copy {
@@ -253,8 +253,12 @@ nav>ul { padding: 0.5em 1em }
 }
 
 @media print {
-  .entries-container { max-width: 33em; }
-
+  .entries-container { max-width: none; }
+  .entries-container>div, .entries-container>p {
+    max-width: 31.4em;
+    margin-left: auto;
+    margin-right: auto;
+  }
   .li-head { page-break-inside: avoid;}
 
   #toc, #the-preface { page-break-after: always; }
@@ -270,7 +274,7 @@ nav>ul { padding: 0.5em 1em }
   body {
     font-size: 10pt;
     font-family: "AR PL UMing CN", SimSun, "宋体", serif;
-    letter-spacing: 0.5pt;
+    letter-spacing: 0.5pt; /* 10 * 0.05 = 0.5 */
   }
 
   p { text-indent: 2.2em; }
@@ -306,7 +310,9 @@ nav>ul { padding: 0.5em 1em }
   }
 
   .entry {
+    margin: 0 auto;
     border-left: 0.2pt solid red;
+    max-width: 31.4em;
   }
 
   .entry a {
@@ -318,20 +324,25 @@ nav>ul { padding: 0.5em 1em }
     border-bottom: 0.2pt solid blue;
   }
 
+  .entry-wrapper { width: 100%; }
+  .entry-wrapper td { vertical-align: top; }
+  .entry-wrapper td:first-child {
+    text-align: left;
+    width: 18pt;
+  }
+  .entry-wrapper td:nth-child(3) {
+    text-align: right;
+    width: 18pt;
+  }
+
   .entry-num {
     display: block; /* none -> block */
-    float: right;
-    margin-right: -11em;
-    width: 18pt; /* 3*(5+1) = 18 */
-    text-align: right;
+    width: 100%;
+    line-height: 2em;
     letter-spacing: 0;
   }
 
-  .entry-num:first-child {
-    float: left;
-    margin-left: -11em;
-    text-align: left;
-  }
+  .entry>.entry-num { display: none; }
 
   .li-head>a {
     border-bottom: none;
@@ -358,9 +369,10 @@ nav>ul { padding: 0.5em 1em }
     min-width: 0;
   }
 
-  /* sorry for the magic/fragile number 4, wish
-     there is a selector for the nth class :( */
-  .款:nth-child(4)>p:first-child {
+  /* 3 is for the first .款 after .entry-num and .title.
+     Sorry for the magic/fragile number 4,
+     wish there is a selector for the nth class :( */
+  .款:nth-child(3)>p:first-child {
     text-indent: 0;
   }
 
@@ -383,32 +395,4 @@ nav>ul { padding: 0.5em 1em }
     padding: 0;
   }
   #wxdyh_qrcode>img { border: 0.2pt solid #44b549; }
-}
-
-/*
-when the paper width is less than or equal to the
-width of an A5 paper, use the following style
-to accommodate the shrink in available space.
-
-Note: Unlike Firefox and Edge, Chrome doesn't respect the
-set pico point size. Instead, it seems to have 483px for
-A5's width, and 717px for A4's width.
-*/
-@media print and (max-width: 420pt) {
-  .entries-container {
-    max-width: 29.7em; /* 33 - 1.1*4 = 29.7 */
-  }
-  #the-title { font-size: 20pt; }
-  .编 { font-size: 16pt; }
-  .章 { font-size: 12pt; }
-  .节 {
-    font-size: 12pt;
-    font-weight: normal;
-  }
-  .entry-num {
-    margin-right: -3em;
-  }
-  .entry-num:first-child {
-    margin-left: -3em;
-  }
 }
