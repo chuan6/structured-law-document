@@ -7,6 +7,9 @@
 
 (def name-link-pairs
   [
+   ["治安管理处罚法"
+    "http://www.npc.gov.cn/wxzl/gongbao/2013-02/25/content_1790854.htm"]
+
    ["上海市网络预约出租汽车经营服务管理若干规定（草案）"
     "http://jtj.sh.gov.cn/jtw/gsgg/n39/u1ai51894.html"]
 
