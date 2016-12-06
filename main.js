@@ -554,7 +554,9 @@ var qrcodeGenerator = (function () {
 var printHandler = (function () {
   return {
     before: function () {
-      var es = document.querySelectorAll("section[class=entry]");
+      var es = document.querySelectorAll(
+        "section[class=entry]:not(#the-preface)"
+      );
       if (es.length === 0) return;
       printNum.addTo(es);
       qrcodeGenerator.show();

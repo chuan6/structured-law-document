@@ -159,8 +159,7 @@
    [:h2 {:class "章"}
     (:text t)]
    (for [{tx :text} ts]
-     [:div {:class "款"}
-      [:p tx]])])
+     [:p tx])])
 
 (defn- html-head [title css & scripts]
   [:head {:lang "zh-CN"}
