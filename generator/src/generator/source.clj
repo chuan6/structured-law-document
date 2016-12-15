@@ -7,6 +7,9 @@
 
 (def name-link-pairs
   [
+   ["互联网直播服务管理规定"
+    "http://www.cac.gov.cn/2016-11/04/c_1119846202.htm"]
+
    ["治安管理处罚法"
     "http://www.npc.gov.cn/wxzl/gongbao/2013-02/25/content_1790854.htm"]
 
