@@ -5,82 +5,70 @@ body {
   margin: 0 auto;
   background-color: white;
 }
-h1,
-h2,
-h3,
-h4 {
+
+h1, h2, h3, h4 {
   margin: 0;
 }
-.title,
-.款,
-.项 {
+
+.title, .款, .项 {
   margin: 0;
   padding: 0;
 }
-#ref-to-original,
-#the-preface > p,
-.title > p:first-child,
-.款 > p,
-.项 > p,
-.目 > p {
+
+#ref-to-original, #the-preface>p, .title>p:first-child, .款>p, .项>p, .目>p {
   margin: 0;
   padding: 0.5em 1em;
 }
-.款 > p:not(:first-child),
-.项 > p:not(:first-child) {
+
+.款>p:not(:first-child), .项>p:not(:first-child) {
   text-indent: 1em;
 }
+
 .目 {
   margin: 0;
   padding-left: 1em;
 }
-.目 > p {
-  /* 目头罗马数字字符为半角，进 0.5em 正好占一字全长 */
+
+.目>p { /* 目头罗马数字字符为半角，进 0.5em 正好占一字全长 */
   text-indent: 0.5em;
 }
-#the-title,
-.编 {
+
+#the-title, .编 {
   font-family: "AR PL UMing CN", "华文中宋", "SimSun", "宋体", serif;
   font-weight: bold;
 }
-#the-title {
-  font-size: 24px;
-}
-.编 {
-  font-size: 22px;
-}
-.章 {
-  font-size: 20px;
-}
+#the-title { font-size: 24px; }
+.编        { font-size: 22px; }
+
+.章 { font-size: 20px; }
 .节 {
   font-family: "AR PL UKai CN", "KaiTi", "楷体", serif;
   font-size: 18px;
 }
+
 #the-title {
   color: red;
 }
-#the-title + hr {
+
+#the-title+hr {
   border: 0.5px solid red;
   margin: 0.33em 0;
 }
+
 .entries-container {
   margin: 0 auto;
   padding: 0 0.5em;
   background-color: inherit;
-  max-width: 503.4px;
-  /* 16*(1.05*28 + 2) + 1(border-left) */
+  max-width: 503.4px; /* 16*(1.05*28 + 2) + 1(border-left) */
 }
-#back-button,
-#share-button,
-#cancel-overlay,
-#do-copy {
+
+#back-button, #share-button, #cancel-overlay, #do-copy {
   border: none;
   outline: none;
   border-radius: 1.62em;
   height: 3.24em;
   width: 3.24em;
-  padding: 0;
-  /* eliminate default button style paddings */
+  padding: 0; /* eliminate default button style paddings */
   box-shadow: 0 0 1em grey;
   font-size: 100%;
   font-weight: bold;
@@ -88,12 +76,14 @@ h4 {
   text-align: center;
   text-decoration: none;
 }
+
 #back-button::-moz-focus-inner,
 #share-button::-moz-focus-inner,
 #cancel-overlay::-moz-focus-inner,
 #do-copy::-moz-focus-inner {
   border: none;
 }
+
 #back-button {
   position: fixed;
   background-color: rgba(255, 0, 0, 0.87);
@@ -102,6 +92,7 @@ h4 {
   bottom: 1em;
   z-index: 1000;
 }
+
 #share-button {
   position: absolute;
   background-color: rgba(0, 128, 0, 0.87);
@@ -109,27 +100,31 @@ h4 {
   right: 1em;
   z-index: 10;
 }
+
 #cancel-overlay {
-  background-color: #ff0000;
+  background-color: rgb(255, 0, 0);
   color: white;
 }
+
 #do-copy {
-  background-color: #008000;
+  background-color: rgb(0, 128, 0);
   color: white;
 }
-.entry,
-.title,
-nav {
+
+.entry, .title, nav {
   min-width: 256px;
 }
+
 .title {
   font-weight: bold;
 }
+
 .entry {
   margin: 1em 0;
   border-left: 1px solid red;
   line-height: 2;
 }
+
 .entry a {
   background-color: Azure;
   border-radius: 0.31em;
@@ -139,90 +134,74 @@ nav {
   margin: 0 0.2em;
   box-shadow: 0 0 0.2em silver;
 }
-.entry-num {
-  display: none;
-}
-#ref-to-original,
-#outline,
-#the-preface,
-.entry,
-.款,
-.项,
-.目 {
+
+.entry-num { display: none; }
+
+#ref-to-original, #outline, #the-preface, .entry, .款, .项, .目 {
   /* radius = (line-height + padding-top + padding-bottom) / 2
      so that for blocks that consists of only one line, the
      right border is perfectly round.
    */
-  border-top-right-radius: 0.75em;
-  /* (2 + 0.5*2) / 4 */
+  border-top-right-radius: 0.75em; /* (2 + 0.5*2) / 4 */
   border-bottom-right-radius: 0.75em;
   /* blur-radius = (line-height - font-height) / 2
      so that the shadow wouldn't extend to the other line,
      above or below.
    */
 }
-#ref-to-original:target,
-#outline:target,
-#the-preface:target,
-.entry:target,
-.款:target,
-.项:target,
-.目:target {
+
+#ref-to-original:target, #outline:target, #the-preface:target, .entry:target, .款:target, .项:target, .目:target {
   background-color: #FFFFD8;
   box-shadow: 0 0 0.31em silver;
 }
-#the-title,
-.编,
-.章,
-.节 {
+
+#the-title, .编, .章, .节 {
   line-height: 2;
   padding: 0.5em 1em;
   text-align: center;
 }
-#toc > h2 {
+
+#toc>h2 {
   padding-left: 3em;
   letter-spacing: 2em;
 }
+
 .li-head {
   display: flex;
   height: 1.7em;
   justify-content: space-between;
-  margin: 0.5em 0;
-  /* 1 - 0.5 = 0.5 */
+  margin: 0.5em 0; /* 1 - 0.5 = 0.5 */
   line-height: 1.5;
 }
+
 .li-head a {
   flex-shrink: 1;
   overflow: hidden;
   margin-left: 0;
 }
+
 .li-head span {
   margin-left: 0.25em;
   color: #BBB;
   flex-shrink: 0;
   align-self: center;
 }
-#the-title,
-.编,
-.章,
-.节 {
-  border-radius: 0.75em;
-  /* (2 + 0.5*2) / 4 */
+
+#the-title, .编, .章, .节 {
+  border-radius: 0.75em; /* (2 + 0.5*2) / 4 */
 }
-#the-title:target,
-.编:target,
-.章:target,
-.节:target {
+
+#the-title:target, .编:target, .章:target, .节:target {
   background-color: #FFFFD8;
   box-shadow: 0 0 0.31em silver;
 }
+
 nav ul {
   padding-left: 1em;
   list-style-type: none;
 }
-nav > ul {
-  padding: 0.5em 1em;
-}
+nav>ul { padding: 0.5em 1em }
+
 #overlay {
   position: fixed;
   display: none;
@@ -239,6 +218,7 @@ nav > ul {
   margin: 0;
   border: 0;
 }
+
 #share-text {
   /* Horizontal margin should be 0; the value is set
      dynamically. Using "auto" here allows centerring
@@ -254,114 +234,82 @@ nav > ul {
   word-wrap: break-word;
   word-break: break-all;
   overflow-y: scroll;
-  line-height: 1.5em;
-  /* as summary, shrink from 2em */
+  line-height: 1.5em; /* as summary, shrink from 2em */
   letter-spacing: 0.05em;
 }
-#overlay-button-panel > button {
+
+#overlay-button-panel>button {
   margin: 0 1em;
 }
-#qrcode {
-  display: none;
-}
+
+#qrcode { display: none; }
 #wxdyh_qrcode {
   text-align: center;
   padding: 1em;
 }
-#wxdyh_qrcode > img {
+#wxdyh_qrcode>img {
   width: 130px;
-  border: 1px solid #44b549;
-  /* 微信公众号网站主色 */
+  border: 1px solid #44b549; /* 微信公众号网站主色 */
 }
+
 @media print {
-  .entries-container {
-    max-width: none;
-  }
-  .entries-container > div,
-  .entries-container > p,
-  .编,
-  .章,
-  .节,
-  .entry {
-    max-width: 314pt;
-    /* width should remain the same across font-sizes */
+  .entries-container { max-width: none; }
+  .entries-container>div, .entries-container>p, .编, .章, .节, .entry {
+    max-width: 314pt; /* width should remain the same across font-sizes */
     margin-left: auto;
     margin-right: auto;
   }
-  .li-head {
-    page-break-inside: avoid;
-  }
-  #toc,
-  #the-preface {
-    page-break-after: always;
-  }
-  .编 {
-    page-break-before: always;
-  }
-  .章,
-  .节 {
-    page-break-after: avoid;
-  }
-  #back-button {
-    display: none;
-  }
-  #share-button {
-    display: none;
-  }
-  #ref-to-original {
-    display: none;
-  }
+  .li-head { page-break-inside: avoid;}
+
+  #toc, #the-preface { page-break-after: always; }
+
+  .编 { page-break-before: always; }
+
+  .章, .节 { page-break-after: avoid; }
+
+  #back-button { display: none; }
+  #share-button { display: none; }
+  #ref-to-original { display: none; }
+
   body {
     font-size: 10pt;
     font-family: "AR PL UMing CN", SimSun, "宋体", serif;
   }
-  p {
-    text-indent: 2.1em;
-  }
-  .title > p {
-    text-indent: 0;
-  }
-  .款 > p:not(:first-child),
-  .项 > p:not(:first-child) {
+
+  p { text-indent: 2.1em; }
+  .title>p { text-indent: 0; }
+  .款>p:not(:first-child), .项>p:not(:first-child){
     text-indent: 3.15em;
   }
-  #the-preface > p,
-  .title > p:first-child,
-  .款 > p,
-  .项 > p,
-  .目 > p {
+
+  #the-preface>p, .title>p:first-child, .款>p, .项>p, .目>p {
     margin: 0;
     padding: 0 1em;
   }
+
   #the-title {
     font-family: "华文中宋";
     font-size: 22pt;
     font-weight: normal;
   }
-  #the-title + hr {
+  #the-title+hr {
     border: 0.1pt solid red;
   }
-  .title,
-  .章 {
+
+  .title, .章 {
     font-family: "黑体", "Noto Sans CJK SC", sans-serif;
   }
-  .编 {
-    font-size: 18pt;
-    font-weight: normal;
-  }
-  .章 {
-    font-size: 14pt;
-    font-weight: normal;
-  }
-  .节 {
-    font-size: 14pt;
-    font-weight: normal;
-  }
+
+  .编 { font-size: 18pt; font-weight: normal; }
+  .章 { font-size: 14pt; font-weight: normal; }
+  .节 { font-size: 14pt; font-weight: normal; }
+
   .entry {
     margin-top: 0;
     margin-bottom: 0;
     border-left: 0.2pt solid red;
   }
+
   .entry a {
     background-color: transparent;
     box-shadow: none;
@@ -370,12 +318,9 @@ nav > ul {
     border-radius: 0;
     border-bottom: 0.2pt solid blue;
   }
-  .entry-wrapper {
-    width: 100%;
-  }
-  .entry-wrapper td {
-    vertical-align: top;
-  }
+
+  .entry-wrapper { width: 100%; }
+  .entry-wrapper td { vertical-align: top; }
   .entry-wrapper td:first-child {
     text-align: left;
     width: 18pt;
@@ -384,39 +329,35 @@ nav > ul {
     text-align: right;
     width: 18pt;
   }
+
   .entry-num {
-    display: block;
-    /* none -> block */
+    display: block; /* none -> block */
     width: 100%;
     line-height: 2em;
     letter-spacing: 0;
   }
-  .entry > .entry-num {
-    display: none;
-  }
-  .li-head > a {
+
+  .entry>.entry-num { display: none; }
+
+  .li-head>a {
     border-bottom: none;
   }
-  .li-head > span {
+
+  .li-head>span {
     color: black;
   }
+
   .li-head {
     border-bottom: 0.2pt solid #BBB;
   }
-  #ref-to-original:target,
-  #outline:target,
-  #the-preface:target,
-  .entry:target,
-  .款:target,
-  .项:target,
-  .目:target,
-  #the-title:target,
-  .编:target,
-  .章:target,
-  .节:target {
+
+  #ref-to-original:target, #outline:target, #the-preface:target,
+  .entry:target, .款:target, .项:target, .目:target,
+  #the-title:target, .编:target, .章:target, .节:target {
     background-color: transparent;
     box-shadow: none;
   }
+
   .title {
     float: left;
     min-height: 0;
@@ -426,12 +367,14 @@ nav > ul {
        may not respect the set font-size. */
     font-weight: normal;
   }
+
   /* 3 is for the first .款 after .entry-num and .title.
      Sorry for the magic/fragile number 4,
      wish there is a selector for the nth class :( */
-  .款:nth-child(3) > p:first-child {
+  .款:nth-child(3)>p:first-child {
     text-indent: 0;
   }
+
   #qrcode {
     display: block;
     text-align: right;
@@ -440,9 +383,8 @@ nav > ul {
     bottom: 1em;
     width: 45%;
   }
-  #qrcode svg {
-    border: 0.2pt solid blue;
-  }
+  #qrcode svg { border: 0.2pt solid blue; }
+
   #wxdyh_qrcode {
     position: absolute;
     text-align: left;
@@ -451,7 +393,5 @@ nav > ul {
     width: 45%;
     padding: 0;
   }
-  #wxdyh_qrcode > img {
-    border: 0.2pt solid #44b549;
-  }
+  #wxdyh_qrcode>img { border: 0.2pt solid #44b549; }
 }
