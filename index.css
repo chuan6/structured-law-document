@@ -358,8 +358,6 @@ nav > ul {
     font-weight: normal;
   }
   .entry {
-    margin-top: 0;
-    margin-bottom: 0;
     border-left: 0.2pt solid red;
   }
   .entry a {
@@ -370,6 +368,21 @@ nav > ul {
     border-radius: 0;
     border-bottom: 0.2pt solid blue;
   }
+  .entry-num {
+    display: block;
+    position: absolute;
+    right: 0;
+    width: 18pt;
+    /* 3*(5+1) = 18 */
+    text-align: right;
+    letter-spacing: 0;
+    line-height: 2em;
+  }
+  .entry-num:first-child {
+    left: 0;
+    text-align: left;
+  }
+  /* .entry-wrapper only appear in the Firefox specific solution */
   .entry-wrapper {
     width: 100%;
   }
@@ -383,16 +396,6 @@ nav > ul {
   .entry-wrapper td:nth-child(3) {
     text-align: right;
     width: 18pt;
-  }
-  .entry-num {
-    display: block;
-    /* none -> block */
-    width: 100%;
-    line-height: 2em;
-    letter-spacing: 0;
-  }
-  .entry > .entry-num {
-    display: none;
   }
   .li-head > a {
     border-bottom: none;
@@ -427,9 +430,9 @@ nav > ul {
     font-weight: normal;
   }
   /* 3 is for the first .款 after .entry-num and .title.
-     Sorry for the magic/fragile number 4,
+     Sorry for the magic/fragile number,
      wish there is a selector for the nth class :( */
-  .款:nth-child(3) > p:first-child {
+  .款:nth-child(4) > p:first-child {
     text-indent: 0;
   }
   #qrcode {
