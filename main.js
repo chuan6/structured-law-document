@@ -471,6 +471,21 @@ function mergeStyle(element, styleMap) {
   }
 }
 
+var textIndentOfTheFirstP = (function () {
+  var theFirstP = function (e) {
+    return e.querySelector(".款")
+            .querySelector("p:first-child");
+  };
+  return {
+    remove: function (e) {
+      theFirstP(e).style["text-indent"] = 0;
+    },
+    reset: function (e) {
+      theFirstP(e).style["text-indent"] = "";
+    }
+  }
+})();
+
 function tabulateATriple(a, b, c) {
   var table = document.createElement("TABLE"),
     tr = document.createElement("TR"),
@@ -506,6 +521,7 @@ var printNumInFirefox = (function () {
 
     mergeStyle(ec, { "margin-top": 0, "margin-bottom": 0 });
     ec.querySelector(".entry-num").style.display = "none";
+    textIndentOfTheFirstP.remove(ec);
     mergeStyle(enl, enstyle);
     mergeStyle(enr, enstyle);
 
@@ -513,10 +529,11 @@ var printNumInFirefox = (function () {
     wrapper.className = "entry-wrapper";
     p.replaceChild(wrapper, e);
   };
-  var unwrap = function (wrapper, p) {
+  var reset = function (wrapper, p) {
     var e = wrapper.querySelector(".entry");
 
     mergeStyle(e, { "margin-top": "", "margin-bottom": "" });
+    textIndentOfTheFirstP.reset(e);
     p.replaceChild(e, wrapper);
   };
 
@@ -528,7 +545,7 @@ var printNumInFirefox = (function () {
     },
     rmFrom: function (es) {
       // remove the inserted entry-num elements
-      iter(es, unwrap, parent);
+      iter(es, reset, parent);
     }
   };
 })();
@@ -540,9 +557,11 @@ var printNum =
         return entry.querySelector(".entry-num");
       };
       var addAnother = function (p, x) {
+        textIndentOfTheFirstP.remove(p);
         if (x) p.insertBefore(x.cloneNode(true), x);
       };
-      var remove = function (p, x) {
+      var reset = function (p, x) {
+        textIndentOfTheFirstP.reset(p);
         if (x) p.removeChild(x);
       };
 
@@ -554,7 +573,7 @@ var printNum =
         },
         rmFrom: function (es) {
           // remove the inserted entry-num elements
-          iter(es, remove, firstENum);
+          iter(es, reset, firstENum);
         }
       };
     })();
@@ -630,6 +649,3 @@ if ("onbeforeprint" in window && "onafterprint" in window) {
     else printHandler.after();
   });
 }
-
-
-
