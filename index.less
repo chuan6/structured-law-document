@@ -1,6 +1,8 @@
+@rsize: 16px;
+
 body {
   font-family: "Noto Sans CJK SC", sans-serif;
-  font-size: 16px;
+  font-size: @rsize;
   letter-spacing: 0.05em;
   margin: 0 auto;
   background-color: white;
@@ -37,13 +39,13 @@ h1, h2, h3, h4 {
   font-family: "AR PL UMing CN", "华文中宋", "SimSun", "宋体", serif;
   font-weight: bold;
 }
-#the-title { font-size: 24px; }
-.编        { font-size: 22px; }
+#the-title { font-size: @rsize + 8; }
+.编        { font-size: @rsize + 6; }
 
-.章 { font-size: 20px; }
+.章 { font-size: @rsize + 4; }
 .节 {
   font-family: "AR PL UKai CN", "KaiTi", "楷体", serif;
-  font-size: 18px;
+  font-size: @rsize + 2;
 }
 
 #the-title {
@@ -230,7 +232,7 @@ nav>ul { padding: 0.5em 1em }
   border: 1px solid silver;
   box-shadow: 0 0 0.5em silver;
   font-family: "Noto Sans CJK SC", sans-serif;
-  font-size: 16px;
+  font-size: @rsize;
   word-wrap: break-word;
   word-break: break-all;
   overflow-y: scroll;
@@ -253,6 +255,8 @@ nav>ul { padding: 0.5em 1em }
 }
 
 @media print {
+  @rsize: 10pt;
+
   .entries-container { max-width: none; }
   .entries-container>div, .entries-container>p, .编, .章, .节, .entry {
     max-width: 314pt; /* width should remain the same across font-sizes */
@@ -272,7 +276,7 @@ nav>ul { padding: 0.5em 1em }
   #ref-to-original { display: none; }
 
   body {
-    font-size: 10pt;
+    font-size: @rsize;
     font-family: "AR PL UMing CN", SimSun, "宋体", serif;
   }
 
@@ -289,7 +293,7 @@ nav>ul { padding: 0.5em 1em }
 
   #the-title {
     font-family: "华文中宋";
-    font-size: 22pt;
+    font-size: @rsize + 12;
     font-weight: normal;
   }
   #the-title+hr {
@@ -300,9 +304,9 @@ nav>ul { padding: 0.5em 1em }
     font-family: "黑体", "Noto Sans CJK SC", sans-serif;
   }
 
-  .编 { font-size: 18pt; font-weight: normal; }
-  .章 { font-size: 14pt; font-weight: normal; }
-  .节 { font-size: 14pt; font-weight: normal; }
+  .编 { font-size: @rsize + 8; font-weight: normal; }
+  .章 { font-size: @rsize + 4; font-weight: normal; }
+  .节 { font-size: @rsize + 4; font-weight: normal; }
 
   .entry {
     border-left: 0.2pt solid red;
@@ -321,7 +325,7 @@ nav>ul { padding: 0.5em 1em }
     display: block;
     position: absolute;
     right: 0;
-    width: 18pt; /* 3*(5+1) = 18 */
+    width: 3 * @rsize/2;
     text-align: right;
     letter-spacing: 0;
     line-height: 2em;
@@ -342,7 +346,7 @@ nav>ul { padding: 0.5em 1em }
   .entry-wrapper td { vertical-align: top; }
   .entry-wrapper td:first-child,
   .entry-wrapper td:nth-child(3) {
-    width: 18pt;
+    width: 3 * @rsize/2;
   }
 
   .li-head>a {

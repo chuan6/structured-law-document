@@ -372,8 +372,7 @@ nav > ul {
     display: block;
     position: absolute;
     right: 0;
-    width: 18pt;
-    /* 3*(5+1) = 18 */
+    width: 15pt;
     text-align: right;
     letter-spacing: 0;
     line-height: 2em;
@@ -394,7 +393,7 @@ nav > ul {
   }
   .entry-wrapper td:first-child,
   .entry-wrapper td:nth-child(3) {
-    width: 18pt;
+    width: 15pt;
   }
   .li-head > a {
     border-bottom: none;
