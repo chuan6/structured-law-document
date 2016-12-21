@@ -385,16 +385,15 @@ nav > ul {
   /* .entry-wrapper only appear in the Firefox specific solution */
   .entry-wrapper {
     width: 100%;
+    border-collapse: collapse;
+    margin: 1em 0;
+    padding: 0;
   }
   .entry-wrapper td {
     vertical-align: top;
   }
-  .entry-wrapper td:first-child {
-    text-align: left;
-    width: 18pt;
-  }
+  .entry-wrapper td:first-child,
   .entry-wrapper td:nth-child(3) {
-    text-align: right;
     width: 18pt;
   }
   .li-head > a {

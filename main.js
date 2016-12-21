@@ -464,10 +464,14 @@ function isFirefox(ua) {
   return p.test(ua);
 }
 
-function mergeStyle(element, styleMap) {
-  var s;
-  for (s in styleMap) {
-    element.style[s] = styleMap[s];
+function mergeStyle(element) {
+  var styleMaps = [].slice.call(arguments, 1);
+  var i, s;
+
+  for (i = 0; i < styleMaps.length; i++) {
+    for (s in styleMaps[i]) {
+      element.style[s] = styleMaps[i][s];
+    }
   }
 }
 
@@ -522,8 +526,8 @@ var printNumInFirefox = (function () {
     mergeStyle(ec, { "margin-top": 0, "margin-bottom": 0 });
     ec.querySelector(".entry-num").style.display = "none";
     textIndentOfTheFirstP.remove(ec);
-    mergeStyle(enl, enstyle);
-    mergeStyle(enr, enstyle);
+    mergeStyle(enl, enstyle, { "text-align": "left" });
+    mergeStyle(enr, enstyle, { "text-align": "right" });
 
     wrapper = tabulateATriple(enl, ec, enr);
     wrapper.className = "entry-wrapper";
