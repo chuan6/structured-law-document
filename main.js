@@ -18,9 +18,9 @@ function getSymbols(string) {
     if (charCode >= 0xD800 && charCode <= 0xDBFF) {
       charCode = string.charCodeAt(index + 1);
       if (charCode >= 0xDC00 && charCode <= 0xDFFF) {
-	output.push(string.slice(index, index + 2));
-	++index;
-	continue;
+        output.push(string.slice(index, index + 2));
+        ++index;
+        continue;
       }
     }
     output.push(string.charAt(index));
@@ -34,7 +34,7 @@ function strSlice(s, end) {
   var c, i = 0;
 
   s = getSymbols(s);
-  for(i = 0; i < s.length; i++) {
+  for (i = 0; i < s.length; i++) {
     c = s[i];
     if (i < end) {
       s1 += c;
@@ -50,7 +50,7 @@ function decodedPathname(u) {
   var isDecoded = function (s) {// ad-hoc
     return s.indexOf("%") === -1;
   };
-  return isDecoded(u)? u : decodeURIComponent(u);
+  return isDecoded(u) ? u : decodeURIComponent(u);
 }
 
 function px(x) {
@@ -58,26 +58,26 @@ function px(x) {
 }
 
 function horizontalExtra(computed, withMargin) {
-  var f = (withMargin===undefined? true : withMargin);
-  var x =  parseFloat(f? computed.marginLeft : "0")
-        + parseFloat(f? computed.marginRight : "0")
-        + parseFloat(computed.borderLeftWidth)
-        + parseFloat(computed.borderRightWidth)
-        + parseFloat(computed.paddingLeft)
-        + parseFloat(computed.paddingRight);
+  var f = (withMargin === undefined ? true : withMargin);
+  var x = parseFloat(f ? computed.marginLeft : "0")
+    + parseFloat(f ? computed.marginRight : "0")
+    + parseFloat(computed.borderLeftWidth)
+    + parseFloat(computed.borderRightWidth)
+    + parseFloat(computed.paddingLeft)
+    + parseFloat(computed.paddingRight);
   return x;
 }
 
 function getEnclosingID(elmt) {
-  return elmt.id || (elmt.parentNode? getEnclosingID(elmt.parentNode) : null);
+  return elmt.id || (elmt.parentNode ? getEnclosingID(elmt.parentNode) : null);
 }
 
 function textContent(x) {
   var acc = (function () {
     var s = "";
     return {
-      fn: function(neglect, t) { s += t; },
-      ret: function() { return s; }
+      fn: function (neglect, t) { s += t; },
+      ret: function () { return s; }
     };
   })();
 
@@ -119,7 +119,7 @@ function backButtonClosure(elmt) {
   };
 
   updateHref("");
-  stack = [{id: "", y: 0}];
+  stack = [{ id: "", y: 0 }];
 
   return {
     element: elmt,
@@ -129,7 +129,7 @@ function backButtonClosure(elmt) {
 
       // only push new id that is different from the top
       if (!curr || curr.id !== id) {
-        stack.push({"id": id, "y": y});
+        stack.push({ "id": id, "y": y });
         updateHref(id);
       }
     },
@@ -139,7 +139,7 @@ function backButtonClosure(elmt) {
       if (stack.length > 1) stack.pop();
 
       curr = top();
-      updateHref(curr? curr.id : "");
+      updateHref(curr ? curr.id : "");
     }
   };
 }
@@ -150,28 +150,28 @@ function shareButtonClosure(elmt) {
   var trimEndingBar = function (txt) {
     // assume that the "//" would never be in original text
     var bar = "▶", n = bar.length;
-    return txt.endsWith(bar)? txt.slice(0, txt.length-n) : txt;
+    return txt.endsWith(bar) ? txt.slice(0, txt.length - n) : txt;
   };
 
   var loc2name = function (loc) {
     var dp = decodedPathname(loc.pathname);
     var s = "/", t = ".html";
 
-    dp = dp.endsWith(t)? dp.slice(0, dp.length - t.length) : dp;
+    dp = dp.endsWith(t) ? dp.slice(0, dp.length - t.length) : dp;
     dp = dp.split(s).pop();
 
     var uh = loc.hash.slice(1).replace(/\./gi, "%");
     var dh = decodeURIComponent(uh);
 
     switch (dh) {
-    case "the-title": case "wxdyh_qrcode":
-      // top level item, no need for either pathname or hash
-      return "";
-    case "the-preface": case "编0":
-      // second level item, no need for hash
-      return dp;
-    default:
-      return dp + "『" + dh + "』";
+      case "the-title": case "wxdyh_qrcode":
+        // top level item, no need for either pathname or hash
+        return "";
+      case "the-preface": case "编0":
+        // second level item, no need for hash
+        return dp;
+      default:
+        return dp + "『" + dh + "』";
     }
   };
 
@@ -195,8 +195,8 @@ function shareButtonClosure(elmt) {
     "getContent": function () {
       var nchars = 52;
       var sliced = strSlice(text, nchars);
-      return (name? "《"+name+"》" : "")
-        + trimEndingBar(sliced[0]) + (sliced[1]? "……":"")
+      return (name ? "《" + name + "》" : "")
+        + trimEndingBar(sliced[0]) + (sliced[1] ? "……" : "")
         + " " + link;
     }
   };
@@ -210,7 +210,7 @@ var tapOn = (function () {
     return {
       // Return true if the op is accepted as part of a tap;
       // return false if otherwise.
-      "start": function(e, isTouch) {
+      "start": function (e, isTouch) {
         if (status === 0) {
           status = 1;
           if (!isTouch) {
@@ -220,13 +220,13 @@ var tapOn = (function () {
           return true;
         } else return false;
       },
-      "move": function(e) {
+      "move": function (e) {
         if (status === 1) {
           status = 2;
           return true;
         } else return false;
       },
-      "end": function(e, isTouch) {
+      "end": function (e, isTouch) {
         if (status === 1) {
           status = 0;
           if (!isTouch && (x !== e.layerX || y !== e.layerY)) {
@@ -239,16 +239,16 @@ var tapOn = (function () {
         }
       }
     };
-  }());
+  } ());
 
-  return function(elmt, handler, doPreventDefault) {
-    elmt.addEventListener("mousedown", function(e) {
+  return function (elmt, handler, doPreventDefault) {
+    elmt.addEventListener("mousedown", function (e) {
       tap.start(e, false);
     });
-    elmt.addEventListener("click", function(e) {
+    elmt.addEventListener("click", function (e) {
       if (tap.end(e, false)) handler(e);
     });
-    elmt.addEventListener("touchstart", function(e) {
+    elmt.addEventListener("touchstart", function (e) {
       var id, srcElmt;
 
       console.log("touchstart", Date.now());
@@ -260,17 +260,17 @@ var tapOn = (function () {
         srcElmt.style.boxShadow = "inset 0 0 0.5em silver";
       }
     });
-    elmt.addEventListener("touchmove", function(e) {
+    elmt.addEventListener("touchmove", function (e) {
       console.log("touchmove", Date.now());
       tap.move(e);
     });
-    elmt.addEventListener("touchend", function(e) {
+    elmt.addEventListener("touchend", function (e) {
       var id, srcElmt;
 
       console.log("touchend", Date.now());
       if (tap.end(e, true)) {
-         if (doPreventDefault) e.preventDefault();
-         handler(e);
+        if (doPreventDefault) e.preventDefault();
+        handler(e);
       }
 
       id = getEnclosingID(e.target);
@@ -280,7 +280,7 @@ var tapOn = (function () {
       }
     });
   };
-}());
+} ());
 
 function overlayClosure(elmt, content, docancel, docopy) {
   var computed, textareaWidth;
@@ -348,11 +348,11 @@ function editHashAndScroll(hash, dontAutoScroll) {
     return function () {
       window.scrollTo(0, y);
     };
-  }();
+  } ();
 
   var elmt = document.getElementById(hash.slice(1));
   console.assert(elmt || dontAutoScroll);
-  var x = dontAutoScroll? 0 : (function () {
+  var x = dontAutoScroll ? 0 : (function () {
     var rect = elmt.getBoundingClientRect();
     var h = rect.bottom - rect.top;
 
@@ -369,14 +369,14 @@ function editHashAndScroll(hash, dontAutoScroll) {
 
   console.log(x);
   switch (x) {
-  case 0:
-    backToPrevY();
-    break;
-  case -1:
-    elmt.scrollIntoView(true);
-    break;
-  case 1:
-    break;
+    case 0:
+      backToPrevY();
+      break;
+    case -1:
+      elmt.scrollIntoView(true);
+      break;
+    case 1:
+      break;
   }
 }
 
@@ -457,14 +457,47 @@ tapOn(window, tapHandler, true);
  Require browsers' support for window.matchMedia("print").
  */
 
+function isFirefox(ua) {
+  // See: https://developer.mozilla.org/en-US/docs
+  //      /Web/HTTP/Headers/User-Agent/Firefox
+  var p = /rv:\d+\.?\d*\) Gecko\/20100101/;
+  return p.test(ua);
+}
+
+function mergeStyle(element) {
+  var styleMaps = [].slice.call(arguments, 1);
+  var i, s;
+
+  for (i = 0; i < styleMaps.length; i++) {
+    for (s in styleMaps[i]) {
+      element.style[s] = styleMaps[i][s];
+    }
+  }
+}
+
+var textIndentOfTheFirstP = (function () {
+  var theFirstP = function (e) {
+    return e.querySelector(".款")
+            .querySelector("p:first-child");
+  };
+  return {
+    remove: function (e) {
+      theFirstP(e).style["text-indent"] = 0;
+    },
+    reset: function (e) {
+      theFirstP(e).style["text-indent"] = "";
+    }
+  }
+})();
+
 function tabulateATriple(a, b, c) {
   var table = document.createElement("TABLE"),
-      tr = document.createElement("TR"),
-      appendCell = function (row, x) {
-        var td = document.createElement("TD");
-        td.appendChild(x);
-        row.appendChild(td);
-      };
+    tr = document.createElement("TR"),
+    appendCell = function (row, x) {
+      var td = document.createElement("TD");
+      td.appendChild(x);
+      row.appendChild(td);
+    };
 
   appendCell(tr, a);
   appendCell(tr, b);
@@ -473,24 +506,37 @@ function tabulateATriple(a, b, c) {
   return table;
 }
 
-var printNum = (function () {
+var printNumInFirefox = (function () {
   var parent = function (e) {
     return e.parentNode;
   };
   var wrap = function (e, p) {
     var wrapper,
-        ec = e.cloneNode(true),
-        en = e.querySelector(".entry-num"),
-        enl = en.cloneNode(true),
-        enr = en.cloneNode(true);
+      ec = e.cloneNode(true),
+      en = e.querySelector(".entry-num"),
+      enl = en.cloneNode(true),
+      enr = en.cloneNode(true),
+      enstyle = {
+        "position": "static",
+        "right": "auto",
+        "width": "100%"
+      };
+
+    mergeStyle(ec, { "margin-top": 0, "margin-bottom": 0 });
+    ec.querySelector(".entry-num").style.display = "none";
+    textIndentOfTheFirstP.remove(ec);
+    mergeStyle(enl, enstyle, { "text-align": "left" });
+    mergeStyle(enr, enstyle, { "text-align": "right" });
 
     wrapper = tabulateATriple(enl, ec, enr);
     wrapper.className = "entry-wrapper";
     p.replaceChild(wrapper, e);
   };
-  var unwrap = function (wrapper, p) {
+  var reset = function (wrapper, p) {
     var e = wrapper.querySelector(".entry");
 
+    mergeStyle(e, { "margin-top": "", "margin-bottom": "" });
+    textIndentOfTheFirstP.reset(e);
     p.replaceChild(e, wrapper);
   };
 
@@ -502,10 +548,38 @@ var printNum = (function () {
     },
     rmFrom: function (es) {
       // remove the inserted entry-num elements
-      iter(es, unwrap, parent);
+      iter(es, reset, parent);
     }
   };
 })();
+
+var printNum =
+  isFirefox(navigator.userAgent) ? printNumInFirefox :
+    (function () {
+      var firstENum = function (entry) {
+        return entry.querySelector(".entry-num");
+      };
+      var addAnother = function (p, x) {
+        textIndentOfTheFirstP.remove(p);
+        if (x) p.insertBefore(x.cloneNode(true), x);
+      };
+      var reset = function (p, x) {
+        textIndentOfTheFirstP.reset(p);
+        if (x) p.removeChild(x);
+      };
+
+      return {
+        addTo: function (es) {
+          // add a copy for each entry-num element so that
+          // the entry-num can be print on both hands of a page
+          iter(es, addAnother, firstENum);
+        },
+        rmFrom: function (es) {
+          // remove the inserted entry-num elements
+          iter(es, reset, firstENum);
+        }
+      };
+    })();
 
 var qrcodeGenerator = (function () {
   var id = "qrcode", code;
@@ -578,6 +652,3 @@ if ("onbeforeprint" in window && "onafterprint" in window) {
     else printHandler.after();
   });
 }
-
-
-

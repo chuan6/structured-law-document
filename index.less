@@ -305,8 +305,6 @@ nav>ul { padding: 0.5em 1em }
   .节 { font-size: 14pt; font-weight: normal; }
 
   .entry {
-    margin-top: 0;
-    margin-bottom: 0;
     border-left: 0.2pt solid red;
   }
 
@@ -319,25 +317,33 @@ nav>ul { padding: 0.5em 1em }
     border-bottom: 0.2pt solid blue;
   }
 
-  .entry-wrapper { width: 100%; }
-  .entry-wrapper td { vertical-align: top; }
-  .entry-wrapper td:first-child {
-    text-align: left;
-    width: 18pt;
-  }
-  .entry-wrapper td:nth-child(3) {
-    text-align: right;
-    width: 18pt;
-  }
-
   .entry-num {
-    display: block; /* none -> block */
-    width: 100%;
-    line-height: 2em;
+    display: block;
+    position: absolute;
+    right: 0;
+    width: 18pt; /* 3*(5+1) = 18 */
+    text-align: right;
     letter-spacing: 0;
+    line-height: 2em;
   }
 
-  .entry>.entry-num { display: none; }
+  .entry-num:first-child {
+    left: 0;
+    text-align: left;
+  }
+
+  /* .entry-wrapper only appear in the Firefox specific solution */
+  .entry-wrapper {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1em 0;
+    padding: 0;
+  }
+  .entry-wrapper td { vertical-align: top; }
+  .entry-wrapper td:first-child,
+  .entry-wrapper td:nth-child(3) {
+    width: 18pt;
+  }
 
   .li-head>a {
     border-bottom: none;
@@ -366,13 +372,6 @@ nav>ul { padding: 0.5em 1em }
        font-weight to normal. Bold font's width&height
        may not respect the set font-size. */
     font-weight: normal;
-  }
-
-  /* 3 is for the first .款 after .entry-num and .title.
-     Sorry for the magic/fragile number 4,
-     wish there is a selector for the nth class :( */
-  .款:nth-child(3)>p:first-child {
-    text-indent: 0;
   }
 
   #qrcode {
