@@ -495,7 +495,6 @@ function tabulateATriple(a, b, c) {
     tr = document.createElement("TR"),
     appendCell = function (row, x) {
       var td = document.createElement("TD");
-      var sx;
       td.appendChild(x);
       row.appendChild(td);
     };
