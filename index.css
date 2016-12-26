@@ -5,26 +5,20 @@ body {
   margin: 0 auto;
   background-color: white;
 }
+p,
 h1,
 h2,
 h3,
 h4 {
+  padding: 0.5em 1em;
   margin: 0;
+  line-height: 2;
 }
 .title,
 .款,
 .项 {
   margin: 0;
   padding: 0;
-}
-#ref-to-original,
-#the-preface > p,
-.title > p:first-child,
-.款 > p,
-.项 > p,
-.目 > p {
-  margin: 0;
-  padding: 0.5em 1em;
 }
 .款 > p:not(:first-child),
 .项 > p:not(:first-child) {
@@ -128,7 +122,6 @@ nav {
 .entry {
   margin: 1em 0;
   border-left: 1px solid red;
-  line-height: 2;
 }
 .entry a {
   background-color: Azure;
@@ -171,14 +164,6 @@ nav {
   background-color: #FFFFD8;
   box-shadow: 0 0 0.31em silver;
 }
-#the-title,
-.编,
-.章,
-.节 {
-  line-height: 2;
-  padding: 0.5em 1em;
-  text-align: center;
-}
 #toc > h2 {
   padding-left: 3em;
   letter-spacing: 2em;
@@ -206,6 +191,7 @@ nav {
 .编,
 .章,
 .节 {
+  text-align: center;
   border-radius: 0.75em;
   /* (2 + 0.5*2) / 4 */
 }
@@ -222,6 +208,8 @@ nav ul {
 }
 nav > ul {
   padding: 0.5em 1em;
+  margin: 0;
+  line-height: 2;
 }
 #overlay {
   position: fixed;
@@ -245,8 +233,10 @@ nav > ul {
      effect on the block when browser width is being
      adjusted.
    */
-  margin: 1em auto;
   padding: 0.5em 1em;
+  margin: 0;
+  line-height: 1.5;
+  margin: 1em auto;
   border: 1px solid silver;
   box-shadow: 0 0 0.5em silver;
   font-family: "Noto Sans CJK SC", sans-serif;
@@ -254,8 +244,6 @@ nav > ul {
   word-wrap: break-word;
   word-break: break-all;
   overflow-y: scroll;
-  line-height: 1.5em;
-  /* as summary, shrink from 2em */
   letter-spacing: 0.05em;
 }
 #overlay-button-panel > button {
