@@ -6,7 +6,7 @@
   line-height: @height;
 }
 
-.button() {
+.button {
   border: none;
   outline: none;
   border-radius: 1.62em;
@@ -82,7 +82,7 @@ p, h1, h2, h3, h4 { .line; }
 }
 
 #back-button {
-  .button;
+  &:extend(.button all);
   position: fixed;
   background-color: rgba(255, 0, 0, 0.87);
   color: white;
@@ -92,7 +92,7 @@ p, h1, h2, h3, h4 { .line; }
 }
 
 #share-button {
-  .button;
+  &:extend(.button all);
   position: absolute;
   background-color: rgba(0, 128, 0, 0.87);
   color: white;
@@ -101,13 +101,13 @@ p, h1, h2, h3, h4 { .line; }
 }
 
 #cancel-overlay {
-  .button;
+  &:extend(.button all);
   background-color: rgb(255, 0, 0);
   color: white;
 }
 
 #do-copy {
-  .button;
+  &:extend(.button all);
   background-color: rgb(0, 128, 0);
   color: white;
 }
