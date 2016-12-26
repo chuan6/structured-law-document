@@ -64,9 +64,73 @@ h4 {
   max-width: 503.4px;
   /* 16*(1.05*28 + 2) + 1(border-left) */
 }
-#back-button,
-#share-button,
-#cancel-overlay,
+#back-button {
+  border: none;
+  outline: none;
+  border-radius: 1.62em;
+  height: 3.24em;
+  width: 3.24em;
+  padding: 0;
+  /* eliminate default button style paddings */
+  box-shadow: 0 0 1em grey;
+  font-size: 100%;
+  font-weight: bold;
+  line-height: 3.24em;
+  text-align: center;
+  text-decoration: none;
+  position: fixed;
+  background-color: rgba(255, 0, 0, 0.87);
+  color: white;
+  right: 1em;
+  bottom: 1em;
+  z-index: 1000;
+}
+#back-button::moz-focus-inner {
+  border: none;
+}
+#share-button {
+  border: none;
+  outline: none;
+  border-radius: 1.62em;
+  height: 3.24em;
+  width: 3.24em;
+  padding: 0;
+  /* eliminate default button style paddings */
+  box-shadow: 0 0 1em grey;
+  font-size: 100%;
+  font-weight: bold;
+  line-height: 3.24em;
+  text-align: center;
+  text-decoration: none;
+  position: absolute;
+  background-color: rgba(0, 128, 0, 0.87);
+  color: white;
+  right: 1em;
+  z-index: 10;
+}
+#share-button::moz-focus-inner {
+  border: none;
+}
+#cancel-overlay {
+  border: none;
+  outline: none;
+  border-radius: 1.62em;
+  height: 3.24em;
+  width: 3.24em;
+  padding: 0;
+  /* eliminate default button style paddings */
+  box-shadow: 0 0 1em grey;
+  font-size: 100%;
+  font-weight: bold;
+  line-height: 3.24em;
+  text-align: center;
+  text-decoration: none;
+  background-color: #ff0000;
+  color: white;
+}
+#cancel-overlay::moz-focus-inner {
+  border: none;
+}
 #do-copy {
   border: none;
   outline: none;
@@ -81,35 +145,11 @@ h4 {
   line-height: 3.24em;
   text-align: center;
   text-decoration: none;
-}
-#back-button::-moz-focus-inner,
-#share-button::-moz-focus-inner,
-#cancel-overlay::-moz-focus-inner,
-#do-copy::-moz-focus-inner {
-  border: none;
-}
-#back-button {
-  position: fixed;
-  background-color: rgba(255, 0, 0, 0.87);
-  color: white;
-  right: 1em;
-  bottom: 1em;
-  z-index: 1000;
-}
-#share-button {
-  position: absolute;
-  background-color: rgba(0, 128, 0, 0.87);
-  color: white;
-  right: 1em;
-  z-index: 10;
-}
-#cancel-overlay {
-  background-color: #ff0000;
-  color: white;
-}
-#do-copy {
   background-color: #008000;
   color: white;
+}
+#do-copy::moz-focus-inner {
+  border: none;
 }
 .entry,
 .title,

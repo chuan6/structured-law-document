@@ -6,6 +6,24 @@
   line-height: @height;
 }
 
+.button() {
+  border: none;
+  outline: none;
+  border-radius: 1.62em;
+  height: 3.24em;
+  width: 3.24em;
+  padding: 0; /* eliminate default button style paddings */
+  box-shadow: 0 0 1em grey;
+  font-size: 100%;
+  font-weight: bold;
+  line-height: 3.24em;
+  text-align: center;
+  text-decoration: none;
+  &::moz-focus-inner {
+    border: none;
+  }
+}
+
 body {
   font-family: "Noto Sans CJK SC", sans-serif;
   font-size: @rsize;
@@ -63,29 +81,8 @@ p, h1, h2, h3, h4 { .line; }
   max-width: 503.4px; /* 16*(1.05*28 + 2) + 1(border-left) */
 }
 
-#back-button, #share-button, #cancel-overlay, #do-copy {
-  border: none;
-  outline: none;
-  border-radius: 1.62em;
-  height: 3.24em;
-  width: 3.24em;
-  padding: 0; /* eliminate default button style paddings */
-  box-shadow: 0 0 1em grey;
-  font-size: 100%;
-  font-weight: bold;
-  line-height: 3.24em;
-  text-align: center;
-  text-decoration: none;
-}
-
-#back-button::-moz-focus-inner,
-#share-button::-moz-focus-inner,
-#cancel-overlay::-moz-focus-inner,
-#do-copy::-moz-focus-inner {
-  border: none;
-}
-
 #back-button {
+  .button;
   position: fixed;
   background-color: rgba(255, 0, 0, 0.87);
   color: white;
@@ -95,6 +92,7 @@ p, h1, h2, h3, h4 { .line; }
 }
 
 #share-button {
+  .button;
   position: absolute;
   background-color: rgba(0, 128, 0, 0.87);
   color: white;
@@ -103,11 +101,13 @@ p, h1, h2, h3, h4 { .line; }
 }
 
 #cancel-overlay {
+  .button;
   background-color: rgb(255, 0, 0);
   color: white;
 }
 
 #do-copy {
+  .button;
   background-color: rgb(0, 128, 0);
   color: white;
 }
