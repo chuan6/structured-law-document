@@ -38,7 +38,7 @@ h3,
 h4 {
   padding: 0.5em 1em;
   margin: 0;
-  line-height: 2;
+  line-height: 2em;
 }
 .title,
 .款,
@@ -144,21 +144,23 @@ nav {
 .款,
 .项,
 .目 {
-  /* radius = (line-height + padding-top + padding-bottom) / 2
-     so that for blocks that consists of only one line, the
-     right border is perfectly round.
-   */
   border-top-right-radius: 0.75em;
-  /* (2 + 0.5*2) / 4 */
   border-bottom-right-radius: 0.75em;
-  /* blur-radius = (line-height - font-height) / 2
-     so that the shadow wouldn't extend to the other line,
-     above or below.
-   */
+}
+#the-title,
+.编,
+.章,
+.节 {
+  text-align: center;
+  border-radius: 0.75em;
 }
 #ref-to-original:target,
+#the-title:target,
 #outline:target,
 #the-preface:target,
+.编:target,
+.章:target,
+.节:target,
 .entry:target,
 .款:target,
 .项:target,
@@ -189,21 +191,6 @@ nav {
   flex-shrink: 0;
   align-self: center;
 }
-#the-title,
-.编,
-.章,
-.节 {
-  text-align: center;
-  border-radius: 0.75em;
-  /* (2 + 0.5*2) / 4 */
-}
-#the-title:target,
-.编:target,
-.章:target,
-.节:target {
-  background-color: #FFFFD8;
-  box-shadow: 0 0 0.31em silver;
-}
 nav ul {
   padding-left: 1em;
   list-style-type: none;
@@ -211,7 +198,7 @@ nav ul {
 nav > ul {
   padding: 0.5em 1em;
   margin: 0;
-  line-height: 2;
+  line-height: 2em;
 }
 #overlay {
   position: fixed;

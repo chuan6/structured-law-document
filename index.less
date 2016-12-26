@@ -1,7 +1,10 @@
 @rsize: 16px; // root font size
 
-.line(@height: 2) {
-  padding: 0.5em 1em;
+@line-pad-y: 0.5em;
+@line-height: 2em;
+@border-radius: (@line-height + 2*@line-pad-y) / 4;
+.line(@height: @line-height) {
+  padding: @line-pad-y 1em;
   margin: 0;
   line-height: @height;
 }
@@ -138,19 +141,26 @@ p, h1, h2, h3, h4 { .line; }
 .entry-num { display: none; }
 
 #ref-to-original, #outline, #the-preface, .entry, .款, .项, .目 {
-  /* radius = (line-height + padding-top + padding-bottom) / 2
-     so that for blocks that consists of only one line, the
-     right border is perfectly round.
-   */
-  border-top-right-radius: 0.75em; /* (2 + 0.5*2) / 4 */
-  border-bottom-right-radius: 0.75em;
-  /* blur-radius = (line-height - font-height) / 2
-     so that the shadow wouldn't extend to the other line,
-     above or below.
-   */
+  border-top-right-radius: @border-radius;
+  border-bottom-right-radius: @border-radius;
 }
 
-#ref-to-original:target, #outline:target, #the-preface:target, .entry:target, .款:target, .项:target, .目:target {
+#the-title, .编, .章, .节 {
+  text-align: center;
+  border-radius: @border-radius;
+}
+
+#ref-to-original:target,
+#the-title:target,
+#outline:target,
+#the-preface:target,
+.编:target,
+.章:target,
+.节:target,
+.entry:target,
+.款:target,
+.项:target,
+.目:target {
   background-color: #FFFFD8;
   box-shadow: 0 0 0.31em silver;
 }
@@ -179,16 +189,6 @@ p, h1, h2, h3, h4 { .line; }
   color: #BBB;
   flex-shrink: 0;
   align-self: center;
-}
-
-#the-title, .编, .章, .节 {
-  text-align: center;
-  border-radius: 0.75em; /* (2 + 0.5*2) / 4 */
-}
-
-#the-title:target, .编:target, .章:target, .节:target {
-  background-color: #FFFFD8;
-  box-shadow: 0 0 0.31em silver;
 }
 
 nav ul {
