@@ -475,21 +475,6 @@ function mergeStyle(element) {
   }
 }
 
-var textIndentOfTheFirstP = (function () {
-  var theFirstP = function (e) {
-    return e.querySelector(".款")
-            .querySelector("p:first-child");
-  };
-  return {
-    remove: function (e) {
-      theFirstP(e).style["text-indent"] = 0;
-    },
-    reset: function (e) {
-      theFirstP(e).style["text-indent"] = "";
-    }
-  }
-})();
-
 function tabulateATriple(a, b, c) {
   var table = document.createElement("TABLE"),
     tr = document.createElement("TR"),
@@ -524,7 +509,6 @@ var printNumInFirefox = (function () {
 
     mergeStyle(ec, { "margin-top": 0, "margin-bottom": 0 });
     ec.querySelector(".entry-num").style.display = "none";
-    textIndentOfTheFirstP.remove(ec);
     mergeStyle(enl, enstyle, { "text-align": "left" });
     mergeStyle(enr, enstyle, { "text-align": "right" });
 
@@ -536,7 +520,6 @@ var printNumInFirefox = (function () {
     var e = wrapper.querySelector(".entry");
 
     mergeStyle(e, { "margin-top": "", "margin-bottom": "" });
-    textIndentOfTheFirstP.reset(e);
     p.replaceChild(e, wrapper);
   };
 
@@ -560,11 +543,9 @@ var printNum =
         return entry.querySelector(".entry-num");
       };
       var addAnother = function (p, x) {
-        textIndentOfTheFirstP.remove(p);
         if (x) p.insertBefore(x.cloneNode(true), x);
       };
       var reset = function (p, x) {
-        textIndentOfTheFirstP.reset(p);
         if (x) p.removeChild(x);
       };
 

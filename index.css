@@ -302,6 +302,9 @@ nav > ul {
   .项 > p:not(:first-child) {
     text-indent: 3.15em;
   }
+  .title + .款 > p:first-child {
+    text-indent: 0;
+  }
   #the-preface > p,
   .title > p:first-child,
   .款 > p,
