@@ -84,7 +84,7 @@ function textContent(x) {
   var cs;
 
   if (x.nodeType === 3) return x.textContent;
-  if (x.tagName === "H2" || x.tagName === "P") {
+  if (x.tagName === "H2" || x.tagName === "P" || x.tagName === "DIV") {
     return x.textContent + "▶";
   }
   if (x.tagName === "IMG") {
@@ -148,7 +148,7 @@ function shareButtonClosure(elmt) {
   var name, text, link;
 
   var trimEndingBar = function (txt) {
-    // assume that the "//" would never be in original text
+    // assume that "▶" would never be in original text
     var bar = "▶", n = bar.length;
     return txt.endsWith(bar) ? txt.slice(0, txt.length - n) : txt;
   };
@@ -167,7 +167,7 @@ function shareButtonClosure(elmt) {
       case "the-title": case "wxdyh_qrcode":
         // top level item, no need for either pathname or hash
         return "";
-      case "the-preface": case "编0":
+      case "ref-to-original" : case "the-preface": case "编0":
         // second level item, no need for hash
         return dp;
       default:

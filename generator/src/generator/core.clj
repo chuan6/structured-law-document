@@ -150,7 +150,7 @@
   (cond-> [:section {:id "toc"}]
     (:text outline) (conj [:h2 {:id (id/encode-id "编0") :class "编"}
                            (:text outline)])
-    true            (conj [:nav {:id "outline" :class "entry"}
+    true            (conj [:nav {:id (id/encode-id "目录") :class "entry"}
                            (toc/outline-html (:list outline))])))
 
 (defn- wrap-序言-in-html [t ts]
@@ -213,12 +213,8 @@
                 }
       [:div {:class "entry"}
        [:p {:id "ref-to-original" :class "n-i-o-t"}
-        "原文请见："
         [:a {:href link-to-original :target "_blank"}
-         (str (-> link-to-original
-                  clojure.java.io/as-url
-                  .getHost)
-              "/……")]]]
+         "原文链接"]]]
       (seq
        (loop [tls tokenized-lines
               elmts []]
@@ -353,7 +349,7 @@
                "index.css")
     [:body
      [:div {:class "entries-container"}
-      [:nav {:id "outline"}
+      [:nav {:id (id/encode-id "目录")}
        [:ul {:class "entry"}
         (for [[n p] entry-paths]
           [:li {:class "li-head"}
