@@ -84,10 +84,14 @@ function textContent(x) {
   var cs;
   var niot = "n-i-o-t";
 
-  if (x.classList.contains(niot)) return "";
-  if (x.nodeType === 3) return x.textContent;
+  if (x.nodeType === 3) {
+    return x.textContent;
+  }
+  if (x.classList && x.classList.contains(niot)) {
+    return "";
+  }
   if (x.tagName === "H2" || x.tagName === "P" || x.tagName === "DIV") {
-    return x.textContent + "↝";
+    return x.textContent + "⏎";
   }
   if (x.tagName === "IMG") {
     return x.alt;
@@ -150,8 +154,8 @@ function shareButtonClosure(elmt) {
   var name, text, link;
 
   var trimEndingBar = function (txt) {
-    // assume that "↝" would never be in original text
-    var bar = "↝", n = bar.length;
+    // assume that "⏎" would never be in original text
+    var bar = "⏎", n = bar.length;
     return txt.endsWith(bar) ? txt.slice(0, txt.length - n) : txt;
   };
 
