@@ -25,7 +25,7 @@
   border: none;
 }
 body {
-  font-family: "Noto Sans CJK SC", sans-serif;
+  font-family: "Noto Sans CJK SC", sans-serif, "HeiTi SC", "Droid Sans";
   font-size: 16px;
   letter-spacing: 0.01em;
   margin: 0 auto;
@@ -60,7 +60,7 @@ h4 {
 }
 #the-title,
 .编 {
-  font-family: "AR PL UMing CN", "华文中宋", "SimSun", "宋体", serif;
+  font-family: "AR PL UMing CN", "华文中宋", "SimSun", "宋体", "HeiTi SC", "Droid Sans", serif;
   font-weight: bold;
 }
 #the-title {
@@ -73,7 +73,7 @@ h4 {
   font-size: 20px;
 }
 .节 {
-  font-family: "AR PL UKai CN", "KaiTi", "楷体", serif;
+  font-family: "AR PL UKai CN", "KaiTi", "楷体", "HeiTi SC", "Droid Sans", serif;
   font-size: 18px;
 }
 #the-title {
