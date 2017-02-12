@@ -7,7 +7,7 @@
       "taskName": "default",
       "isBuildCommand": true,
       "showOutput": "always",
-      "isWatching": true
+      "isBackground": true // vscode upgrade from isWatching
     }
   ]
 }
