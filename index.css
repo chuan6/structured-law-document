@@ -27,7 +27,7 @@
 body {
   font-family: "Noto Sans CJK SC", sans-serif;
   font-size: 16px;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.01em;
   margin: 0 auto;
   background-color: white;
 }
@@ -87,8 +87,7 @@ h4 {
   margin: 0 auto;
   padding: 0 0.5em;
   background-color: inherit;
-  max-width: 503.4px;
-  /* 16*(1.05*28 + 2) + 1(border-left) */
+  max-width: 485.48px;
 }
 #back-button {
   position: fixed;
@@ -233,7 +232,7 @@ nav > ul {
   word-wrap: break-word;
   word-break: break-all;
   overflow-y: scroll;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.01em;
 }
 #overlay-button-panel > button {
   margin: 0 1em;
@@ -293,14 +292,14 @@ nav > ul {
     font-family: "AR PL UMing CN", SimSun, "宋体", serif;
   }
   p {
-    text-indent: 2.1em;
+    text-indent: 2.02em;
   }
   .title > p {
     text-indent: 0;
   }
   .款 > p:not(:first-child),
   .项 > p:not(:first-child) {
-    text-indent: 3.15em;
+    text-indent: 3.03em;
   }
   .title + .款 > p:first-child {
     text-indent: 0;
@@ -406,6 +405,9 @@ nav > ul {
        font-weight to normal. Bold font's width&height
        may not respect the set font-size. */
     font-weight: normal;
+  }
+  .title > p {
+    padding-right: 1.01em;
   }
   #qrcode {
     display: block;

@@ -1,5 +1,6 @@
 @rsize: 16px; // root font size
-
+@base-ltrspc-em: 0.01em;
+@base-font-width-em: 1 + @base-ltrspc-em;
 @line-pad-y: 0.5em;
 @line-height: 2em;
 @border-radius: (@line-height + 2*@line-pad-y) / 4;
@@ -30,7 +31,7 @@
 body {
   font-family: "Noto Sans CJK SC", sans-serif;
   font-size: @rsize;
-  letter-spacing: 0.05em;
+  letter-spacing: @base-ltrspc-em;
   margin: 0 auto;
   background-color: white;
 }
@@ -81,7 +82,12 @@ p, h1, h2, h3, h4 { .line; }
   margin: 0 auto;
   padding: 0 0.5em;
   background-color: inherit;
-  max-width: 503.4px; /* 16*(1.05*28 + 2) + 1(border-left) */
+  max-width: @rsize * (
+      @base-font-width-em * 28
+      + 2 // padding
+    )
+    + 1 // left-border
+    ;
 }
 
 #back-button {
@@ -229,7 +235,7 @@ nav>ul { .line; }
   word-wrap: break-word;
   word-break: break-all;
   overflow-y: scroll;
-  letter-spacing: 0.05em;
+  letter-spacing: @base-ltrspc-em;
 }
 
 #overlay-button-panel>button {
@@ -272,10 +278,10 @@ nav>ul { .line; }
     font-family: "AR PL UMing CN", SimSun, "宋体", serif;
   }
 
-  p { text-indent: 2.1em; }
+  p { text-indent: 2 * @base-font-width-em; }
   .title>p { text-indent: 0; }
   .款>p:not(:first-child), .项>p:not(:first-child){
-    text-indent: 3.15em;
+    text-indent: 3 * @base-font-width-em;
   }
 
   .title + .款 > p:first-child {
@@ -372,6 +378,9 @@ nav>ul { .line; }
        font-weight to normal. Bold font's width&height
        may not respect the set font-size. */
     font-weight: normal;
+  }
+  .title > p {
+    padding-right: @base-font-width-em;
   }
 
   #qrcode {
