@@ -91,7 +91,7 @@ function textContent(x) {
     return "";
   }
   if (x.tagName === "H2" || x.tagName === "P" || x.tagName === "DIV") {
-    return x.textContent + "⏎";
+    return x.textContent + "•";
   }
   if (x.tagName === "IMG") {
     return x.alt;
@@ -154,8 +154,8 @@ function shareButtonClosure(elmt) {
   var name, text, link;
 
   var trimEndingBar = function (txt) {
-    // assume that "⏎" would never be in original text
-    var bar = "⏎", n = bar.length;
+    // assume that "•" would never be in original text
+    var bar = "•", n = bar.length;
     return txt.endsWith(bar) ? txt.slice(0, txt.length - n) : txt;
   };
 
@@ -177,7 +177,7 @@ function shareButtonClosure(elmt) {
         // second level item, no need for hash
         return dp;
       default:
-        return dp + "『" + dh + "』";
+        return dp + "#" + dh;
     }
   };
 
@@ -199,11 +199,11 @@ function shareButtonClosure(elmt) {
       name = loc2name(loc);
     },
     "getContent": function () {
-      var nchars = 52;
+      var nchars = 64;
       var sliced = strSlice(text, nchars);
-      return (name ? "《" + name + "》" : "")
-        + trimEndingBar(sliced[0]) + (sliced[1] ? "……" : "")
-        + " " + link;
+      return name
+        + "“" + trimEndingBar(sliced[0]) + (sliced[1] ? "……" : "") + "”"
+        + link;
     }
   };
 }
