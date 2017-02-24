@@ -11,41 +11,33 @@ function iter(coll, g, f) {
 // https://mathiasbynens.be/notes/javascript-unicode#iterating-over-symbols
 // prefer for...of iterator; but it is currently not supported by Weixin's
 // X5 kernel by Tencent.
-function getSymbols(string) {
+function getSymbols(raw: string): string[] {
   var index = 0;
-  var length = string.length;
+  var length = raw.length;
   var output = [];
   for (; index < length - 1; ++index) {
-    var charCode = string.charCodeAt(index);
+    var charCode = raw.charCodeAt(index);
     if (charCode >= 0xD800 && charCode <= 0xDBFF) {
-      charCode = string.charCodeAt(index + 1);
+      charCode = raw.charCodeAt(index + 1);
       if (charCode >= 0xDC00 && charCode <= 0xDFFF) {
-        output.push(string.slice(index, index + 2));
+        output.push(raw.slice(index, index + 2));
         ++index;
         continue;
       }
     }
-    output.push(string.charAt(index));
+    output.push(raw.charAt(index));
   }
-  output.push(string.charAt(index));
+  output.push(raw.charAt(index));
   return output;
 }
 
-function strSlice(s, end) {
-  var s1 = '', s2 = '';
-  var c, i = 0;
+function strSlice(raw: string, end: number): [string, string] {
+  var s = getSymbols(raw);
 
-  s = getSymbols(s);
-  for (i = 0; i < s.length; i++) {
-    c = s[i];
-    if (i < end) {
-      s1 += c;
-    } else {
-      s2 += c;
-    }
-  }
-
-  return [s1, s2];
+  return [
+    s.slice(0, end).join(''), // before the end
+    s.slice(end).join('') // the end and after
+  ];
 }
 
 function decodedPathname(u) {
@@ -70,8 +62,9 @@ function horizontalExtra(computed, withMargin) {
   return x;
 }
 
-function getEnclosingID(elmt) {
-  return elmt.id || (elmt.parentNode ? getEnclosingID(elmt.parentNode) : null);
+function getEnclosingID(t: HTMLElement): string {
+  return t.id ||
+    (t.parentElement ? getEnclosingID(t.parentElement) : '');
 }
 
 function textContent(x) {
@@ -111,43 +104,39 @@ function textContent(x) {
   return null;
 }
 
-function backButtonClosure(elmt) {
-  var stack = [];
+function backButtonClosure(t: HTMLAnchorElement) {
+  type item = { id: string, y: number };
 
-  var top = function () {
-    return stack[stack.length - 1];
-  };
+  var stack: item[] = [];
 
-  var updateHref = function (id) {
-    if (id === "" || id) {
-      elmt.href = "#" + id;
-    } else {
-      elmt.removeAttribute("href");
-    }
+  var top = () => stack[stack.length - 1];
+
+  var updateHref = (id: string): void => {
+    t.href = '#' + id;
   };
 
   updateHref("");
-  stack = [{ id: "", y: 0 }];
+  stack = [{ id: "", y: 0 }]; // stack.length === 1
 
   return {
-    element: elmt,
+    element: t,
     peek: top,
-    push: function (id, y) {
+    push: (id: string, y: number) => {
       var curr = top();
 
       // only push new id that is different from the top
-      if (!curr || curr.id !== id) {
-        stack.push({ "id": id, "y": y });
+      if (id !== curr.id) {
+        stack.push({ id, y });
         updateHref(id);
       }
     },
-    pop: function () {
+    pop: () => {
       var curr;
 
-      if (stack.length > 1) stack.pop();
+      if (stack.length > 1) stack.pop(); // stack.length >= 1
 
       curr = top();
-      updateHref(curr ? curr.id : "");
+      updateHref(curr.id);
     }
   };
 }
@@ -347,7 +336,7 @@ function overlayClosure(elmt, content, docancel, docopy) {
 var backButton, shareButton, overlay;
 
 window.addEventListener("load", function () {
-  backButton = backButtonClosure(
+  backButton = backButtonClosure(<HTMLAnchorElement>
     document.getElementById("back-button"));
 
   shareButton = shareButtonClosure(
