@@ -161,6 +161,14 @@ function shareButtonClosure(elmt) {
     return txt.endsWith(bar) ? txt.slice(0, txt.length - n) : txt;
   };
 
+  var separated = function (ret, s) {
+    const c = '‖';
+    if (!ret) return s;
+    if (!s) return ret;
+    // ret && s
+    return ret + c + s;
+  };
+
   var loc2name = function (loc) {
     var dp = decodedPathname(loc.pathname);
     var s = "/", t = ".html";
@@ -179,7 +187,7 @@ function shareButtonClosure(elmt) {
         // second level item, no need for hash
         return dp;
       default:
-        return dp + "‖" + dh;
+        return [dp, dh].reduce(separated);
     }
   };
 
@@ -203,9 +211,11 @@ function shareButtonClosure(elmt) {
     "getContent": function () {
       var nchars = 64;
       var sliced = strSlice(text, nchars);
-      return name
-        + "‖" + trimEndingBar(sliced[0]) + (sliced[1] ? "……" : "")
-        + " " + link;
+      return [
+        name,
+        trimEndingBar(sliced[0]) + (sliced[1] ? "……" : ""),
+        link
+      ].reduce(separated);
     }
   };
 }

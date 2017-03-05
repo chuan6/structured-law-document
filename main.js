@@ -149,6 +149,15 @@ function shareButtonClosure(elmt) {
         var bar = "↵", n = bar.length;
         return txt.endsWith(bar) ? txt.slice(0, txt.length - n) : txt;
     };
+    var separated = function (ret, s) {
+        var c = '‖';
+        if (!ret)
+            return s;
+        if (!s)
+            return ret;
+        // ret && s
+        return ret + c + s;
+    };
     var loc2name = function (loc) {
         var dp = decodedPathname(loc.pathname);
         var s = "/", t = ".html";
@@ -167,7 +176,7 @@ function shareButtonClosure(elmt) {
                 // second level item, no need for hash
                 return dp;
             default:
-                return dp + "‖" + dh;
+                return [dp, dh].reduce(separated);
         }
     };
     return {
@@ -189,9 +198,11 @@ function shareButtonClosure(elmt) {
         "getContent": function () {
             var nchars = 64;
             var sliced = strSlice(text, nchars);
-            return name
-                + "‖" + trimEndingBar(sliced[0]) + (sliced[1] ? "……" : "")
-                + " " + link;
+            return [
+                name,
+                trimEndingBar(sliced[0]) + (sliced[1] ? "……" : ""),
+                link
+            ].reduce(separated);
         }
     };
 }
@@ -433,8 +444,6 @@ function applyStyles(element, styleMap) {
         element.style[s] = styleMap[s];
     }
 }
-var x = { a: 1 };
-var y = __assign({}, x, { b: 2 });
 function tabulateATriple(a, b, c) {
     var table = document.createElement("TABLE"), tr = document.createElement("TR"), appendCell = function (row, x) {
         var td = document.createElement("TD");
@@ -529,20 +538,16 @@ var qrcodeGenerator = (function () {
         var origin = "https://读法.com";
         return origin + decodedPathname(loc.pathname);
     };
-    console.log("qrcodegenerator initialized");
     return {
         show: function () {
             var e;
-            console.log("to call qrcode");
             code = qrcode(10, "L");
             code.addData(decodedURL(window.location));
             code.make();
             e = insertElmt(id);
             e.innerHTML = code.createSvgTag();
-            console.log("svg inserted");
         },
         clear: function () {
-            console.log("to clear qrcode");
             removeElmt(id);
             code = undefined;
         }
