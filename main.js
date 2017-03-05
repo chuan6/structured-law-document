@@ -6,6 +6,12 @@ var __assign = (this && this.__assign) || Object.assign || function(t) {
     }
     return t;
 };
+function isIn(coll, x) {
+    return coll.indexOf(x) === -1 ? false : true;
+}
+function partial(f, arg1) {
+    return f.bind(null, arg1);
+}
 function iter(coll, g, f) {
     var i;
     for (i = 0; i < coll.length; i++) {
@@ -49,6 +55,14 @@ function decodedPathname(u) {
     };
     return isDecoded(u) ? u : decodeURIComponent(u);
 }
+function separatedBy(x, ret, s) {
+    if (!ret)
+        return s;
+    if (!s)
+        return ret;
+    // ret && s
+    return ret + x + s;
+}
 function px(x) {
     return "" + x + "px";
 }
@@ -66,39 +80,41 @@ function getEnclosingID(t) {
     return t.id ||
         (t.parentElement ? getEnclosingID(t.parentElement) : '');
 }
-function textContent(x) {
+function textFragments(x) {
     var acc = (function () {
-        var s = "";
+        var s = [];
         return {
-            fn: function (neglect, t) { s += t; },
+            fn: function (_, t) { s = s.concat(t); },
             ret: function () { return s; }
         };
     })();
-    var cs;
     var niot = "n-i-o-t";
+    var empty = [];
+    var cs;
     if (x.nodeType === 3) {
-        return x.textContent;
+        return [x.textContent];
     }
     if (x.classList && x.classList.contains(niot)) {
-        return "";
+        return empty;
     }
-    if (x.tagName === "H2" || x.tagName === "P" || x.tagName === "DIV") {
-        return x.textContent + "↵";
+    if (isIn(['H1', 'H2', 'P', 'DIV'], x.tagName)) {
+        return [x.textContent]; // + "↵";
     }
     if (x.tagName === "IMG") {
         return x.alt;
     }
     if (x instanceof HTMLElement) {
-        if (window.getComputedStyle(x).display === "none")
-            return "";
+        if (window.getComputedStyle(x).display === "none") {
+            return empty;
+        }
         cs = x.childNodes;
         if (cs.length === 0)
-            return "";
+            return empty;
         // cs.length > 0
-        iter(cs, acc.fn, textContent);
+        iter(cs, acc.fn, textFragments);
         return acc.ret();
     }
-    return null;
+    return empty;
 }
 function backButtonClosure(t) {
     var stack = [];
@@ -130,20 +146,8 @@ function backButtonClosure(t) {
 }
 function shareButtonClosure(elmt) {
     var name, text, link;
-    var trimEndingBar = function (txt) {
-        // assume that "↵" would never be in original text
-        var bar = "↵", n = bar.length;
-        return txt.endsWith(bar) ? txt.slice(0, txt.length - n) : txt;
-    };
-    var separated = function (ret, s) {
-        var c = '‖';
-        if (!ret)
-            return s;
-        if (!s)
-            return ret;
-        // ret && s
-        return ret + c + s;
-    };
+    var separatedByBar = partial(separatedBy, '‖');
+    var separatedByNL = partial(separatedBy, '↵');
     var loc2name = function (loc) {
         var dp = decodedPathname(loc.pathname);
         var s = "/", t = ".html";
@@ -162,33 +166,35 @@ function shareButtonClosure(elmt) {
                 // second level item, no need for hash
                 return dp;
             default:
-                return [dp, dh].reduce(separated);
+                return [dp, dh].reduce(separatedByBar);
         }
     };
     return {
-        "element": elmt,
-        "showAt": function (y) {
+        element: elmt,
+        showAt: function (y) {
             var top = y + window.pageYOffset - 26;
             elmt.style.top = px(top);
             elmt.style.display = "";
         },
-        "clear": function () {
+        clear: function () {
             text = link = null;
             elmt.style.display = "none";
         },
-        "setContent": function (elmt, loc) {
-            text = textContent(elmt);
+        setContent: function (elmt, loc) {
+            text = textFragments(elmt).reduce(separatedByNL, '');
             link = loc.href;
             name = loc2name(loc);
         },
-        "getContent": function () {
+        getContent: function () {
             var nchars = 64;
             var sliced = strSlice(text, nchars);
+            // sliced[0] may end with the separator,
+            // allow it, no trimming
             return [
                 name,
-                trimEndingBar(sliced[0]) + (sliced[1] ? "……" : ""),
+                sliced[0] + (sliced[1] ? "……" : ""),
                 link
-            ].reduce(separated);
+            ].reduce(separatedByBar);
         }
     };
 }
