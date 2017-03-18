@@ -137,7 +137,6 @@ nav {
   display: none;
 }
 #ref-to-original,
-#outline,
 #the-preface,
 .entry,
 .款,
@@ -147,6 +146,7 @@ nav {
   border-bottom-right-radius: 0.75em;
 }
 #the-title,
+#wxdyh_qrcode,
 .编,
 .章,
 .节 {
@@ -155,8 +155,8 @@ nav {
 }
 #ref-to-original:target,
 #the-title:target,
-#outline:target,
 #the-preface:target,
+#wxdyh_qrcode:target,
 .编:target,
 .章:target,
 .节:target,
@@ -384,16 +384,16 @@ nav > ul {
     border-bottom: 0.2pt solid #BBB;
   }
   #ref-to-original:target,
-  #outline:target,
+  #the-title:target,
   #the-preface:target,
+  #wxdyh_qrcode:target,
+  .编:target,
+  .章:target,
+  .节:target,
   .entry:target,
   .款:target,
   .项:target,
-  .目:target,
-  #the-title:target,
-  .编:target,
-  .章:target,
-  .节:target {
+  .目:target {
     background-color: transparent;
     box-shadow: none;
   }

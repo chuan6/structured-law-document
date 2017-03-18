@@ -100,11 +100,11 @@ function textFragments(x): string[] {
   if (x.classList && x.classList.contains(niot)) {
     return empty;
   }
-  if (isIn(['H1', 'H2', 'P', 'DIV'], x.tagName)) {
-    return [x.textContent]; // + "↵";
+  if (isIn(['H1', 'H2', 'P'], x.tagName)) {
+    return [x.textContent];
   }
   if (x.tagName === "IMG") {
-    return x.alt;
+    return [x.alt];
   }
   if (x instanceof HTMLElement) {
     if (window.getComputedStyle(x).display === "none") {
