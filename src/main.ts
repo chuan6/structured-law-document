@@ -1,5 +1,13 @@
 declare const qrcode: any;
 
+function isIn(coll: any[], x: any): boolean {
+  return coll.indexOf(x) === -1? false : true;
+}
+
+function partial(f, arg1) {
+  return f.bind(null, arg1);
+}
+
 function iter(coll, g, f) {
   var i;
   for (i = 0; i < coll.length; i++) {
@@ -11,41 +19,33 @@ function iter(coll, g, f) {
 // https://mathiasbynens.be/notes/javascript-unicode#iterating-over-symbols
 // prefer for...of iterator; but it is currently not supported by Weixin's
 // X5 kernel by Tencent.
-function getSymbols(string) {
+function getSymbols(raw: string): string[] {
   var index = 0;
-  var length = string.length;
+  var length = raw.length;
   var output = [];
   for (; index < length - 1; ++index) {
-    var charCode = string.charCodeAt(index);
+    var charCode = raw.charCodeAt(index);
     if (charCode >= 0xD800 && charCode <= 0xDBFF) {
-      charCode = string.charCodeAt(index + 1);
+      charCode = raw.charCodeAt(index + 1);
       if (charCode >= 0xDC00 && charCode <= 0xDFFF) {
-        output.push(string.slice(index, index + 2));
+        output.push(raw.slice(index, index + 2));
         ++index;
         continue;
       }
     }
-    output.push(string.charAt(index));
+    output.push(raw.charAt(index));
   }
-  output.push(string.charAt(index));
+  output.push(raw.charAt(index));
   return output;
 }
 
-function strSlice(s, end) {
-  var s1 = '', s2 = '';
-  var c, i = 0;
+function strSlice(raw: string, end: number): [string, string] {
+  var s = getSymbols(raw);
 
-  s = getSymbols(s);
-  for (i = 0; i < s.length; i++) {
-    c = s[i];
-    if (i < end) {
-      s1 += c;
-    } else {
-      s2 += c;
-    }
-  }
-
-  return [s1, s2];
+  return [
+    s.slice(0, end).join(''), // before the end
+    s.slice(end).join('') // the end and after
+  ];
 }
 
 function decodedPathname(u) {
@@ -53,6 +53,13 @@ function decodedPathname(u) {
     return s.indexOf("%") === -1;
   };
   return isDecoded(u) ? u : decodeURIComponent(u);
+}
+
+function separatedBy(x: string, ret, s): string {
+  if (!ret) return s;
+  if (!s) return ret;
+  // ret && s
+  return ret + x + s;
 }
 
 function px(x) {
@@ -70,84 +77,83 @@ function horizontalExtra(computed, withMargin) {
   return x;
 }
 
-function getEnclosingID(elmt) {
-  return elmt.id || (elmt.parentNode ? getEnclosingID(elmt.parentNode) : null);
+function getEnclosingID(t: HTMLElement): string {
+  return t.id ||
+    (t.parentElement ? getEnclosingID(t.parentElement) : '');
 }
 
-function textContent(x) {
-  var acc = (function () {
-    var s = "";
+function textFragments(x): string[] {
+  const acc = (function () {
+    var s = [];
     return {
-      fn: function (neglect, t) { s += t; },
-      ret: function () { return s; }
+      fn: (_, t) => { s = s.concat(t); },
+      ret: () => s
     };
   })();
-
+  const niot = "n-i-o-t";
+  const empty = [];
   var cs;
-  var niot = "n-i-o-t";
 
   if (x.nodeType === 3) {
-    return x.textContent;
+    return [x.textContent];
   }
   if (x.classList && x.classList.contains(niot)) {
-    return "";
+    return empty;
   }
-  if (x.tagName === "H2" || x.tagName === "P" || x.tagName === "DIV") {
-    return x.textContent + "↵";
+  if (isIn(['H1', 'H2', 'P'], x.tagName)) {
+    return [x.textContent];
   }
   if (x.tagName === "IMG") {
-    return x.alt;
+    return [x.alt];
   }
   if (x instanceof HTMLElement) {
-    if (window.getComputedStyle(x).display === "none") return "";
+    if (window.getComputedStyle(x).display === "none") {
+      return empty;
+    }
 
     cs = x.childNodes;
-    if (cs.length === 0) return "";
+    if (cs.length === 0) return empty;
     // cs.length > 0
 
-    iter(cs, acc.fn, textContent);
+    iter(cs, acc.fn, textFragments);
     return acc.ret();
   }
-  return null;
+  return empty;
 }
 
-function backButtonClosure(elmt) {
-  var stack = [];
+function backButtonClosure(t: HTMLAnchorElement) {
+  type item = { id: string, y: number };
 
-  var top = function () {
-    return stack[stack.length - 1];
-  };
+  var stack: item[] = [];
 
-  var updateHref = function (id) {
-    if (id === "" || id) {
-      elmt.href = "#" + id;
-    } else {
-      elmt.removeAttribute("href");
-    }
+  var top = () => stack[stack.length - 1];
+
+  var updateHref = (id: string): void => {
+    t.href = '#' + id;
   };
 
   updateHref("");
-  stack = [{ id: "", y: 0 }];
+  stack = [{ id: "", y: 0 }]; // stack.length === 1
 
   return {
-    element: elmt,
+    element: t,
     peek: top,
-    push: function (id, y) {
+    push: (id: string, y: number) => {
       var curr = top();
 
       // only push new id that is different from the top
-      if (!curr || curr.id !== id) {
-        stack.push({ "id": id, "y": y });
+      if (id !== curr.id) {
+        stack.push({ id, y });
         updateHref(id);
       }
     },
-    pop: function () {
+    pop: () => {
       var curr;
 
-      if (stack.length > 1) stack.pop();
+      if (stack.length > 1) stack.pop(); // stack.length >= 1
 
       curr = top();
-      updateHref(curr ? curr.id : "");
+      updateHref(curr.id);
     }
   };
 }
@@ -155,19 +161,8 @@ function backButtonClosure(elmt) {
 function shareButtonClosure(elmt) {
   var name, text, link;
 
-  var trimEndingBar = function (txt) {
-    // assume that "↵" would never be in original text
-    var bar = "↵", n = bar.length;
-    return txt.endsWith(bar) ? txt.slice(0, txt.length - n) : txt;
-  };
-
-  var separated = function (ret, s) {
-    const c = '‖';
-    if (!ret) return s;
-    if (!s) return ret;
-    // ret && s
-    return ret + c + s;
-  };
+  var separatedByBar = partial(separatedBy, '‖');
+  var separatedByNL = partial(separatedBy, '↵');
 
   var loc2name = function (loc) {
     var dp = decodedPathname(loc.pathname);
@@ -187,35 +182,37 @@ function shareButtonClosure(elmt) {
         // second level item, no need for hash
         return dp;
       default:
-        return [dp, dh].reduce(separated);
+        return [dp, dh].reduce(separatedByBar);
     }
   };
 
   return {
-    "element": elmt,
-    "showAt": function (y) {
+    element: elmt,
+    showAt: function (y) {
       var top = y + window.pageYOffset - 26;
 
       elmt.style.top = px(top);
       elmt.style.display = "";
     },
-    "clear": function () {
+    clear: function () {
       text = link = null;
       elmt.style.display = "none";
     },
-    "setContent": function (elmt, loc) {
-      text = textContent(elmt);
+    setContent: function (elmt, loc) {
+      text = textFragments(elmt).reduce(separatedByNL, '');
       link = loc.href;
       name = loc2name(loc);
     },
-    "getContent": function () {
+    getContent: function () {
       var nchars = 64;
       var sliced = strSlice(text, nchars);
+      // sliced[0] may end with the separator,
+      // allow it, no trimming
       return [
         name,
-        trimEndingBar(sliced[0]) + (sliced[1] ? "……" : ""),
+        sliced[0] + (sliced[1] ? "……" : ""),
         link
-      ].reduce(separated);
+      ].reduce(separatedByBar);
     }
   };
 }
@@ -347,7 +344,7 @@ function overlayClosure(elmt, content, docancel, docopy) {
 var backButton, shareButton, overlay;
 
 window.addEventListener("load", function () {
-  backButton = backButtonClosure(
+  backButton = backButtonClosure(<HTMLAnchorElement>
     document.getElementById("back-button"));
 
   shareButton = shareButtonClosure(
@@ -622,18 +619,20 @@ var qrcodeGenerator = (function () {
 })();
 
 var printHandler = (function () {
+  const selector = 'section[class=entry]:not(#the-preface)'
+
   return {
     before: function () {
-      var es = document.querySelectorAll(
-        "section[class=entry]:not(#the-preface)"
-      );
+      var es = document.querySelectorAll(selector);
       if (es.length === 0) return;
       printNum.addTo(es);
       qrcodeGenerator.show();
     },
     after: function () {
-      var ews = document.querySelectorAll(".entry-wrapper");
-      printNum.rmFrom(ews);
+      var es = (printNum === printNumInFirefox ?
+                document.querySelectorAll('.entry-wrapper') :
+                document.querySelectorAll(selector))
+      printNum.rmFrom(es);
       qrcodeGenerator.clear();
     }
   };

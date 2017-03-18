@@ -146,20 +146,20 @@ p, h1, h2, h3, h4 { .line; }
 
 .entry-num { display: none; }
 
-#ref-to-original, #outline, #the-preface, .entry, .款, .项, .目 {
+#ref-to-original, #the-preface, .entry, .款, .项, .目 {
   border-top-right-radius: @border-radius;
   border-bottom-right-radius: @border-radius;
 }
 
-#the-title, .编, .章, .节 {
+#the-title, #wxdyh_qrcode, .编, .章, .节 {
   text-align: center;
   border-radius: @border-radius;
 }
 
 #ref-to-original:target,
 #the-title:target,
-#outline:target,
 #the-preface:target,
+#wxdyh_qrcode:target,
 .编:target,
 .章:target,
 .节:target,
@@ -363,9 +363,17 @@ nav>ul { .line; }
     border-bottom: 0.2pt solid #BBB;
   }
 
-  #ref-to-original:target, #outline:target, #the-preface:target,
-  .entry:target, .款:target, .项:target, .目:target,
-  #the-title:target, .编:target, .章:target, .节:target {
+  #ref-to-original:target,
+  #the-title:target,
+  #the-preface:target,
+  #wxdyh_qrcode:target,
+  .编:target,
+  .章:target,
+  .节:target,
+  .entry:target,
+  .款:target,
+  .项:target,
+  .目:target {
     background-color: transparent;
     box-shadow: none;
   }
