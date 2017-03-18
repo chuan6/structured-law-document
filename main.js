@@ -546,17 +546,20 @@ var qrcodeGenerator = (function () {
     };
 })();
 var printHandler = (function () {
+    var selector = 'section[class=entry]:not(#the-preface)';
     return {
         before: function () {
-            var es = document.querySelectorAll("section[class=entry]:not(#the-preface)");
+            var es = document.querySelectorAll(selector);
             if (es.length === 0)
                 return;
             printNum.addTo(es);
             qrcodeGenerator.show();
         },
         after: function () {
-            var ews = document.querySelectorAll(".entry-wrapper");
-            printNum.rmFrom(ews);
+            var es = (printNum === printNumInFirefox ?
+                document.querySelectorAll('.entry-wrapper') :
+                document.querySelectorAll(selector));
+            printNum.rmFrom(es);
             qrcodeGenerator.clear();
         }
     };
