@@ -123,11 +123,13 @@ function makeCallback(f, y, z) {
   };
 }
 
+var rootDir = '../'
+
 function readTXTAndCompare(w, name) {
   var fromHTML = getTextFromHTML(w);
 
   fs.readFile(
-    'generator/resources/' + name + '.txt',
+    rootDir + 'generator/resources/' + name + '.txt',
     'utf8',
     makeCallback(normCmp, fromHTML, name)
   );
@@ -140,10 +142,10 @@ function goThroughRefs(w) {
   for (i = 0; i < entries.length; i++) {
     ref = entries[i];
     dom.env({
-      file: ref.getAttribute('href'),
+      file: rootDir + ref.getAttribute('href'),
       done: makeCallback(readTXTAndCompare, ref.textContent)
     });
   }
 }
 
-dom.env('index.html', makeCallback(goThroughRefs));
+dom.env(rootDir + 'index.html', makeCallback(goThroughRefs));

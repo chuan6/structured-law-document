@@ -7,6 +7,9 @@
 
 (def name-link-pairs
   [
+   ["民法总则"
+    "http://www.npc.gov.cn/npc/xinwen/2017-03/15/content_2018907.htm"]
+
    ["互联网直播服务管理规定"
     "http://www.cac.gov.cn/2016-11/04/c_1119846202.htm"]
 
